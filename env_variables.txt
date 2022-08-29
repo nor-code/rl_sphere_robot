@@ -1,0 +1,5 @@
+PYTHONUNBUFFERED=1;
+LD_LIBRARY_PATH=LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin;
+MJLIB_PATH=$HOME/.mujoco/mujoco210/bin/libmujoco210.so;
+MUJOCO_PY_MJPRO_PATH=$HOME/.mujoco/mujoco210/;
+ENV_MJLIB_PATH=$HOME/.mujoco/mujoco210/include

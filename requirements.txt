@@ -1,0 +1,5 @@
+matplotlib
+torch
+numpy
+tqdm
+# wget -q https://raw.githubusercontent.com/yandexdataschool/Practical_RL/master/week04_approx_rl/utils.py
