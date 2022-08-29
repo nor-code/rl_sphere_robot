@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<mujoco model="sphere_robot">
+    <compiler inertiafromgeom="true" angle="degree"/>
+    <option integrator="RK4"/>
+    <option timestep="0.005" iterations="50" solver="Newton" tolerance="1e-10"/>
+    <size njmax="1500" nconmax="5000" nstack="5000000"/>
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1="0.6 0.6 0.6" rgb2="0 0 0" width="512" height="512"/>
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .25" rgb2=".3 .3 .3" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <visual>
+        <rgba haze=".3 .3 .3 1"/>
+    </visual>
+
+    <worldbody>
+        <light pos="0 0 .6"/>
+        <geom name="floor" pos="0 0 0" size="0 0 1" type="plane" material="matplane"/>
+        <body pos="0 0 0">
+            <freejoint/>
+            <geom name="sphere_shell" type="sphere" pos="0 0 0" size=".2 .19" rgba=".0 .0 .0 .2" mass="1" group="1"/>
+            <body>
+                <joint name="pl" type="ball"/>
+                <geom name="bearing1" pos="0      -0.167 -0.03" size="0.01" mass="0.9"/>
+                <geom name="line1" type="cylinder" fromto="0       -0.15 -0.03    0     -0.167 -0.03" size="0.005"/>
+
+                <geom name="bearing2" pos="0.1472  0.085 -0.03" size="0.01" mass="0.9"/>
+                <geom name="line2" type="cylinder" fromto="0.1299  0.075 -0.03    0.1472 0.085 -0.03" size="0.005"/>
+
+                <geom name="bearing3" pos="-0.1472 0.085 -0.03" size="0.01" mass="0.9"/>
+                <geom name="line3" type="cylinder" fromto="-0.1299 0.075 -0.03   -0.1472 0.085 -0.03" size="0.005"/>
+
+                <body>
+                    <geom name="platform" type="cylinder" pos="0 0 -0.03" size=".15 .005" rgba=".0 .0 .3 .5" mass="3" group="1"/>
+<!--                    <geom name="dasd" type="sphere" pos="0.1 -0.1 -0.02" size="0.01" mass="0.2"/>-->
+                </body>
+
+                <body>
+                    <joint name="platform_with_fork" type="hinge" axis="0 0 1"/>
+
+                    <geom name="fork0" type="capsule" fromto="0 0 -0.03  0 0 -0.07" size="0.01" mass="0.1" group="0.01"/>
+                    <geom name="link_f1_f2" type="capsule" fromto="-0.03 0 -0.07   0.03 0 -0.07" size="0.01" mass="0.001" group="1"/>
+                    <geom name="fork1" type="capsule" fromto="-0.03 0 -0.07  -0.03 0 -0.16" size="0.01" mass="0.01" group="1"/>
+                    <geom name="fork2" type="capsule" fromto="0.03 0 -0.07  0.03 0 -0.16" size="0.01" mass="0.01" group="1"/>
+                    <geom name="wheel_axis" type="cylinder" fromto="-0.03 0 -0.15  0.03 0 -0.15" size="0.005"/>
+                    <body>
+                        <joint name="wheel_motor" type="hinge" axis="1 0 0"/>
+                        <geom name="wheel" type="cylinder" fromto="-0.008 0 -0.15  0.008 0 -0.15" size="0.049 0.005"/>
+                    </body>
+                </body>
+
+
+            </body>
+        </body>
+    </worldbody>
+    <actuator>
+            <motor name="platform_with_fork" gear="5" joint="platform_with_fork"/>
+            <motor name="wheel_motor" gear="5" joint="wheel_motor"/>
+    </actuator>
+</mujoco>
