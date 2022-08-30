@@ -1,73 +1,15 @@
-import collections
-
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-from dm_control import mujoco, viewer
-from dm_control.rl import control
 from dm_control.rl.control import PhysicsError
-from dm_control.suite import base
 from dm_env import StepType
 from scipy.signal import fftconvolve, gaussian
 from tqdm import trange
 
-
+from agent.dqn import DeepQLearningAgent
 from replay_buffer import ReplayBuffer
-
-
-class DeepQLearningAgent(nn.Module):
-    def __init__(self, state_dim, epsilon):
-        super().__init__()
-        self.epsilon = epsilon
-
-        self.platform_action = np.array(np.meshgrid(np.linspace(-0.5, 0.5, 15), np.zeros(1))).T.reshape(-1, 2)
-        self.wheel_action = np.array(np.meshgrid(np.zeros(1), np.linspace(-1, 1, 15))).T.reshape(-1, 2)
-        self.action_count = len(self.platform_action) + len(self.wheel_action)
-
-        self.all_pairs_actions = np.concatenate((self.platform_action, self.wheel_action), axis=0)
-        self.index_to_pair = dict(zip(range(self.action_count), self.all_pairs_actions))
-
-        self.network = nn.Sequential(
-            nn.Linear(state_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, self.action_count)
-        )
-
-    def forward(self, state):
-        return self.network(state)
-
-    def get_qvalues(self, state):
-        model_device = next(self.parameters()).device
-        tensor_state = torch.tensor(state, device=model_device, dtype=torch.float32)
-        return self.network(tensor_state).data.cpu().numpy()
-
-    def sample_actions(self, q_values):
-        rand = np.random.rand()
-
-        if rand <= self.epsilon:
-            return np.random.choice(range(self.action_count), size=batch_size)
-        else:
-            return q_values.argmax(axis=-1)
-        # eps = self.epsilon
-        # batch_size, n_action = q_values.shape  # 32 x 30
-        #
-        # random_action_indx = np.random.choice(range(self.action_count), size=batch_size)
-        #
-        # best_actions_indx = q_values.argmax(axis=-1)  # -->  1. i1   2. i2
-        #
-        # identity_function_for_explore = np.random.choice(
-        #     [0, 1], size=batch_size, p=[1 - eps, eps]
-        # )
-        #
-        # return np.where(identity_function_for_explore,
-        #                 self.all_pairs_actions[best_actions_indx],
-        #                 self.all_pairs_actions[random_action_indx]
-        #                 )
+from robot.enviroment import make_env, trajectory
 
 
 def play_and_record(initial_state, agent, _enviroment, cash, n_steps=1):
@@ -100,7 +42,6 @@ def play_and_record(initial_state, agent, _enviroment, cash, n_steps=1):
             break
 
         s = _time_step.observation
-
 
     return sum_rewards, s
 
@@ -185,105 +126,24 @@ def smoothen(values):
     return fftconvolve(values, kernel, 'valid')
 
 
-def trajectory():
-    t = np.linspace(0, 2 * np.pi, 120)
-    x_ = [2 * np.sin(t_) for t_ in t]
-    y_ = [2 * np.cos(t_) - 2 for t_ in t]
-    return x_, y_
-
-
-def point():
-    x, y = trajectory()
-    return collections.OrderedDict().fromkeys(zip(x, y))
-
-
-class RobotPhysics(mujoco.Physics):
-    def get_sphere_position(self):
-        return self.named.data.geom_xpos['sphere_shell']
-
-
-class TrakingTrajectoryTask(base.Task):
-
-    def __init__(self, points, random=None):
-        self.timeout = 30
-        self.points = points
-        self.current_point = self.points.popitem(last=False)
-        super().__init__(random=random)
-
-    def initialize_episode(self, physics):
-        # nv = physics.model.nv
-        physics.named.data.qpos[:] = 0
-        physics.named.data.qvel[:] = 0
-        self.points = point()
-        self.current_point = self.points.popitem(last=False)
-        super().initialize_episode(physics)
-
-    def get_observation(self, physics):
-        # obs = collections.OrderedDict()
-        # obs['position'] = physics.bounded_position()
-        # obs['velocity'] = physics.velocity()
-        xy = physics.named.data.geom_xpos['sphere_shell'][0:2]
-        acc_gyro = physics.data.sensordata
-        return np.concatenate((xy, acc_gyro), axis=0)
-
-    def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.__distance_to_current_point(physics) >= 3.0:
-            return 0.0
-
-    def __distance_to_current_point(self, physics):
-        x, y, z = physics.named.data.geom_xpos['sphere_shell']
-        return np.sqrt((x - self.current_point[0][0]) ** 2 + (y - self.current_point[0][1]) ** 2)
-
-    def get_reward(self, physics):
-        distance = self.__distance_to_current_point(physics)
-        if distance < 0.8:
-            # print ("достигли точки ", self.current_point[0])
-            self.current_point = self.points.popitem(last=False)
-            return 1
-        elif 0.8 <= distance <= 1.5:
-            return - 0.1 * distance
-        else:
-            return - distance
-
-
-# for test simulation, remove in future
-def random_policy(action_spec):
-    return np.random.uniform(
-        low=action_spec.minimum,
-        high=action_spec.maximum,
-        size=action_spec.shape
-    )
-
-
-def make_env():
-    physics = RobotPhysics.from_xml_path('robot_4.xml')
-    task = TrakingTrajectoryTask(points=point())
-    return control.Environment(
-        physics, task, time_limit=50, n_sub_steps=50
-    )
-
-
 env = make_env()
 
 # action_spec = env.action_spec()
-cash = ReplayBuffer(1000000)
-state_dim = 8
+cash = ReplayBuffer(2_000_000)
+state_dim = 2  # 8
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-agent = DeepQLearningAgent(state_dim, epsilon=1).to(device)
-target_network = DeepQLearningAgent(state_dim, epsilon=1).to(device)
-target_network.load_state_dict(agent.state_dict())
-
 timesteps_per_epoch = 1000
 batch_size = 512
-total_steps = 2 * 10 ** 4  # 10 ** 4
-decay_steps = 1 * 10 ** 4  # 10 ** 4
+total_steps = 1 * 10 ** 3  # 10 ** 4
+decay_steps = 1 * 10 ** 3  # 10 ** 4
+
+agent = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
+target_network = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
+target_network.load_state_dict(agent.state_dict())
 
 optimizer = torch.optim.Adam(agent.parameters(), lr=1e-3)
-
-init_epsilon = 1
-final_epsilon = 0.05
 
 loss_freq = 50
 refresh_target_network_freq = 500
@@ -297,11 +157,10 @@ grad_norm_history = []
 initial_state_v_history = []
 step = 0
 
-init_epsilon = 0.99
-final_epsilon = 0.01
+init_epsilon = 1
+final_epsilon = 0.05
 
 state = env.reset().observation
-
 
 with trange(step, total_steps + 1) as progress_bar:
     for step in progress_bar:
@@ -311,10 +170,8 @@ with trange(step, total_steps + 1) as progress_bar:
         # play
         _, state = play_and_record(state, agent, env, cash, timesteps_per_epoch)
 
-        # train
-        # <YOUR CODE: sample batch_size of data from experience replay>
         s, a, r, next_s, is_done = cash.sample(batch_size)
-        # loss = <YOUR CODE: compute TD loss>
+
         loss = compute_td_loss(s, a, r, next_s, is_done, agent, target_network, device=device)
 
         loss.backward()
