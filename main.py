@@ -12,6 +12,8 @@ from replay_buffer import ReplayBuffer
 from robot.enviroment import make_env, trajectory
 
 
+# from IPython.display import clear_output
+
 def play_and_record(initial_state, agent, _enviroment, cash, n_steps=1):
     s = initial_state
     sum_rewards = 0
@@ -26,12 +28,13 @@ def play_and_record(initial_state, agent, _enviroment, cash, n_steps=1):
             _time_step = _enviroment.step(action)
         except PhysicsError:
             print("поломка в физике, метод play_and_record")
-            _enviroment.reset()
             cash.add(s, action_idx, -1, s, True)
+            _enviroment = _enviroment.reset()
+            s = _enviroment.observation
             break
 
         state = _time_step.observation
-        is_done = _time_step.step_type == StepType.LAST or _enviroment.physics.data.time > 50
+        is_done = _time_step.step_type == StepType.LAST or _enviroment.physics.data.time > 12
 
         sum_rewards += _time_step.reward
 
@@ -39,6 +42,7 @@ def play_and_record(initial_state, agent, _enviroment, cash, n_steps=1):
 
         if is_done:
             _enviroment = _enviroment.reset()
+            s = _enviroment.observation
             break
 
         s = _time_step.observation
@@ -134,11 +138,10 @@ state_dim = 2  # 8
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-timesteps_per_epoch = 1000
+timesteps_per_epoch = 300
 batch_size = 512
-total_steps = 1 * 10 ** 3  # 10 ** 4
-decay_steps = 1 * 10 ** 3  # 10 ** 4
-
+total_steps = 1 * 10 ** 2  # 10 ** 4
+decay_steps = 2 * 10 ** 2  # 10 ** 4
 agent = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network.load_state_dict(agent.state_dict())
@@ -238,9 +241,12 @@ times = []
 env = make_env()
 time_step = env.reset()
 prev_time = env.physics.data.time
+actions = []
 while env.physics.data.time < 40:
     qvalues = agent.get_qvalues([time_step.observation])
     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]  # if greedy else agent.sample_actions(qvalues)[0]
+    print(action)
+    actions = np.append(actions, action)
     try:
         time_step = env.step(action=action)
     except PhysicsError:
@@ -253,7 +259,6 @@ while env.physics.data.time < 40:
         break
 
     prev_time = env.physics.data.time
-    print("reward = ", reward, "\n")
 
     # frame = env.physics.render(camera_id=0, width=300, height=300)
 
@@ -264,10 +269,26 @@ while env.physics.data.time < 40:
     # if env.physics.data.time > 1:
     #     frames.append(frame)
 
-fig1, ax = plt.subplots(3, 1)
+
+# from dm_control.viewer import application
+#
+# def action_policy(timestamp):
+#     qvalues = agent.get_qvalues([timestamp.observation])
+#     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
+#     return action
+#
+#
+# env = make_env()
+# app = application.Application()
+# app.launch(env, policy=action_policy)
+
+actions = actions.reshape(-1, 2)
+fig1, ax = plt.subplots(5, 1)
 ax[0].plot(times, pos[:, 0][1:])
 ax[1].plot(times, pos[:, 1][1:])
 ax[2].plot(times, pos[:, 2][1:])
+ax[3].plot(times, actions[:, 0][:-1])
+ax[4].plot(times, actions[:, 1][:-1])
 
 traj = plt.figure().add_subplot()
 traj.plot(pos[:, 1][1:], pos[:, 1][1:], label="trajectory")
