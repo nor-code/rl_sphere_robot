@@ -21,8 +21,8 @@ def point():
     return collections.OrderedDict().fromkeys(zip(x, y))
 
 
-def make_env():
-    physics = RobotPhysics.from_xml_path('robot_4.xml')
+def make_env(xml_file='robot_4.xml'):
+    physics = RobotPhysics.from_xml_path(xml_file)
     task = TrakingTrajectoryTask(points_function=point)
     return control.Environment(
         physics, task, time_limit=50, n_sub_steps=60

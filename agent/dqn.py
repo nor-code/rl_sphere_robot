@@ -9,8 +9,8 @@ class DeepQLearningAgent(nn.Module):
         self.epsilon = epsilon
         self.batch_size = batch_size
 
-        self.platform_action = np.array(np.meshgrid(np.linspace(-0.26, 0.26, 15), np.zeros(1))).T.reshape(-1, 2)
-        self.wheel_action = np.array(np.meshgrid(np.zeros(1), np.linspace(-0.4, 0.4, 15))).T.reshape(-1, 2)
+        self.platform_action = np.array(np.meshgrid(np.linspace(-0.26, 0.26, 5), np.zeros(1))).T.reshape(-1, 2)
+        self.wheel_action = np.array(np.meshgrid(np.zeros(1), np.linspace(-0.25, 0.25, 5))).T.reshape(-1, 2)
         self.action_count = len(self.platform_action) + len(self.wheel_action)
 
         self.all_pairs_actions = np.concatenate((self.platform_action, self.wheel_action), axis=0)

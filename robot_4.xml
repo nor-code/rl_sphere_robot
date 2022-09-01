@@ -71,6 +71,9 @@
     </actuator>
 
     <sensor>
+        <subtreecom name="shell_center" body="shell"/>
+        <jointpos name="fork_wheel_angle" joint="fork_with_platform"/>
+<!--        <subtreelinvel name="wheel_center" body="wheel"/>-->
         <accelerometer name="imu_accel" site="mpu9250"/>
         <gyro name="imu_gyro" site="mpu9250"/>
     </sensor>

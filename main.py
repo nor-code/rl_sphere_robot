@@ -134,7 +134,7 @@ env = make_env()
 
 # action_spec = env.action_spec()
 cash = ReplayBuffer(2_000_000)
-state_dim = 2  # 8
+state_dim = 4  # 8
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -231,68 +231,75 @@ rl[1][1].set_title("Grad norm history (smoothened)")
 rl[1][1].plot(smoothen(grad_norm_history))
 rl[1][1].grid()
 
-# plt.show()
 
 frames = []
-time_step = env.reset()
-pos = np.array([[0, 0, 0]])
 times = []
-
+actions = []
+V = []
+U = []
+pos = np.array([[0, 0]])
 env = make_env()
+reward = 0
 time_step = env.reset()
 prev_time = env.physics.data.time
-actions = []
+
 while env.physics.data.time < 40:
     qvalues = agent.get_qvalues([time_step.observation])
     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]  # if greedy else agent.sample_actions(qvalues)[0]
     print(action)
     actions = np.append(actions, action)
+
     try:
         time_step = env.step(action=action)
     except PhysicsError:
         print("physicx error  time = ", prev_time)
         break
 
-    reward = time_step.reward
-    if reward is None:
+    if time_step.reward is None:
         print("reward is None ! time = ", prev_time)
         break
 
+    reward += time_step.reward
     prev_time = env.physics.data.time
 
-    # frame = env.physics.render(camera_id=0, width=300, height=300)
+    observation = time_step.observation
 
-    observation = np.concatenate([time_step.observation[0:2], [0]], axis=0)
+    V.append(observation[2])
+    U.append(observation[3])
+    pos = np.append(pos, [observation[0:2]], axis=0)
 
-    pos = np.append(pos, [observation], axis=0)
     times.append(env.physics.data.time)
+
+    # frame = env.physics.render(camera_id=0, width=300, height=300)
     # if env.physics.data.time > 1:
     #     frames.append(frame)
 
+print("TOTAL REWARD = ", reward)
 
-# from dm_control.viewer import application
-#
-# def action_policy(timestamp):
-#     qvalues = agent.get_qvalues([timestamp.observation])
-#     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
-#     return action
-#
-#
-# env = make_env()
-# app = application.Application()
-# app.launch(env, policy=action_policy)
+from dm_control.viewer import application
+
+
+def action_policy(timestamp):
+    qvalues = agent.get_qvalues([timestamp.observation])
+    action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
+    return action
+
+
+env = make_env()
+app = application.Application()
+app.launch(env, policy=action_policy)
 
 actions = actions.reshape(-1, 2)
 fig1, ax = plt.subplots(5, 1)
 ax[0].plot(times, pos[:, 0][1:])
 ax[1].plot(times, pos[:, 1][1:])
-ax[2].plot(times, pos[:, 2][1:])
 ax[3].plot(times, actions[:, 0][:-1])
 ax[4].plot(times, actions[:, 1][:-1])
 
 traj = plt.figure().add_subplot()
-traj.plot(pos[:, 1][1:], pos[:, 1][1:], label="trajectory")
+traj.plot(pos[:, 0][1:], pos[:, 1][1:], label="trajectory")
 traj.plot(trajectory()[0], trajectory()[1], label="desired_trajectory")
+traj.quiver(pos[:, 0][1:], pos[:, 1][1:], V, U, color=['r', 'b', 'g'], angles='xy', width=0.002)
 traj.set_xlabel('x')
 traj.set_ylabel('y')
 
