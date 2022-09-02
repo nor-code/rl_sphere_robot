@@ -107,5 +107,5 @@ class TrakingTrajectoryTask(base.Task):
             return -1
 
         cos_a = np.dot(PC, PO) / (norm_PO * norm_PC)
-        return ((norm_PC - norm_PO * cos_a) / norm_PC) - np.sqrt(norm_PO ** 2 - (norm_PO * cos_a) ** 2) \
+        return (norm_PC / (norm_PC - norm_PO * cos_a)) - np.sqrt(norm_PO ** 2 - (norm_PO * cos_a) ** 2) \
                - np.arccos(np.dot([PC[0] / norm_PC, PC[1] / norm_PC], [cos, sin]))
