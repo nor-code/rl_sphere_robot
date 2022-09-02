@@ -103,7 +103,7 @@ class TrakingTrajectoryTask(base.Task):
         norm_PO = np.linalg.norm(PO)
 
         if norm_PO > norm_PC or np.linalg.norm(distance) > norm_PC \
-                or self.__distance_to_current_point(self.prev_point[0], self.prev_point[1]) < distance:
+                or self.__distance_to_current_point(self.prev_xy[0], self.prev_xy[1]) < distance:
             return -1
 
         cos_a = np.dot(PC, PO) / (norm_PO * norm_PC)
