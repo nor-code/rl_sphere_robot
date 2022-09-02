@@ -1,3 +1,5 @@
+# TODO выпилить в будущем, пример с которого бралась loss-функция
+
 import random
 from collections import deque, namedtuple
 

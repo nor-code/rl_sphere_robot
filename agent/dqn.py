@@ -24,9 +24,9 @@ class DeepQLearningAgent(nn.Module):
             nn.ReLU(),
             nn.Linear(512, 1024),
             nn.ReLU(),
-            nn.Linear(1024, 512),
+            nn.Linear(1024, 1024),
             nn.ReLU(),
-            nn.Linear(512, self.action_count)
+            nn.Linear(1024, self.action_count)
         )
 
     def forward(self, state):

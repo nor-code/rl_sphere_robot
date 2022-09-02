@@ -4,7 +4,8 @@ import numpy as np
 from dm_control.rl import control
 
 from robot.model import RobotPhysics
-from robot.task import TrakingTrajectoryTask
+from robot.task_1 import TrakingTrajectoryTask1
+from robot.task_2 import TrakingTrajectoryTask2
 
 
 def trajectory():
@@ -21,9 +22,16 @@ def point():
     return collections.OrderedDict().fromkeys(zip(x, y))
 
 
-def make_env(xml_file='robot_4.xml'):
+def make_env(xml_file='robot_4.xml', episode_timeout=30, type_task=None):
+    task = None
+    state_dim = 0
     physics = RobotPhysics.from_xml_path(xml_file)
-    task = TrakingTrajectoryTask(points_function=point)
-    return control.Environment(
-        physics, task, time_limit=50, n_sub_steps=60
-    )
+
+    if type_task == 1:
+        state_dim = 4  # x y cos_a sin_a
+        task = TrakingTrajectoryTask1(points_function=point, timeout=episode_timeout)
+    else:
+        state_dim = 2  # x y
+        task = TrakingTrajectoryTask2(points_function=point, timeout=episode_timeout)
+
+    return control.Environment(physics, task, time_limit=50, n_sub_steps=60), state_dim

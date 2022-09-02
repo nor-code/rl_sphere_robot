@@ -8,6 +8,10 @@ pos = np.array([[0, 0]])
 V = []
 U = []
 
+# def action_policy(timestamp):
+#     qvalues = agent.get_qvalues([timestamp.observation])
+#     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
+#     return action
 
 def action_policy(time_step):
     global pos, V, U

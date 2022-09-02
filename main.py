@@ -1,20 +1,24 @@
+import argparse
+
+import PIL
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
 from dm_control.rl.control import PhysicsError
 from dm_env import StepType
 from scipy.signal import fftconvolve, gaussian
+from torch.utils.tensorboard import SummaryWriter
+from torchvision.transforms import ToTensor
 from tqdm import trange
 
 from agent.dqn import DeepQLearningAgent
 from replay_buffer import ReplayBuffer
 from robot.enviroment import make_env, trajectory
-
-
 # from IPython.display import clear_output
+from utils.utils import build_trajectory
 
-def play_and_record(initial_state, agent, _enviroment, cash, n_steps=1):
+
+def play_and_record(initial_state, agent, _enviroment, cash, episode_timeout, n_steps=1000):
     s = initial_state
     sum_rewards = 0
 
@@ -34,10 +38,12 @@ def play_and_record(initial_state, agent, _enviroment, cash, n_steps=1):
             break
 
         state = _time_step.observation
-        is_done = _time_step.step_type == StepType.LAST or _enviroment.physics.data.time > 12
+        is_done = _time_step.step_type == StepType.LAST or _enviroment.physics.data.time > episode_timeout
+
+        if _time_step.reward is None:
+            break
 
         sum_rewards += _time_step.reward
-
         cash.add(s, action_idx, _time_step.reward, state, is_done)
 
         if is_done:
@@ -71,6 +77,7 @@ def evaluate(_enviroment, _agent, n_games=1, greedy=False, t_max=10000):
             except PhysicsError:
                 print("поломка в физике, метод evaluate")
                 break
+
         rewards.append(reward)
     return np.mean(rewards)
 
@@ -130,29 +137,33 @@ def smoothen(values):
     return fftconvolve(values, kernel, 'valid')
 
 
-env = make_env()
-
-# action_spec = env.action_spec()
-cash = ReplayBuffer(2_000_000)
-state_dim = 4  # 8
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-timesteps_per_epoch = 300
-batch_size = 512
-total_steps = 1 * 10 ** 4  # 10 ** 4
-decay_steps = 1 * 10 ** 4  # 10 ** 4
+parser = argparse.ArgumentParser(description='DQN Spherical Robot')
+parser.add_argument('--simu_number', type=int, default=0, help='number of simulation')
+parser.add_argument('--type_task', type=int, default=1, help='type of task. now available 1 and 2')
+args = parser.parse_args()
+
+number = args.simu_number
+
+writer = SummaryWriter()
+timeout = 30
+env, state_dim = make_env(episode_timeout=timeout, type_task=args.type_task)
+cash = ReplayBuffer(20_000_000)
+
+timesteps_per_epoch = 1000
+batch_size = 2 * 4096
+total_steps = 20 * 10 ** 4  # 10 ** 4
+decay_steps = 20 * 10 ** 4  # 10 ** 4
 agent = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network.load_state_dict(agent.state_dict())
 
 optimizer = torch.optim.Adam(agent.parameters(), lr=1e-3)
 
-loss_freq = 50
+loss_freq = 1000
 refresh_target_network_freq = 500
-eval_freq = 500
-
-max_grad_norm = 5000
+eval_freq = 1000
 
 mean_rw_history = []
 td_loss_history = []
@@ -171,136 +182,60 @@ with trange(step, total_steps + 1) as progress_bar:
         agent.epsilon = linear_decay(init_epsilon, final_epsilon, step, decay_steps)
 
         # play
-        _, state = play_and_record(state, agent, env, cash, timesteps_per_epoch)
+        _, state = play_and_record(state, agent, env, cash, timeout, timesteps_per_epoch)
 
         s, a, r, next_s, is_done = cash.sample(batch_size)
 
         loss = compute_td_loss(s, a, r, next_s, is_done, agent, target_network, device=device)
 
         loss.backward()
-        grad_norm = nn.utils.clip_grad_norm_(agent.parameters(), max_grad_norm)
+        # grad_norm = nn.utils.clip_grad_norm_(agent.parameters(), max_grad_norm)
         optimizer.step()
         optimizer.zero_grad()
 
         if step % loss_freq == 0:
-            td_loss_history.append(loss.data.cpu().item())
-            grad_norm_history.append(grad_norm.data.cpu().item())
+            writer.add_scalar("TD_loss #" + str(number), loss.data.cpu().item(), step)
+            # grad_norm_history.append(grad_norm.data.cpu().item())
 
         if step % refresh_target_network_freq == 0:
             print("copy parameters from agent to target")
             target_network.load_state_dict(agent.state_dict())
             state = env.reset().observation
-            print("init state = ", state)
 
         if step % eval_freq == 0:
-            print("buffer size = %i, epsilon = %.5f" %
-                  (len(cash), agent.epsilon))
-
-            mean_rw_history.append(evaluate(
-                make_env(), agent, n_games=2, greedy=True, t_max=1000)
+            plot_buf, fig = build_trajectory(
+                agent=agent, enviroment=env, timeout=timeout, trajectory_func=trajectory, type_task=args.type_task
             )
+
+            pillow_img = PIL.Image.open(plot_buf)
+            tensor_img = ToTensor()(pillow_img)
+            writer.add_image("trajectory #" + str(number), tensor_img, step)
+            plt.close(fig)
+
+            mean_reward = evaluate(make_env(episode_timeout=timeout, type_task=args.type_task)[0], agent, n_games=2, greedy=True, t_max=1000)
+            writer.add_scalar("Mean_reward_history #" + str(number), mean_reward, step)
+
             initial_state_q_values = agent.get_qvalues(
-                make_env().reset().observation
+                make_env(episode_timeout=timeout, type_task=args.type_task)[0].reset().observation
             )
-            initial_state_v_history.append(np.max(initial_state_q_values))
+            writer.add_scalar("init_state_Q_value #" + str(number), np.max(initial_state_q_values), step)
 
-print("buffer size = %i, epsilon = %.5f" %
-      (len(cash), agent.epsilon))
+writer.flush()
 
-final_score = evaluate(
-    make_env(),
-    agent, n_games=30, greedy=True, t_max=1000
-)
-print('final score:', final_score)
-
-fig, rl = plt.subplots(2, 2)
-
-rl[0][0].set_title("Mean reward per episode")
-rl[0][0].plot(mean_rw_history)
-rl[0][0].grid()
-
-rl[1][0].set_title("TD loss history (smoothened)")
-rl[1][0].plot(smoothen(td_loss_history))
-rl[1][0].grid()
-
-rl[0][1].set_title("Initial state V")
-rl[0][1].plot(initial_state_v_history)
-rl[0][1].grid()
-
-rl[1][1].set_title("Grad norm history (smoothened)")
-rl[1][1].plot(smoothen(grad_norm_history))
-rl[1][1].grid()
+# print("buffer size = %i, epsilon = %.5f" % (len(cash), agent.epsilon))
+#
+# final_score = evaluate(
+#     make_env(episode_timeout=timeout),
+#     agent, n_games=30, greedy=True, t_max=1000
+# )
+# print('final score:', final_score)
 
 
-frames = []
-times = []
-actions = []
-V = []
-U = []
-pos = np.array([[0, 0]])
-env = make_env()
-reward = 0
-time_step = env.reset()
-prev_time = env.physics.data.time
+PATH = './models/'
+FILE = PATH + "name" + str(number) + ".pt"
 
-while env.physics.data.time < 40:
-    qvalues = agent.get_qvalues([time_step.observation])
-    action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]  # if greedy else agent.sample_actions(qvalues)[0]
-    print(action)
-    actions = np.append(actions, action)
+torch.save(agent.state_dict(), FILE)
 
-    try:
-        time_step = env.step(action=action)
-    except PhysicsError:
-        print("physicx error  time = ", prev_time)
-        break
-
-    if time_step.reward is None:
-        print("reward is None ! time = ", prev_time)
-        break
-
-    reward += time_step.reward
-    prev_time = env.physics.data.time
-
-    observation = time_step.observation
-
-    V.append(observation[2])
-    U.append(observation[3])
-    pos = np.append(pos, [observation[0:2]], axis=0)
-
-    times.append(env.physics.data.time)
-
-    # frame = env.physics.render(camera_id=0, width=300, height=300)
-    # if env.physics.data.time > 1:
-    #     frames.append(frame)
-
-print("TOTAL REWARD = ", reward)
-
-from dm_control.viewer import application
-
-
-def action_policy(timestamp):
-    qvalues = agent.get_qvalues([timestamp.observation])
-    action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
-    return action
-
-
-env = make_env()
-app = application.Application()
-app.launch(env, policy=action_policy)
-
-actions = actions.reshape(-1, 2)
-fig1, ax = plt.subplots(5, 1)
-ax[0].plot(times, pos[:, 0][1:])
-ax[1].plot(times, pos[:, 1][1:])
-ax[3].plot(times, actions[:, 0][:-1])
-ax[4].plot(times, actions[:, 1][:-1])
-
-traj = plt.figure().add_subplot()
-traj.plot(pos[:, 0][1:], pos[:, 1][1:], label="trajectory")
-traj.plot(trajectory()[0], trajectory()[1], label="desired_trajectory")
-traj.quiver(pos[:, 0][1:], pos[:, 1][1:], V, U, color=['r', 'b', 'g'], angles='xy', width=0.002)
-traj.set_xlabel('x')
-traj.set_ylabel('y')
-
-plt.show()
+# model = TheModelClass(*args, **kwargs)
+# model.load_state_dict(torch.load(PATH))
+# model.eval()

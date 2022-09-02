@@ -2,11 +2,11 @@ import numpy as np
 from dm_control.suite import base
 
 
-class TrakingTrajectoryTask(base.Task):
+class TrakingTrajectoryTask2(base.Task):
 
-    def __init__(self, points_function, random=None):
+    def __init__(self, points_function, timeout, random=None):
         """тайм-аут одного эпизода"""
-        self.timeout = 20
+        self.timeout = timeout
         """ количество точек, которые мы достигли в рамках текущего эпищода """
         self.achievedPoints = 0
 
@@ -54,19 +54,7 @@ class TrakingTrajectoryTask(base.Task):
         x, y, z = physics.named.data.geom_xpos['sphere_shell']
         self.current_xy = [x, y]
 
-        # угол поворота вилки колеса
-        angle = physics.named.data.sensordata['fork_wheel_angle'] % 360 + 90
-
-        # координаты напрвляющего единичного вектора курса робота
-        sign_x = np.sign(x - self.prev_xy[0])
-        sign_x = sign_x == 1 if sign_x == 0 else sign_x
-        cos = sign_x * np.cos(np.deg2rad(angle))
-
-        sign_y = np.sign(y - self.prev_xy[1])
-        sign_y = sign_y == 1 if sign_y == 0 else sign_y
-        sin = sign_y * np.sqrt(1 - cos ** 2)
-
-        self.state = [x, y, cos[0], sin[0]]
+        self.state = [x, y]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
@@ -85,7 +73,7 @@ class TrakingTrajectoryTask(base.Task):
         return [pointB[0][0] - pointA[0][0], pointB[0][1] - pointA[0][1]]
 
     def get_reward(self, physics):
-        x, y, cos, sin = self.state
+        x, y = self.state
         distance = self.__distance_to_current_point(x, y)
 
         if distance < 0.1:
@@ -97,7 +85,7 @@ class TrakingTrajectoryTask(base.Task):
         if self.achievedPoints == 0:
             return -distance
 
-        PC = TrakingTrajectoryTask.vector(self.prev_point, self.current_point)
+        PC = TrakingTrajectoryTask2.vector(self.prev_point, self.current_point)
         PO = [x - self.prev_point[0][0], y - self.prev_point[0][1]]
         norm_PC = np.linalg.norm(PC)
         norm_PO = np.linalg.norm(PO)
@@ -106,6 +94,4 @@ class TrakingTrajectoryTask(base.Task):
                 or self.__distance_to_current_point(self.prev_xy[0], self.prev_xy[1]) < distance:
             return -1
 
-        cos_a = np.dot(PC, PO) / (norm_PO * norm_PC)
-        return (norm_PC / (norm_PC - norm_PO * cos_a)) - np.sqrt(norm_PO ** 2 - (norm_PO * cos_a) ** 2) \
-               - np.arccos(np.dot([PC[0] / norm_PC, PC[1] / norm_PC], [cos, sin]))
+        return norm_PC / 1 + distance
