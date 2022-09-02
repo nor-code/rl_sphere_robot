@@ -140,8 +140,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 timesteps_per_epoch = 300
 batch_size = 512
-total_steps = 1 * 10 ** 2  # 10 ** 4
-decay_steps = 2 * 10 ** 2  # 10 ** 4
+total_steps = 1 * 10 ** 4  # 10 ** 4
+decay_steps = 1 * 10 ** 4  # 10 ** 4
 agent = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network.load_state_dict(agent.state_dict())

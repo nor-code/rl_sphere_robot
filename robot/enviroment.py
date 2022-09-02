@@ -11,8 +11,8 @@ def trajectory():
     # t = np.linspace(0, 2 * np.pi, 120)
     # x_ = [2 * np.sin(t_) for t_ in t]
     # y_ = [2 * np.cos(t_) - 2 for t_ in t]
-    x_ = [0, 1, 1, 0]
-    y_ = [0, 0, 2, 2]
+    x_ = [0, 0.5, 1, 1, 0]
+    y_ = [0, 0.5, 1, 2, 2]
     return x_, y_
 
 

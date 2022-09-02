@@ -64,7 +64,7 @@ class TrakingTrajectoryTask(base.Task):
 
         sign_y = np.sign(y - self.prev_xy[1])
         sign_y = sign_y == 1 if sign_y == 0 else sign_y
-        sin = sign_y * np.sqrt(1 - cos**2)
+        sin = sign_y * np.sqrt(1 - cos ** 2)
 
         self.state = [x, y, cos[0], sin[0]]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
@@ -85,7 +85,7 @@ class TrakingTrajectoryTask(base.Task):
         return [pointB[0][0] - pointA[0][0], pointB[0][1] - pointA[0][1]]
 
     def get_reward(self, physics):
-        x, y, cos_a, sin_a = self.state
+        x, y, cos, sin = self.state
         distance = self.__distance_to_current_point(x, y)
 
         if distance < 0.1:
@@ -102,9 +102,10 @@ class TrakingTrajectoryTask(base.Task):
         norm_PC = np.linalg.norm(PC)
         norm_PO = np.linalg.norm(PO)
 
-        if norm_PO > norm_PC or np.linalg.norm(distance) > norm_PC:
+        if norm_PO > norm_PC or np.linalg.norm(distance) > norm_PC \
+                or self.__distance_to_current_point(self.prev_point[0], self.prev_point[1]) < distance:
             return -1
 
         cos_a = np.dot(PC, PO) / (norm_PO * norm_PC)
-        return ((norm_PC - norm_PO * cos_a) / norm_PC) \
-               + 0.5 * np.dot([PC[0]/norm_PC, PC[1]/norm_PC], [cos_a, sin_a])
+        return ((norm_PC - norm_PO * cos_a) / norm_PC) - np.sqrt(norm_PO ** 2 - (norm_PO * cos_a) ** 2) \
+               - np.arccos(np.dot([PC[0] / norm_PC, PC[1] / norm_PC], [cos, sin]))
