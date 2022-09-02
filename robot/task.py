@@ -6,7 +6,7 @@ class TrakingTrajectoryTask(base.Task):
 
     def __init__(self, points_function, random=None):
         """тайм-аут одного эпизода"""
-        self.timeout = 12
+        self.timeout = 20
         """ количество точек, которые мы достигли в рамках текущего эпищода """
         self.achievedPoints = 0
 
@@ -24,6 +24,10 @@ class TrakingTrajectoryTask(base.Task):
         """текущее и предыдущее состояние ( координаты ) """
         self.current_xy = [0, 0]
         self.prev_xy = [0, 0]
+        self.current_direction = [0, 0]
+        self.prev_direction = [0, 0]
+
+        self.state = [0, 0, 0, 0]
 
         super().__init__(random=random)
 
@@ -37,6 +41,8 @@ class TrakingTrajectoryTask(base.Task):
 
         self.current_xy = [0, 0]
         self.prev_xy = [0, 0]
+
+        self.state = [0, 0, 0, 0]
 
         super().initialize_episode(physics)
 
@@ -58,15 +64,14 @@ class TrakingTrajectoryTask(base.Task):
 
         sign_y = np.sign(y - self.prev_xy[1])
         sign_y = sign_y == 1 if sign_y == 0 else sign_y
-        sin = sign_y * np.sin(np.deg2rad(angle))
+        sin = sign_y * np.sqrt(1 - cos**2)
 
-        print(cos, " ",  sin)
-        return [x, y, cos[0], sin[0]]  # np.concatenate((xy, acc_gyro), axis=0)
+        self.state = [x, y, cos[0], sin[0]]
+        return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
         x, y, z = physics.named.data.geom_xpos['sphere_shell']
         if len(self.points) == 0 or physics.data.time > self.timeout or self.__distance_to_current_point(x, y) > 1.2:
-            print("total achived points = ", self.achievedPoints)
             return 0.0
 
     def __distance_to_current_point(self, x, y):
@@ -80,7 +85,7 @@ class TrakingTrajectoryTask(base.Task):
         return [pointB[0][0] - pointA[0][0], pointB[0][1] - pointA[0][1]]
 
     def get_reward(self, physics):
-        x, y, z = physics.named.data.geom_xpos['sphere_shell']
+        x, y, cos_a, sin_a = self.state
         distance = self.__distance_to_current_point(x, y)
 
         if distance < 0.1:
@@ -97,10 +102,9 @@ class TrakingTrajectoryTask(base.Task):
         norm_PC = np.linalg.norm(PC)
         norm_PO = np.linalg.norm(PO)
 
-        if norm_PC < norm_PO:
+        if norm_PO > norm_PC or np.linalg.norm(distance) > norm_PC:
             return -1
 
         cos_a = np.dot(PC, PO) / (norm_PO * norm_PC)
-
-        # print("cos_a = ", cos_a , " distance = ", distance, " reward = ", cos_a * distance)
-        return cos_a * distance
+        return ((norm_PC - norm_PO * cos_a) / norm_PC) \
+               + 0.5 * np.dot([PC[0]/norm_PC, PC[1]/norm_PC], [cos_a, sin_a])

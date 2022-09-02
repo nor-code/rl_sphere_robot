@@ -25,7 +25,7 @@ def action_policy(time_step):
     elif 0.4 <= val < 0.8:
         return np.array([0, -0.2])
     else:
-        return np.array([-0.3, -0.2])
+        return np.array([-0.3, 0])
 
 
 env = make_env(xml_file="../robot_4.xml")

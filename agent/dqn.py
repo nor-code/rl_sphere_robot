@@ -9,11 +9,14 @@ class DeepQLearningAgent(nn.Module):
         self.epsilon = epsilon
         self.batch_size = batch_size
 
-        self.platform_action = np.array(np.meshgrid(np.linspace(-0.26, 0.26, 5), np.zeros(1))).T.reshape(-1, 2)
-        self.wheel_action = np.array(np.meshgrid(np.zeros(1), np.linspace(-0.25, 0.25, 5))).T.reshape(-1, 2)
-        self.action_count = len(self.platform_action) + len(self.wheel_action)
+        self.platform_action_left = np.array(np.meshgrid(np.linspace(-0.24, -0.17, 4), np.zeros(1))).T.reshape(-1, 2)
+        self.zero_action = np.array([[0, 0]])
+        self.platform_action_right = np.array(np.meshgrid(np.linspace(0.17, 0.24, 4), np.zeros(1))).T.reshape(-1, 2)
+        self.wheel_action = np.array(np.meshgrid(np.zeros(1), np.linspace(-0.25, 0.25, 8))).T.reshape(-1, 2)
 
-        self.all_pairs_actions = np.concatenate((self.platform_action, self.wheel_action), axis=0)
+        self.action_count = 1 + len(self.platform_action_left) + len(self.platform_action_right) + len(self.wheel_action)
+
+        self.all_pairs_actions = np.concatenate((self.platform_action_left, self.platform_action_right, self.zero_action, self.wheel_action), axis=0)
         self.index_to_pair = dict(zip(range(self.action_count), self.all_pairs_actions))
 
         self.network = nn.Sequential(
