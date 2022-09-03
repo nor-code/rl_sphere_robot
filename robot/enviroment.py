@@ -9,11 +9,11 @@ from robot.task_2 import TrakingTrajectoryTask2
 
 
 def trajectory():
-    # t = np.linspace(0, 2 * np.pi, 120)
-    # x_ = [2 * np.sin(t_) for t_ in t]
-    # y_ = [2 * np.cos(t_) - 2 for t_ in t]
-    x_ = [0, 0.5, 1, 1, 0]
-    y_ = [0, 0.5, 1, 2, 2]
+    t = np.linspace(0, np.pi, 8)
+    x_ = [np.sin(t_) for t_ in t]
+    y_ = [- np.cos(t_) + 1 for t_ in t]
+    # x_ = [0, 0.5, 1, 1, 1.1]
+    # y_ = [0, 0.5, 1, 1.5, 2]
     return x_, y_
 
 
@@ -22,7 +22,7 @@ def point():
     return collections.OrderedDict().fromkeys(zip(x, y))
 
 
-def make_env(xml_file='robot_4.xml', episode_timeout=30, type_task=None):
+def make_env(xml_file='robot_4.xml', episode_timeout=30, type_task=2):
     task = None
     state_dim = 0
     physics = RobotPhysics.from_xml_path(xml_file)
@@ -34,4 +34,4 @@ def make_env(xml_file='robot_4.xml', episode_timeout=30, type_task=None):
         state_dim = 2  # x y
         task = TrakingTrajectoryTask2(points_function=point, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=50, n_sub_steps=60), state_dim
+    return control.Environment(physics, task, time_limit=40, n_sub_steps=60), state_dim

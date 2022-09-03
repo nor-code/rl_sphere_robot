@@ -1,6 +1,9 @@
 import numpy as np
 from dm_control.suite import base
 
+e_x = [1, 0]
+e_y = [0, 1]
+
 
 class TrakingTrajectoryTask2(base.Task):
 
@@ -27,6 +30,9 @@ class TrakingTrajectoryTask2(base.Task):
         self.current_direction = [0, 0]
         self.prev_direction = [0, 0]
 
+        """ точка невозврата """
+        self.point_no_return = [0, 0]
+
         self.state = [0, 0, 0, 0]
 
         super().__init__(random=random)
@@ -44,6 +50,8 @@ class TrakingTrajectoryTask2(base.Task):
 
         self.state = [0, 0, 0, 0]
 
+        self.point_no_return = [0, 0]
+
         super().initialize_episode(physics)
 
     def get_observation(self, physics):
@@ -58,8 +66,7 @@ class TrakingTrajectoryTask2(base.Task):
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        x, y, z = physics.named.data.geom_xpos['sphere_shell']
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.__distance_to_current_point(x, y) > 1.2:
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.is_invalid_state():
             return 0.0
 
     def __distance_to_current_point(self, x, y):
@@ -72,26 +79,71 @@ class TrakingTrajectoryTask2(base.Task):
         """
         return [pointB[0][0] - pointA[0][0], pointB[0][1] - pointA[0][1]]
 
+    # знак для прямой, брать > 0 или < 0
+    @staticmethod
+    def get_sign(vector):
+        on_x = np.dot(vector, e_x)
+        on_y = np.dot(vector, e_y)
+
+        if on_x * on_y > 0:
+            return 1
+        return -1
+
+    # робот лежит в пределах окружности
+    @staticmethod
+    def is_belong_circle(P, C, radius, x, y):
+        x_center = (C[0] - P[0]) / 2
+        y_center = (C[1] - P[1]) / 2
+        return (x - x_center)**2 + (y - y_center)**2 <= radius**2
+
+    # уравнение прямой через которую роботу нельзя переезжать
+    # т.е. если робот поедет назад, то штрафуем его
+    # A*x + B*y + C = 0
+    @staticmethod
+    def get_line_no_return(vector, point):
+        sign = TrakingTrajectoryTask2.get_sign(vector)
+        A = vector[0]
+        B = vector[1]
+        C = - (A * point[0] + B * point[1])
+        return A, B, C, sign
+
+    @staticmethod
+    def is_ahead_no_return_line(A, B, C, sign, x, y):
+        if sign > 0:
+            return A * x + B * y + C > 0
+        return A * x + B * y + C < 0
+
+    def is_invalid_state(self):
+        x, y = self.state
+        PC = TrakingTrajectoryTask2.vector(self.prev_point, self.current_point)
+        radius = np.linalg.norm(PC) / 2
+
+        if not TrakingTrajectoryTask2.is_belong_circle(self.prev_point[0], self.current_point[0], radius, x, y):
+            return True
+
+        A, B, C, sign = TrakingTrajectoryTask2.get_line_no_return(PC, self.point_no_return)
+
+        if (not TrakingTrajectoryTask2.is_ahead_no_return_line(A, B, C, sign, x, y)) or A * x + B * y + C == 0:
+            return True
+        return False
+
     def get_reward(self, physics):
         x, y = self.state
+
         distance = self.__distance_to_current_point(x, y)
 
         if distance < 0.1:
             self.prev_point = self.current_point
-            self.achievedPoints += 1
             self.current_point = self.points.popitem(last=False)
-            return 1
 
-        if self.achievedPoints == 0:
-            return -distance
+            self.point_no_return = [x, y]
+            self.achievedPoints += 1
+            return 10
+
+        if self.is_invalid_state():
+            return -10
 
         PC = TrakingTrajectoryTask2.vector(self.prev_point, self.current_point)
-        PO = [x - self.prev_point[0][0], y - self.prev_point[0][1]]
-        norm_PC = np.linalg.norm(PC)
-        norm_PO = np.linalg.norm(PO)
 
-        if norm_PO > norm_PC or np.linalg.norm(distance) > norm_PC \
-                or self.__distance_to_current_point(self.prev_xy[0], self.prev_xy[1]) < distance:
-            return -1
-
-        return norm_PC / 1 + distance
+        self.point_no_return = [x, y]
+        return np.linalg.norm(PC) / distance

@@ -51,27 +51,32 @@ class TrakingTrajectoryTask1(base.Task):
             self.prev_xy = self.current_xy
 
         # координаты центра сферической оболочки
-        x, y, z = physics.named.data.geom_xpos['sphere_shell']
+        # x, y, z = physics.named.data.geom_xpos['sphere_shell']
+
+        # координаты точки контакта оболочки с полом
+        x, y, z = physics.named.data.geom_xpos['wheel_']
         self.current_xy = [x, y]
 
-        # угол поворота вилки колеса
-        angle = physics.named.data.sensordata['fork_wheel_angle'] % 360 + 90
+        # вектор скорости в абс системе координат
+        v_x, v_y, v_z = physics.named.data.sensordata['sphere_vel']
 
-        # координаты напрвляющего единичного вектора курса робота
-        sign_x = np.sign(x - self.prev_xy[0])
-        sign_x = sign_x == 1 if sign_x == 0 else sign_x
-        cos = sign_x * np.cos(np.deg2rad(angle))
-
-        sign_y = np.sign(y - self.prev_xy[1])
-        sign_y = sign_y == 1 if sign_y == 0 else sign_y
-        sin = sign_y * np.sqrt(1 - cos ** 2)
-
-        self.state = [x, y, cos[0], sin[0]]
+        self.state = [x, y, v_x, v_y]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
+
+    # # угол поворота вилки колеса
+    # angle = physics.named.data.sensordata['fork_wheel_angle'] % 360 + 90
+    # # координаты напрвляющего единичного вектора курса робота
+    # sign_x = np.sign(x - self.prev_xy[0])
+    # sign_x = sign_x == 1 if sign_x == 0 else sign_x
+    # cos = sign_x * np.cos(np.deg2rad(angle))
+    #
+    # sign_y = np.sign(y - self.prev_xy[1])
+    # sign_y = sign_y == 1 if sign_y == 0 else sign_y
+    # sin = sign_y * np.sqrt(1 - cos ** 2)
 
     def get_termination(self, physics):
         x, y, z = physics.named.data.geom_xpos['sphere_shell']
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.__distance_to_current_point(x, y) > 1.2:
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.__distance_to_current_point(x, y) > 10:
             return 0.0
 
     def __distance_to_current_point(self, x, y):
@@ -84,6 +89,7 @@ class TrakingTrajectoryTask1(base.Task):
         """
         return [pointB[0][0] - pointA[0][0], pointB[0][1] - pointA[0][1]]
 
+    # TODO исправить вознаграждение
     def get_reward(self, physics):
         x, y, cos, sin = self.state
         distance = self.__distance_to_current_point(x, y)

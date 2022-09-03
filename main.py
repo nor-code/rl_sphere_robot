@@ -51,7 +51,7 @@ def play_and_record(initial_state, agent, _enviroment, cash, episode_timeout, n_
             s = _enviroment.observation
             break
 
-        s = _time_step.observation
+        s = state
 
     return sum_rewards, s
 
@@ -144,17 +144,18 @@ parser.add_argument('--simu_number', type=int, default=0, help='number of simula
 parser.add_argument('--type_task', type=int, default=1, help='type of task. now available 1 and 2')
 args = parser.parse_args()
 
+args.type_task = 2
 number = args.simu_number
 
 writer = SummaryWriter()
-timeout = 30
+timeout = 40
 env, state_dim = make_env(episode_timeout=timeout, type_task=args.type_task)
-cash = ReplayBuffer(20_000_000)
+cash = ReplayBuffer(2_000_000)
 
 timesteps_per_epoch = 1000
-batch_size = 2 * 4096
-total_steps = 20 * 10 ** 4  # 10 ** 4
-decay_steps = 20 * 10 ** 4  # 10 ** 4
+batch_size = 2 * 2048
+total_steps = 10 * 10 ** 4  # 10 ** 4
+decay_steps = 10 * 10 ** 4  # 10 ** 4
 agent = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network.load_state_dict(agent.state_dict())
@@ -162,7 +163,7 @@ target_network.load_state_dict(agent.state_dict())
 optimizer = torch.optim.Adam(agent.parameters(), lr=1e-3)
 
 loss_freq = 1000
-refresh_target_network_freq = 500
+refresh_target_network_freq = 1000
 eval_freq = 1000
 
 mean_rw_history = []
@@ -209,7 +210,7 @@ with trange(step, total_steps + 1) as progress_bar:
 
             pillow_img = PIL.Image.open(plot_buf)
             tensor_img = ToTensor()(pillow_img)
-            writer.add_image("trajectory #" + str(number), tensor_img, step)
+            writer.add_image("trajectory #" + str(number), tensor_img, step / 1000)
             plt.close(fig)
 
             mean_reward = evaluate(make_env(episode_timeout=timeout, type_task=args.type_task)[0], agent, n_games=2, greedy=True, t_max=1000)
