@@ -24,8 +24,11 @@ class TrakingTrajectoryTask2(base.Task):
         """ общее количество точек на пути """
         self.totalPoint = len(self.points)
 
-        """ количество неправильных состояний """
+        """ количество неправильных состояний за эпизод """
         self.count_invalid_states = 0
+
+        """предыдущее расстояние и текущее до целевой точки на кривой"""
+        self.prev_dist = self.current_dist = 0
 
         """ точка невозврата """
         self.point_no_return = [0, 0]
@@ -38,16 +41,17 @@ class TrakingTrajectoryTask2(base.Task):
         physics.named.data.qpos[0:3] = [0, 0, 0.2]
         physics.named.data.qvel[:] = 0
         self.points = self.p_fun()
+
         self.current_point = self.points.popitem(last=False)
+        self.prev_point = None
 
         self.achievedPoints = 0
-        self.prev_point = None
 
         self.count_invalid_states = 0
 
-        self.state = [0, 0]
+        self.prev_dist = self.current_dist = 0
 
-        self.point_no_return = [0, 0]
+        self.state = [0, 0]
 
         super().initialize_episode(physics)
 
@@ -84,10 +88,10 @@ class TrakingTrajectoryTask2(base.Task):
 
     # робот лежит в пределах окружности
     @staticmethod
-    def is_belong_circle(P, C, radius, x, y):
+    def is_belong_ellipse(P, C, radius, x, y):
         x_center = (C[0] - P[0]) / 2
         y_center = (C[1] - P[1]) / 2
-        return (x - x_center)**2 + (y - y_center)**2 <= radius**2
+        return (x - x_center)**2 + 5 * (y - y_center)**2 <= radius**2
 
     # уравнение прямой через которую роботу нельзя переезжать
     # т.е. если робот поедет назад, то штрафуем его
@@ -111,26 +115,26 @@ class TrakingTrajectoryTask2(base.Task):
         PC = TrakingTrajectoryTask2.vector(self.prev_point, self.current_point)
         radius = np.linalg.norm(PC) / 2
 
-        if not TrakingTrajectoryTask2.is_belong_circle(self.prev_point[0], self.current_point[0], radius + 0.1, x, y):
+        if not TrakingTrajectoryTask2.is_belong_ellipse(self.prev_point[0], self.current_point[0], radius + 0.1, x, y):
             return True
 
-        A, B, C, sign = TrakingTrajectoryTask2.get_line_no_return(PC, self.point_no_return)
-
-        if (not TrakingTrajectoryTask2.is_ahead_no_return_line(A, B, C, sign, x, y)) or A * x + B * y + C == 0:
+        if self.current_dist > self.prev_dist:
             return True
         return False
 
     def get_reward(self, physics):
         x, y = self.state
 
-        distance = self.__distance_to_current_point(x, y)
+        self.current_dist = self.__distance_to_current_point(x, y)
 
-        if distance < 0.1:
+        if self.current_dist < 0.1:
             self.prev_point = self.current_point
             self.current_point = self.points.popitem(last=False)
 
             self.point_no_return = [x, y]
             self.achievedPoints += 1
+
+            self.prev_dist = self.current_dist = self.__distance_to_current_point(x, y)
 
             if len(self.points) == 0:
                 print("FINAL")
@@ -147,6 +151,7 @@ class TrakingTrajectoryTask2(base.Task):
         PC = TrakingTrajectoryTask2.vector(self.prev_point, self.current_point)
 
         self.point_no_return = [x, y]
-        pc_distance = np.linalg.norm(PC) / distance
-        # print("reward = ", pc_distance)
-        return pc_distance
+
+        reward = np.linalg.norm(PC) / self.current_dist
+        self.prev_dist = self.current_dist
+        return reward
