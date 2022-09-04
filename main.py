@@ -144,7 +144,6 @@ parser.add_argument('--simu_number', type=int, default=0, help='number of simula
 parser.add_argument('--type_task', type=int, default=1, help='type of task. now available 1 and 2')
 args = parser.parse_args()
 
-args.type_task = 2
 number = args.simu_number
 
 writer = SummaryWriter()
