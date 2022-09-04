@@ -148,5 +148,5 @@ class TrakingTrajectoryTask2(base.Task):
 
         self.point_no_return = [x, y]
         pc_distance = np.linalg.norm(PC) / distance
-        print("reward = ", pc_distance)
+        # print("reward = ", pc_distance)
         return pc_distance
