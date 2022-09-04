@@ -152,6 +152,6 @@ class TrakingTrajectoryTask2(base.Task):
 
         self.point_no_return = [x, y]
 
-        reward = np.linalg.norm(PC) / self.current_dist
+        reward = self.achievedPoints + np.linalg.norm(PC) / self.current_dist
         self.prev_dist = self.current_dist
         return reward
