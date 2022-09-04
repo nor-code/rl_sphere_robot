@@ -24,11 +24,8 @@ class TrakingTrajectoryTask2(base.Task):
         """ общее количество точек на пути """
         self.totalPoint = len(self.points)
 
-        """текущее и предыдущее состояние ( координаты ) """
-        self.current_xy = [0, 0]
-        self.prev_xy = [0, 0]
-        self.current_direction = [0, 0]
-        self.prev_direction = [0, 0]
+        """ количество неправильных состояний """
+        self.count_invalid_states = 0
 
         """ точка невозврата """
         self.point_no_return = [0, 0]
@@ -42,31 +39,27 @@ class TrakingTrajectoryTask2(base.Task):
         physics.named.data.qvel[:] = 0
         self.points = self.p_fun()
         self.current_point = self.points.popitem(last=False)
+
         self.achievedPoints = 0
         self.prev_point = None
 
-        self.current_xy = [0, 0]
-        self.prev_xy = [0, 0]
+        self.count_invalid_states = 0
 
-        self.state = [0, 0, 0, 0]
+        self.state = [0, 0]
 
         self.point_no_return = [0, 0]
 
         super().initialize_episode(physics)
 
     def get_observation(self, physics):
-        if physics.data.time > 0:
-            self.prev_xy = self.current_xy
-
-        # координаты центра сферической оболочки
-        x, y, z = physics.named.data.geom_xpos['sphere_shell']
-        self.current_xy = [x, y]
+        # координаты центра колеса
+        x, y, z = physics.named.data.geom_xpos['wheel_']
 
         self.state = [x, y]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.is_invalid_state():
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 1:
             return 0.0
 
     def __distance_to_current_point(self, x, y):
@@ -118,7 +111,7 @@ class TrakingTrajectoryTask2(base.Task):
         PC = TrakingTrajectoryTask2.vector(self.prev_point, self.current_point)
         radius = np.linalg.norm(PC) / 2
 
-        if not TrakingTrajectoryTask2.is_belong_circle(self.prev_point[0], self.current_point[0], radius, x, y):
+        if not TrakingTrajectoryTask2.is_belong_circle(self.prev_point[0], self.current_point[0], radius + 0.1, x, y):
             return True
 
         A, B, C, sign = TrakingTrajectoryTask2.get_line_no_return(PC, self.point_no_return)
@@ -138,12 +131,22 @@ class TrakingTrajectoryTask2(base.Task):
 
             self.point_no_return = [x, y]
             self.achievedPoints += 1
+
+            if len(self.points) == 0:
+                print("FINAL")
+                return 100
             return 10
 
         if self.is_invalid_state():
-            return -10
+            self.count_invalid_states += 1
+            return -50
+
+        if self.achievedPoints > 1:
+            print("count achived points = ", self.achievedPoints, " time = ", physics.data.time)
 
         PC = TrakingTrajectoryTask2.vector(self.prev_point, self.current_point)
 
         self.point_no_return = [x, y]
-        return np.linalg.norm(PC) / distance
+        pc_distance = np.linalg.norm(PC) / distance
+        print("reward = ", pc_distance)
+        return pc_distance

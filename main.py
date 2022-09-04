@@ -162,9 +162,9 @@ target_network.load_state_dict(agent.state_dict())
 
 optimizer = torch.optim.Adam(agent.parameters(), lr=1e-3)
 
-loss_freq = 1000
-refresh_target_network_freq = 1000
-eval_freq = 1000
+loss_freq = 400
+refresh_target_network_freq = 400
+eval_freq = 400
 
 mean_rw_history = []
 td_loss_history = []
@@ -210,7 +210,7 @@ with trange(step, total_steps + 1) as progress_bar:
 
             pillow_img = PIL.Image.open(plot_buf)
             tensor_img = ToTensor()(pillow_img)
-            writer.add_image("trajectory #" + str(number), tensor_img, step / 1000)
+            writer.add_image("trajectory #" + str(number), tensor_img, step / eval_freq)
             plt.close(fig)
 
             mean_reward = evaluate(make_env(episode_timeout=timeout, type_task=args.type_task)[0], agent, n_games=2, greedy=True, t_max=1000)
