@@ -6,10 +6,10 @@ from dm_control.rl import control
 from robot.model import RobotPhysics
 from robot.task_1 import TrakingTrajectoryTask1
 from robot.task_2 import TrakingTrajectoryTask2
-
+from robot.task_3 import TrakingTrajectoryTask3
 
 def trajectory():
-    t = np.linspace(0, np.pi, 8)
+    t = np.linspace(0, np.pi, 16)
     x_ = [np.sin(t_) for t_ in t]
     y_ = [- np.cos(t_) + 1 for t_ in t]
     # x_ = [0, 0.5, 1, 1, 1.1]
@@ -30,8 +30,11 @@ def make_env(xml_file='robot_4.xml', episode_timeout=30, type_task=2):
     if type_task == 1:
         state_dim = 4  # x y cos_a sin_a
         task = TrakingTrajectoryTask1(points_function=point, timeout=episode_timeout)
-    else:
+    elif type_task == 2:
         state_dim = 2  # x y
         task = TrakingTrajectoryTask2(points_function=point, timeout=episode_timeout)
+    elif type_task == 3:
+        state_dim = 4
+        task = TrakingTrajectoryTask3(points_function=point, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=40, n_sub_steps=60), state_dim
+    return control.Environment(physics, task, time_limit=40, n_sub_steps=50), state_dim

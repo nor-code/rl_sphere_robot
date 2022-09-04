@@ -59,8 +59,8 @@ def play_and_record(initial_state, agent, _enviroment, cash, episode_timeout, n_
 def evaluate(_enviroment, _agent, n_games=1, greedy=False, t_max=10000):
     """ Plays n_games full games. If greedy, picks actions as argmax(qvalues). Returns mean reward. """
     rewards = []
-    time_step = _enviroment.reset()
     for _ in range(n_games):
+        time_step = _enviroment.reset()
         s = time_step.observation
         reward = 0.0
         for _ in range(t_max):
@@ -142,6 +142,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 parser = argparse.ArgumentParser(description='DQN Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=0, help='number of simulation')
 parser.add_argument('--type_task', type=int, default=1, help='type of task. now available 1 and 2')
+# parser.add_argument('--agent', type=str, default='dqn', help='type agent, dqn or ddqn available')
+# parser.add_argument('--trajectory', type=str, default='circle', help='desired trajectory')
+
 args = parser.parse_args()
 
 number = args.simu_number
@@ -149,21 +152,21 @@ number = args.simu_number
 writer = SummaryWriter()
 timeout = 40
 env, state_dim = make_env(episode_timeout=timeout, type_task=args.type_task)
-cash = ReplayBuffer(2_000_000)
+cash = ReplayBuffer(20_000_000)
 
 timesteps_per_epoch = 1000
-batch_size = 2 * 2048
-total_steps = 10 * 10 ** 4  # 10 ** 4
-decay_steps = 10 * 10 ** 4  # 10 ** 4
+batch_size = 4 * 2048
+total_steps = 40 * 10 ** 4  # 10 ** 4
+decay_steps = 40 * 10 ** 4  # 10 ** 4
 agent = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network.load_state_dict(agent.state_dict())
 
 optimizer = torch.optim.Adam(agent.parameters(), lr=1e-3)
 
-loss_freq = 400
-refresh_target_network_freq = 400
-eval_freq = 400
+loss_freq = 600
+refresh_target_network_freq = 600
+eval_freq = 600
 
 mean_rw_history = []
 td_loss_history = []

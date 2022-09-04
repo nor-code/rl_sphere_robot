@@ -1,11 +1,12 @@
 import numpy as np
 from dm_control.suite import base
 
-e_x = [1, 0]
-e_y = [0, 1]
+
+def is_belong_rectangle(x, y, a, b):
+    return (a < x) and (x < a) and (-b < y) and (y < b)
 
 
-class TrakingTrajectoryTask2(base.Task):
+class TrakingTrajectoryTask3(base.Task):
 
     def __init__(self, points_function, timeout, random=None):
         """тайм-аут одного эпизода"""
@@ -19,6 +20,7 @@ class TrakingTrajectoryTask2(base.Task):
 
         """текущая и предыдущая целевая точка ( координаты ) """
         self.current_point = self.points.popitem(last=False)
+
         self.prev_point = None
 
         """ общее количество точек на пути """
@@ -51,15 +53,16 @@ class TrakingTrajectoryTask2(base.Task):
 
         self.prev_dist = self.current_dist = 0
 
-        self.state = [0, 0]
+        self.state = [0, 0, 0, 0]
 
         super().initialize_episode(physics)
 
     def get_observation(self, physics):
         # координаты центра колеса
         x, y, z = physics.named.data.geom_xpos['wheel_']
-
-        self.state = [x, y]
+        # вектор скорости в абс системе координат
+        v_x, v_y, v_z = physics.named.data.sensordata['sphere_vel']
+        self.state = [x, y, v_x, v_y]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
@@ -76,37 +79,36 @@ class TrakingTrajectoryTask2(base.Task):
         """
         return [pointB[0][0] - pointA[0][0], pointB[0][1] - pointA[0][1]]
 
-    # знак для прямой, брать > 0 или < 0
-    @staticmethod
-    def get_sign(vector):
-        on_x = np.dot(vector, e_x)
-        on_y = np.dot(vector, e_y)
-
-        if on_x * on_y > 0:
-            return 1
-        return -1
-
-    # робот лежит в пределах окружности
-    @staticmethod
-    def is_belong_ellipse(P, C, radius, x, y):
-        x_center = P[0] + (C[0] - P[0]) / 2
-        y_center = P[1] + (C[1] - P[1]) / 2
-        return (x - x_center)**2 + (y - y_center)**2 <= radius**2
-
     def is_invalid_state(self):
-        x, y = self.state
-        PC = TrakingTrajectoryTask2.vector(self.prev_point, self.current_point)
-        radius = np.linalg.norm(PC) / 2
+        x, y, _, _ = self.state
+        PC = TrakingTrajectoryTask3.vector(self.prev_point, self.current_point)
 
-        if not TrakingTrajectoryTask2.is_belong_ellipse(self.prev_point[0], self.current_point[0], radius + 0.05, x, y):
+        a_x = (self.current_point[0][0] - self.prev_point[0][0]) / 2
+        b_y = (self.current_point[0][1] - self.prev_point[0][1]) / 2
+        x_center = self.prev_point[0][0] + a_x
+        y_center = self.prev_point[0][1] + b_y
+
+        len_PC = np.linalg.norm(PC)
+
+        cos_a = np.dot(PC, [1, 0]) / len_PC
+        a = np.arccos(cos_a)
+        if np.dot(PC, [0, 1]) < 0:
+            a = 2 * np.pi - a
+
+        M = np.array([[np.cos(a), np.sin(a)], [-np.sin(a), np.cos(a)]])  # от Ox'y' -> Oxy
+
+        x -= x_center
+        y -= y_center
+
+        x, y = np.dot(M, [x, y])
+
+        if is_belong_rectangle(x, y, a_x + 0.05, b_y) or self.current_dist > self.prev_dist:
             return True
 
-        if self.current_dist > self.prev_dist:
-            return True
         return False
 
     def get_reward(self, physics):
-        x, y = self.state
+        x, y, _, _ = self.state
 
         self.current_dist = self.__distance_to_current_point(x, y)
 
@@ -128,11 +130,9 @@ class TrakingTrajectoryTask2(base.Task):
             return -50 * self.achievedPoints
 
         if self.achievedPoints > 1:
-            print("count achived points = ", self.achievedPoints, " time = ", physics.data.time)
+            print("count achieved points = ", self.achievedPoints, " time = ", physics.data.time)
 
-        PC = TrakingTrajectoryTask2.vector(self.prev_point, self.current_point)
-
-        self.point_no_return = [x, y]
+        PC = TrakingTrajectoryTask3.vector(self.prev_point, self.current_point)
 
         reward = self.achievedPoints + np.linalg.norm(PC) / self.current_dist
         self.prev_dist = self.current_dist
