@@ -89,9 +89,9 @@ class TrakingTrajectoryTask2(base.Task):
     # робот лежит в пределах окружности
     @staticmethod
     def is_belong_ellipse(P, C, radius, x, y):
-        x_center = (C[0] - P[0]) / 2
-        y_center = (C[1] - P[1]) / 2
-        return (x - x_center)**2 + 5 * (y - y_center)**2 <= radius**2
+        x_center = P[0] + (C[0] - P[0]) / 2
+        y_center = P[1] + (C[1] - P[1]) / 2
+        return (x - x_center)**2 + (y - y_center)**2 <= radius**2
 
     # уравнение прямой через которую роботу нельзя переезжать
     # т.е. если робот поедет назад, то штрафуем его
@@ -131,7 +131,6 @@ class TrakingTrajectoryTask2(base.Task):
             self.prev_point = self.current_point
             self.current_point = self.points.popitem(last=False)
 
-            self.point_no_return = [x, y]
             self.achievedPoints += 1
 
             self.prev_dist = self.current_dist = self.__distance_to_current_point(x, y)
@@ -143,7 +142,7 @@ class TrakingTrajectoryTask2(base.Task):
 
         if self.is_invalid_state():
             self.count_invalid_states += 1
-            return -50
+            return -50 * self.achievedPoints
 
         if self.achievedPoints > 1:
             print("count achived points = ", self.achievedPoints, " time = ", physics.data.time)
