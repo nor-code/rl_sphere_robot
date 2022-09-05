@@ -152,21 +152,21 @@ number = args.simu_number
 writer = SummaryWriter()
 timeout = 40
 env, state_dim = make_env(episode_timeout=timeout, type_task=args.type_task)
-cash = ReplayBuffer(20_000_000)
+cash = ReplayBuffer(2_000_000)
 
 timesteps_per_epoch = 1000
-batch_size = 3 * 2048
-total_steps = 40 * 10 ** 4  # 10 ** 4
-decay_steps = 40 * 10 ** 4  # 10 ** 4
+batch_size = 2 * 2048
+total_steps = 15 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+decay_steps = 14 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
 agent = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
 target_network.load_state_dict(agent.state_dict())
 
 optimizer = torch.optim.Adam(agent.parameters(), lr=1e-3)
 
-loss_freq = 300                   # 300
-refresh_target_network_freq = 350  # 400
-eval_freq = 300                    # 400
+loss_freq = 200                  # 300 # 300
+refresh_target_network_freq = 250  # 350 # 400
+eval_freq = 200                  # 300  # 400
 
 mean_rw_history = []
 td_loss_history = []
@@ -175,7 +175,7 @@ initial_state_v_history = []
 step = 0
 
 init_epsilon = 1
-final_epsilon = 0.05
+final_epsilon = 0.1
 
 state = env.reset().observation
 
