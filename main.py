@@ -155,7 +155,7 @@ env, state_dim = make_env(episode_timeout=timeout, type_task=args.type_task)
 cash = ReplayBuffer(20_000_000)
 
 timesteps_per_epoch = 1000
-batch_size = 4 * 2048
+batch_size = 3 * 2048
 total_steps = 40 * 10 ** 4  # 10 ** 4
 decay_steps = 40 * 10 ** 4  # 10 ** 4
 agent = DeepQLearningAgent(state_dim, batch_size=batch_size, epsilon=1).to(device)
@@ -164,9 +164,9 @@ target_network.load_state_dict(agent.state_dict())
 
 optimizer = torch.optim.Adam(agent.parameters(), lr=1e-3)
 
-loss_freq = 600
-refresh_target_network_freq = 600
-eval_freq = 600
+loss_freq = 1000                    # 300
+refresh_target_network_freq = 1000  # 400
+eval_freq = 1000                    # 400
 
 mean_rw_history = []
 td_loss_history = []

@@ -102,7 +102,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         x, y = np.dot(M, [x, y])
 
-        if is_belong_rectangle(x, y, a_x + 0.05, b_y) or self.current_dist > self.prev_dist:
+        if is_belong_rectangle(x, y, 0.14 + 0.04, 0.05) or self.current_dist > self.prev_dist:
             return True
 
         return False
@@ -112,7 +112,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         self.current_dist = self.__distance_to_current_point(x, y)
 
-        if self.current_dist < 0.05:
+        if self.current_dist < 0.04:
             self.prev_point = self.current_point
             self.current_point = self.points.popitem(last=False)
 
