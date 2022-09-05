@@ -165,7 +165,7 @@ target_network.load_state_dict(agent.state_dict())
 optimizer = torch.optim.Adam(agent.parameters(), lr=1e-3)
 
 loss_freq = 300                   # 300
-refresh_target_network_freq = 500  # 400
+refresh_target_network_freq = 350  # 400
 eval_freq = 300                    # 400
 
 mean_rw_history = []
