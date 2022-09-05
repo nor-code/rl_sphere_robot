@@ -13,6 +13,10 @@ def trajectory():
     t = np.linspace(0, np.pi, 12)
     x_ = [np.sin(t_) for t_ in t]
     y_ = [- np.cos(t_) + 1 for t_ in t]
+
+    # deg = np.rad2deg(np.arctan(y_[1] / x_[1]))
+    # print("deg = ", deg)
+
     # x_ = [0, 0.5, 1, 1, 1.1]
     # y_ = [0, 0.5, 1, 1.5, 2]
     return x_, y_
@@ -35,7 +39,7 @@ def make_env(xml_file='robot_4.xml', episode_timeout=30, type_task=2):
         state_dim = 2  # x y
         task = TrakingTrajectoryTask2(points_function=point, timeout=episode_timeout)
     elif type_task == 3:
-        state_dim = 4
+        state_dim = 4  # x y v_x v_y
         task = TrakingTrajectoryTask3(points_function=point, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=40, n_sub_steps=30), state_dim # n_sub_steps = 50
+    return control.Environment(physics, task, time_limit=40, n_sub_steps=50), state_dim

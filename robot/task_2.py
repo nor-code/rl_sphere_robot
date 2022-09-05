@@ -98,7 +98,7 @@ class TrakingTrajectoryTask2(base.Task):
         PC = TrakingTrajectoryTask2.vector(self.prev_point, self.current_point)
         radius = np.linalg.norm(PC) / 2
 
-        if not TrakingTrajectoryTask2.is_belong_ellipse(self.prev_point[0], self.current_point[0], radius + 0.05, x, y):
+        if not TrakingTrajectoryTask2.is_belong_ellipse(self.prev_point[0], self.current_point[0], radius + 0.056, x, y):
             return True
 
         if self.current_dist > self.prev_dist:
@@ -110,7 +110,7 @@ class TrakingTrajectoryTask2(base.Task):
 
         self.current_dist = self.__distance_to_current_point(x, y)
 
-        if self.current_dist < 0.05:
+        if self.current_dist < 0.056:
             self.prev_point = self.current_point
             self.current_point = self.points.popitem(last=False)
 

@@ -3,7 +3,7 @@ from dm_control.suite import base
 
 
 def is_belong_rectangle(x, y, a, b):
-    return (a < x) and (x < a) and (-b < y) and (y < b)
+    return (-a <= x) and (x <= a) and (-b <= y) and (y <= b)
 
 
 class TrakingTrajectoryTask3(base.Task):
@@ -83,10 +83,8 @@ class TrakingTrajectoryTask3(base.Task):
         x, y, _, _ = self.state
         PC = TrakingTrajectoryTask3.vector(self.prev_point, self.current_point)
 
-        a_x = (self.current_point[0][0] - self.prev_point[0][0]) / 2
-        b_y = (self.current_point[0][1] - self.prev_point[0][1]) / 2
-        x_center = self.prev_point[0][0] + a_x
-        y_center = self.prev_point[0][1] + b_y
+        x_center = self.prev_point[0][0] + (self.current_point[0][0] - self.prev_point[0][0]) / 2
+        y_center = self.prev_point[0][1] + (self.current_point[0][1] - self.prev_point[0][1]) / 2
 
         len_PC = np.linalg.norm(PC)
 
@@ -102,7 +100,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         x, y = np.dot(M, [x, y])
 
-        if is_belong_rectangle(x, y, 0.14 + 0.04, 0.05) or self.current_dist > self.prev_dist:
+        if (not is_belong_rectangle(x, y, (len_PC / 2) + 0.06, 0.08)) or self.current_dist > self.prev_dist:
             return True
 
         return False
@@ -112,7 +110,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         self.current_dist = self.__distance_to_current_point(x, y)
 
-        if self.current_dist < 0.04:
+        if self.current_dist < 0.08:
             self.prev_point = self.current_point
             self.current_point = self.points.popitem(last=False)
 

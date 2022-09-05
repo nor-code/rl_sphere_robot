@@ -14,7 +14,7 @@ class DeepQLearningAgent(nn.Module):
 
         self.platform_wheel_action_pair = np.array(
             np.meshgrid(
-                np.array([-0.15, -0.18, -0.22, -0.25, -0.28, 0.15, 0.18, 0.22, 0.25, 0.28]),
+                np.array([-0.15, -0.18, -0.22, 0.15, 0.18, 0.22]),
                 np.array([0.20, 0.23, 0.26, 0.28, 0.3])
             )
         ).T.reshape(-1, 2)
