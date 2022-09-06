@@ -49,8 +49,8 @@ class DeepQLearningAgent(nn.Module):
             nn.ReLU(),
             nn.Linear(1024, 1024),
             nn.ReLU(),
-            nn.Linear(1024, self.action_count).to(self.device)
-        )
+            nn.Linear(1024, self.action_count)
+        ).to(self.device)
 
     def forward(self, state):
         return self.q_network(state)
