@@ -38,7 +38,8 @@ class DeepQLearningAgent(nn.Module):
             nn.Linear(1024, 1024),
             nn.ReLU(),
             nn.Linear(1024, self.action_count)
-        )
+        ).to(self.device)
+
         self.optimizer = torch.optim.Adam(self.q_network.parameters(), lr=1e-3)
 
         self.target_network = nn.Sequential(
@@ -48,7 +49,7 @@ class DeepQLearningAgent(nn.Module):
             nn.ReLU(),
             nn.Linear(1024, 1024),
             nn.ReLU(),
-            nn.Linear(1024, self.action_count)
+            nn.Linear(1024, self.action_count).to(self.device)
         )
 
     def forward(self, state):
