@@ -97,7 +97,7 @@ class DeepQLearningAgent(nn.Module):
         loss.backward()
         self.optimizer.step()
 
-        return loss
+        return loss.detach().cpu()
 
     def update_target_network(self):
         self.target_network.load_state_dict(self.q_network.state_dict())
