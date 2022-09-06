@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from dm_control.viewer import application
 
+from agent.dqn import DeepQLearningAgent
 from robot.enviroment import make_env, trajectory
 
 pos = np.array([[0, 0]])
@@ -14,8 +16,13 @@ U = []
 #     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
 #     return action
 
+agent = DeepQLearningAgent(4, batch_size=1, epsilon=0).to('cpu')
+
+agent.load_state_dict(torch.load('../models/name3.pt', map_location=torch.device('cpu')))
+agent.eval()
+
 def action_policy(time_step):
-    global pos, V, U, i
+    global pos, V, U, i, agent
 
     i += 1
 
@@ -28,7 +35,11 @@ def action_policy(time_step):
 
     if i < 200:
         # return [0.22, 0.31]
-        return [0.15, 0.35]
+        q = agent.get_qvalues(observation)
+        index = agent.sample_actions(q)
+        print(index)
+        action = agent.index_to_pair[index]
+        return action
     else:
         return [-0.22, 0.31]
     # return np.array([0.25, 0])
@@ -40,7 +51,7 @@ def action_policy(time_step):
     #     return np.array([-0.3, 0])
 
 
-env = make_env(xml_file="../robot_4.xml", type_task=1)[0]
+env = make_env(xml_file="../robot_4.xml", type_task=-1)[0]
 app = application.Application()
 app.launch(env, policy=action_policy)
 

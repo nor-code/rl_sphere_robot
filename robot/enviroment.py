@@ -3,6 +3,7 @@ import collections
 import numpy as np
 from dm_control.rl import control
 
+from robot.mock_task import MockTask
 from robot.model import RobotPhysics
 from robot.task_1 import TrakingTrajectoryTask1
 from robot.task_2 import TrakingTrajectoryTask2
@@ -41,5 +42,7 @@ def make_env(xml_file='robot_4.xml', episode_timeout=30, type_task=2):
     elif type_task == 3:
         state_dim = 4  # x y v_x v_y
         task = TrakingTrajectoryTask3(points_function=point, timeout=episode_timeout)
-
-    return control.Environment(physics, task, time_limit=40, n_sub_steps=50), state_dim
+    else:
+        state_dim = 4  # x y v_x v_y
+        task = MockTask(points_function=point, timeout=episode_timeout)
+    return control.Environment(physics, task, time_limit=50, n_sub_steps=50), state_dim
