@@ -124,9 +124,9 @@ agent = DeepQLearningAgent(state_dim,
                            device=device,
                            algo=args.algo)
 
-loss_freq = 200  # 300 # 300
-refresh_target_network_freq = 200  # 350 # 400
-eval_freq = 200  # 300  # 400
+loss_freq = 250  # 300 # 300
+refresh_target_network_freq = 250  # 350 # 400
+eval_freq = 250  # 300  # 400
 
 mean_rw_history = []
 td_loss_history = []
