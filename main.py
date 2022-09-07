@@ -12,7 +12,7 @@ from tqdm import trange
 
 from agent.dqn import DeepQLearningAgent
 from replay_buffer import ReplayBuffer
-from robot.enviroment import make_env, trajectory
+from robot.enviroment import make_env
 # from IPython.display import clear_output
 from utils.utils import build_trajectory
 
@@ -126,7 +126,7 @@ agent = DeepQLearningAgent(state_dim,
 
 loss_freq = 250  # 300 # 300
 refresh_target_network_freq = 250  # 350 # 400
-eval_freq = 250  # 300  # 400
+eval_freq = 1  # 300  # 400
 
 mean_rw_history = []
 td_loss_history = []
@@ -158,7 +158,7 @@ with trange(step, total_steps + 1) as progress_bar:
 
         if step % eval_freq == 0:
             plot_buf, fig = build_trajectory(
-                agent=agent, enviroment=env, timeout=timeout, trajectory_func=trajectory, type_task=args.type_task
+                agent=agent, enviroment=env, timeout=timeout, trajectory_type=args.trajectory, type_task=args.type_task
             )
 
             pillow_img = PIL.Image.open(plot_buf)

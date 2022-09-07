@@ -5,7 +5,15 @@ import numpy as np
 from dm_control.rl.control import PhysicsError
 
 
-def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_func=None, type_task=None):
+def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=None, type_task=None):
+
+    if trajectory_type == 'curve':
+        from robot.enviroment import curve
+        trajectory_func = curve
+    elif trajectory_type == 'circle':
+        from robot.enviroment import  circle
+        trajectory_func = circle
+
     times = []
     actions = []
     V = []
