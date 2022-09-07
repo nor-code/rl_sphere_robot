@@ -102,20 +102,20 @@ parser = argparse.ArgumentParser(description='DQN Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
 parser.add_argument('--type_task', type=int, default=3, help='type of task. now available 1 and 2')
 parser.add_argument('--algo', type=str, default='ddqn', help='type agent, dqn or ddqn available')
-
+parser.add_argument('--trajectory', type=str, default='circle', help='trajectory for agent')
 args = parser.parse_args()
 
 number = args.simu_number
 
 writer = SummaryWriter()
-timeout = 40
-env, state_dim = make_env(episode_timeout=timeout, type_task=args.type_task)
+timeout = 50
+env, state_dim = make_env(episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory)
 cash = ReplayBuffer(6_000_000)
 
 timesteps_per_epoch = 1000
 batch_size = 4 * 1024
-total_steps = 15 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
-decay_steps = 15 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+total_steps = 25 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+decay_steps = 22 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
 
 agent = DeepQLearningAgent(state_dim,
                            batch_size=batch_size,
@@ -166,12 +166,14 @@ with trange(step, total_steps + 1) as progress_bar:
             writer.add_image("trajectory #" + str(number), tensor_img, step / eval_freq)
             plt.close(fig)
 
-            mean_reward = evaluate(make_env(episode_timeout=timeout, type_task=args.type_task)[0], agent, n_games=3,
-                                   greedy=True, t_max=1000)
+            mean_reward = evaluate(
+                make_env(episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory)[0],
+                agent, n_games=3, greedy=True, t_max=1000
+            )
             writer.add_scalar("Mean_reward_history 3 episode #" + str(number), mean_reward, step)
 
             initial_state_q_values = agent.get_qvalues(
-                make_env(episode_timeout=timeout, type_task=args.type_task)[0].reset().observation
+                make_env(episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory)[0].reset().observation
             )
             writer.add_scalar("init_state_Q_value #" + str(number), np.max(initial_state_q_values), step)
 

@@ -4,7 +4,8 @@ from dm_control.suite import base
 
 class TrakingTrajectoryTask1(base.Task):
 
-    def __init__(self, points_function, timeout, random=None):
+    def __init__(self, points_function, type_curve, timeout, random=None):
+        self.type_curve = type_curve
         """тайм-аут одного эпизода"""
         self.timeout = timeout
         """ количество точек, которые мы достигли в рамках текущего эпищода """
@@ -12,7 +13,7 @@ class TrakingTrajectoryTask1(base.Task):
 
         """ функции для целевой траектории"""
         self.p_fun = points_function
-        self.points = points_function()
+        self.points = points_function(type_curve)
 
         """текущая и предыдущая целевая точка ( координаты ) """
         self.current_point = self.points.popitem(last=False)

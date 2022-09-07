@@ -8,7 +8,9 @@ def is_belong_rectangle(x, y, a, b):
 
 class TrakingTrajectoryTask3(base.Task):
 
-    def __init__(self, points_function, timeout, random=None):
+    def __init__(self, points_function, type_curve, timeout, random=None):
+        self.type_curve = type_curve
+
         """тайм-аут одного эпизода"""
         self.timeout = timeout
         """ количество точек, которые мы достигли в рамках текущего эпищода """
@@ -16,7 +18,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         """ функции для целевой траектории"""
         self.p_fun = points_function
-        self.points = points_function()
+        self.points = points_function(type_curve)
 
         """текущая и предыдущая целевая точка ( координаты ) """
         self.current_point = self.points.popitem(last=False)
@@ -42,7 +44,7 @@ class TrakingTrajectoryTask3(base.Task):
     def initialize_episode(self, physics):
         physics.named.data.qpos[0:3] = [0, 0, 0.2]
         physics.named.data.qvel[:] = 0
-        self.points = self.p_fun()
+        self.points = self.p_fun(self.type_curve)
 
         self.current_point = self.points.popitem(last=False)
         self.prev_point = None
@@ -100,7 +102,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         x, y = np.dot(M, [x, y])
 
-        if (not is_belong_rectangle(x, y, (len_PC / 2) + 0.06, 0.08)) or self.current_dist > self.prev_dist:
+        if (not is_belong_rectangle(x, y, (len_PC / 2) + 0.05, 0.05)) or self.current_dist > self.prev_dist:
             return True
 
         return False
@@ -110,7 +112,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         self.current_dist = self.__distance_to_current_point(x, y)
 
-        if self.current_dist < 0.08:
+        if self.current_dist < 0.05:
             self.prev_point = self.current_point
             self.current_point = self.points.popitem(last=False)
 
@@ -125,7 +127,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         if self.is_invalid_state():
             self.count_invalid_states += 1
-            return -50 * self.achievedPoints
+            return -40
 
         if self.achievedPoints > 1:
             print("count achieved points = ", self.achievedPoints, " time = ", physics.data.time)

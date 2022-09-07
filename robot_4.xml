@@ -30,7 +30,7 @@
         <light pos="0 0 6"/>
         <light directional="false" diffuse=".2 .2 .2" specular="0 0 0" pos="0 0 5" dir="0 0 -1" castshadow="false"/>
 
-        <body name="shell" pos="0 0 0" euler="0 0 -82">
+        <body name="shell" pos="0 0 0" euler="0 0 -84">
             <joint name="shell_floor" type="free"/>
             <geom name="sphere_shell" type="sphere" pos="0 0 0" size=".2 .19" rgba=".0 .0 .0 .2" mass="0.5" friction="1 5 1" group="1"/>
 

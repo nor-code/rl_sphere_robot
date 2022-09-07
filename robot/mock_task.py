@@ -3,7 +3,8 @@ from dm_control.suite import base
 
 class MockTask(base.Task):
 
-    def __init__(self, points_function, timeout, random=None):
+    def __init__(self, points_function, type_curve, timeout, random=None):
+        self.type_curve = type_curve
         """тайм-аут одного эпизода"""
         self.timeout = timeout
         """ количество точек, которые мы достигли в рамках текущего эпищода """
@@ -11,7 +12,7 @@ class MockTask(base.Task):
 
         """ функции для целевой траектории"""
         self.p_fun = points_function
-        self.points = points_function()
+        self.points = points_function(type_curve)
 
         """текущая и предыдущая целевая точка ( координаты ) """
         self.current_point = self.points.popitem(last=False)
@@ -37,7 +38,7 @@ class MockTask(base.Task):
     def initialize_episode(self, physics):
         physics.named.data.qpos[0:3] = [0, 0, 0.2]
         physics.named.data.qvel[:] = 0
-        self.points = self.p_fun()
+        self.points = self.p_fun(self.type_curve)
 
         self.current_point = self.points.popitem(last=False)
         self.prev_point = None
