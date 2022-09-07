@@ -50,7 +50,7 @@ def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, 
         sum_rewards += _time_step.reward
         cash.add(s, action_idx, _time_step.reward, state, is_done)
 
-        if iteration > _agent.batch_size:
+        if iteration > _agent.batch_size and iteration % 512 == 0:
             loss = _agent.train_network(_cash)
 
         if is_done:
@@ -110,12 +110,12 @@ number = args.simu_number
 writer = SummaryWriter()
 timeout = 40
 env, state_dim = make_env(episode_timeout=timeout, type_task=args.type_task)
-cash = ReplayBuffer(2_000_000)
+cash = ReplayBuffer(6_000_000)
 
 timesteps_per_epoch = 1000
-batch_size = 2048
+batch_size = 4 * 1024
 total_steps = 15 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
-decay_steps = 14 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+decay_steps = 15 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
 
 agent = DeepQLearningAgent(state_dim,
                            batch_size=batch_size,
