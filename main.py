@@ -50,7 +50,7 @@ def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, 
         sum_rewards += _time_step.reward
         cash.add(s, action_idx, _time_step.reward, state, is_done)
 
-        if iteration > _agent.batch_size and iteration % 512 == 0:
+        if iteration > _agent.batch_size:
             loss = _agent.train_network(_cash)
 
         if is_done:
@@ -110,11 +110,11 @@ number = args.simu_number
 writer = SummaryWriter()
 timeout = 50
 env, state_dim = make_env(episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory)
-cash = ReplayBuffer(6_000_000)
+cash = ReplayBuffer(3_000_000)
 
 timesteps_per_epoch = 1000
-batch_size = 4 * 1024
-total_steps = 25 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+batch_size = 2048
+total_steps = 22 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
 decay_steps = 22 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
 
 agent = DeepQLearningAgent(state_dim,
@@ -124,9 +124,9 @@ agent = DeepQLearningAgent(state_dim,
                            device=device,
                            algo=args.algo)
 
-loss_freq = 250  # 300 # 300
-refresh_target_network_freq = 250  # 350 # 400
-eval_freq = 1  # 300  # 400
+# loss_freq = 250  # 300 # 300
+refresh_target_network_freq = 400  # 350 # 400
+eval_freq = 150  # 300  # 400
 
 mean_rw_history = []
 td_loss_history = []
@@ -135,7 +135,7 @@ initial_state_v_history = []
 step = 0
 
 init_epsilon = 1
-final_epsilon = 0.1
+final_epsilon = 0.2
 
 state = env.reset().observation
 
@@ -147,11 +147,11 @@ with trange(step, total_steps + 1) as progress_bar:
         # play 1 episode and push to replay buffer
         _, state, loss = play_and_record(state, agent, env, cash, timeout, timesteps_per_epoch)
 
-        if step % loss_freq == 0 and loss is not None:
+        if loss is not None:
             writer.add_scalar("TD_loss #" + str(number), loss.data.cpu().item(), step)
             # grad_norm_history.append(grad_norm.data.cpu().item())
 
-        if step % refresh_target_network_freq == 0:
+        if step % refresh_target_network_freq == 0 and iteration > batch_size:
             print("copy parameters from agent to target")
             agent.update_target_network()
             state = env.reset().observation

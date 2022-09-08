@@ -57,4 +57,4 @@ def make_env(xml_file='robot_4.xml', episode_timeout=30, type_task=2, trajectory
         state_dim = 4  # x y v_x v_y
         task = MockTask(points_function=point, type_curve=trajectory, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=50, n_sub_steps=45), state_dim
+    return control.Environment(physics, task, time_limit=50, n_sub_steps=50), state_dim

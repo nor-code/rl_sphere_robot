@@ -127,7 +127,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         if self.is_invalid_state():
             self.count_invalid_states += 1
-            return -40
+            return -50
 
         if self.achievedPoints > 1:
             print("count achieved points = ", self.achievedPoints, " time = ", physics.data.time)
