@@ -50,7 +50,7 @@ def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, 
         sum_rewards += _time_step.reward
         cash.add(s, action_idx, _time_step.reward, state, is_done)
 
-        if iteration > _agent.batch_size:
+        if iteration > _agent.batch_size and iteration % 512 == 0:
             loss = _agent.train_network(_cash)
 
         if is_done:
@@ -96,6 +96,24 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
             final_val * cur_step) / total_steps
 
 
+def get_envs(size):
+    env_list_ = []
+    dim = 0
+    for i in [0, size // 4, size // 4, (3 * size) // 4]:
+        env_i, dim = make_env(
+            episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=i
+        )
+        env_list_.append(env_i)
+    return env_list_, dim
+
+
+def get_size():
+    if args.trajectory == 'circle':
+        return 30
+    elif args.trajectory == 'curve':
+        return 20
+
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN Spherical Robot')
@@ -109,13 +127,13 @@ number = args.simu_number
 
 writer = SummaryWriter()
 timeout = 50
-env, state_dim = make_env(episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory)
-cash = ReplayBuffer(3_000_000)
+env_list, state_dim = get_envs(get_size())
+cash = ReplayBuffer(4_000_000)
 
-timesteps_per_epoch = 1000
-batch_size = 2048
-total_steps = 22 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
-decay_steps = 22 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+timesteps_per_epoch = 2000
+batch_size = 2 * 2048
+total_steps = 25 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+decay_steps = 25 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
 
 agent = DeepQLearningAgent(state_dim,
                            batch_size=batch_size,
@@ -127,6 +145,7 @@ agent = DeepQLearningAgent(state_dim,
 # loss_freq = 250  # 300 # 300
 refresh_target_network_freq = 400  # 350 # 400
 eval_freq = 150  # 300  # 400
+change_env_freq = 5
 
 mean_rw_history = []
 td_loss_history = []
@@ -137,6 +156,7 @@ step = 0
 init_epsilon = 1
 final_epsilon = 0.2
 
+env = np.random.choice(env_list, size=1)[0]
 state = env.reset().observation
 
 with trange(step, total_steps + 1) as progress_bar:
@@ -146,6 +166,9 @@ with trange(step, total_steps + 1) as progress_bar:
 
         # play 1 episode and push to replay buffer
         _, state, loss = play_and_record(state, agent, env, cash, timeout, timesteps_per_epoch)
+
+        if step % change_env_freq:
+            env = np.random.choice(env_list, size=1)[0]
 
         if loss is not None:
             writer.add_scalar("TD_loss #" + str(number), loss.data.cpu().item(), step)
@@ -167,15 +190,18 @@ with trange(step, total_steps + 1) as progress_bar:
             plt.close(fig)
 
             mean_reward = evaluate(
-                make_env(episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory)[0],
+                make_env(episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=0)[
+                    0],
                 agent, n_games=3, greedy=True, t_max=1000
             )
             writer.add_scalar("Mean_reward_history 3 episode #" + str(number), mean_reward, step)
 
             initial_state_q_values = agent.get_qvalues(
-                make_env(episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory)[0].reset().observation
+                make_env(episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=0)[
+                    0].reset().observation
             )
             writer.add_scalar("init_state_Q_value #" + str(number), np.max(initial_state_q_values), step)
+            writer.add_scalar("size of replay buffer # " + str(number), cash.buffer_len(), step)
 
 writer.flush()
 

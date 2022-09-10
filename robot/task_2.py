@@ -7,8 +7,7 @@ e_y = [0, 1]
 
 class TrakingTrajectoryTask2(base.Task):
 
-    def __init__(self, points_function, type_curve, timeout, random=None):
-        self.type_curve = type_curve
+    def __init__(self, trajectory_function, begin_index, timeout, random=None):
 
         """тайм-аут одного эпизода"""
         self.timeout = timeout
@@ -16,11 +15,13 @@ class TrakingTrajectoryTask2(base.Task):
         self.achievedPoints = 0
 
         """ функции для целевой траектории"""
-        self.p_fun = points_function
-        self.points = points_function(type_curve)
+        self.p_fun = trajectory_function
+        self.points = np.array(self.p_fun()).T
+        self.begin_index = begin_index
+        self.current_index = begin_index
 
         """текущая и предыдущая целевая точка ( координаты ) """
-        self.current_point = self.points.popitem(last=False)
+        self.current_point = self.points[begin_index]
         self.prev_point = None
 
         """ общее количество точек на пути """
@@ -40,12 +41,15 @@ class TrakingTrajectoryTask2(base.Task):
         super().__init__(random=random)
 
     def initialize_episode(self, physics):
-        physics.named.data.qpos[0:3] = [0, 0, 0.2]
-        physics.named.data.qvel[:] = 0
-        self.points = self.p_fun(self.type_curve)
+        self.points = np.array(self.p_fun()).T
 
-        self.current_point = self.points.popitem(last=False)
+        index = self.begin_index
+        self.current_index = index
+        self.current_point = self.points[index]
         self.prev_point = None
+
+        physics.named.data.qpos[0:3] = [self.current_point[0], self.current_point[1], 0.2]
+        physics.named.data.qvel[:] = 0
 
         self.achievedPoints = 0
 
@@ -139,3 +143,14 @@ class TrakingTrajectoryTask2(base.Task):
         reward = self.achievedPoints + np.linalg.norm(PC) / self.current_dist
         self.prev_dist = self.current_dist
         return reward
+
+    """
+      следующая точка и дошли ли мы до конца или нет
+      """
+
+    def get_next_point(self, points):
+        self.current_index += 1
+        self.current_index %= len(points)
+        if self.current_index == self.begin_index:
+            return None
+        return points[self.current_index]

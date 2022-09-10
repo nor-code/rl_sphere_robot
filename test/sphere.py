@@ -15,16 +15,16 @@ U = []
 #     qvalues = agent.get_qvalues([timestamp.observation])
 #     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
 #     return action
-
-agent = DeepQLearningAgent(state_dim=4,
-                           batch_size=1,
-                           epsilon=0,
-                           gamma=0.99,
-                           device='cpu',
-                           algo='ddqn')
-
-agent.q_network.load_state_dict(torch.load('../models/name_dqn.pt', map_location=torch.device('cpu')))
-agent.eval()
+#
+# agent = DeepQLearningAgent(state_dim=4,
+#                            batch_size=1,
+#                            epsilon=0,
+#                            gamma=0.99,
+#                            device='cpu',
+#                            algo='ddqn')
+#
+# agent.q_network.load_state_dict(torch.load('../models/name_dqn.pt', map_location=torch.device('cpu')))
+# agent.eval()
 
 def action_policy(time_step):
     global pos, V, U, i, agent
@@ -39,12 +39,12 @@ def action_policy(time_step):
     U.append(observation[3])
 
     if i < 200:
-        # return [0.22, 0.31]
-        q = agent.get_qvalues(observation)
-        index = agent.sample_actions(q)
-        print(index)
-        action = agent.index_to_pair[index]
-        return action
+        return [0, 0.33]
+        # q = agent.get_qvalues(observation)
+        # index = agent.sample_actions(q)
+        # print(index)
+        # action = agent.index_to_pair[index]
+        # return action
     else:
         return [-0.22, 0.31]
     # return np.array([0.25, 0])
@@ -56,7 +56,7 @@ def action_policy(time_step):
     #     return np.array([-0.3, 0])
 
 
-env = make_env(xml_file="../robot_4.xml", type_task=-1, trajectory='curve')[0]
+env = make_env(type_task=-1, trajectory='circle', begin_index_=0)[0]
 app = application.Application()
 app.launch(env, policy=action_policy)
 

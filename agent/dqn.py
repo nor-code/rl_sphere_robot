@@ -18,8 +18,8 @@ class DeepQLearningAgent(nn.Module):
 
         self.platform_wheel_action_pair = np.array(
             np.meshgrid(
-                np.array([-0.15, -0.18, -0.22, 0.15, 0.18, 0.22, 0.25]),
-                np.array([0.20, 0.23, 0.26, 0.28, 0.3])
+                np.array([-0.15, -0.18, -0.205, -0.22, 0.15, 0.18, 0.205, 0.22]),
+                np.array([0.20, 0.23, 0.26, 0.28, 0.3, 0.33])
             )
         ).T.reshape(-1, 2)
 
@@ -31,24 +31,24 @@ class DeepQLearningAgent(nn.Module):
         self.index_to_pair = dict(zip(range(self.action_count), self.all_pairs_actions))
 
         self.q_network = nn.Sequential(
-            nn.Linear(state_dim, 512),
-            nn.ReLU(),
-            nn.Linear(512, 1024),
-            nn.ReLU(),
+            nn.Linear(state_dim, 1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024, 1024),
+            nn.LeakyReLU(),
             nn.Linear(1024, 2048),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(2048, self.action_count)
         ).to(self.device)
 
         self.optimizer = torch.optim.Adam(self.q_network.parameters(), lr=1e-3)
 
         self.target_network = nn.Sequential(
-            nn.Linear(state_dim, 512),
-            nn.ReLU(),
-            nn.Linear(512, 1024),
-            nn.ReLU(),
+            nn.Linear(state_dim, 1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024, 1024),
+            nn.LeakyReLU(),
             nn.Linear(1024, 2048),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(2048, self.action_count)
         ).to(self.device)
 

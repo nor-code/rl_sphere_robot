@@ -10,14 +10,98 @@ from robot.task_2 import TrakingTrajectoryTask2
 from robot.task_3 import TrakingTrajectoryTask3
 
 
+def get_string_xml(roll_angle):
+    return f"""
+    <?xml version="1.0"?>
+    <mujoco model="sphere_robot">
+
+        <compiler inertiafromgeom="true" angle="degree"/>
+        <option integrator="RK4"/>
+        <option timestep="0.005" iterations="50" solver="Newton" tolerance="1e-10"/>
+        <size njmax="1500" nconmax="5000" nstack="5000000"/>
+
+
+        <asset>
+            <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
+            <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+            <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278"
+                rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
+            <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+            <material name="matgeom" texture="texgeom" texuniform="true" rgba="0.8 0.6 .4 1"/>
+        </asset>
+
+        <visual>
+            <map force="0.1" zfar="30"/>
+            <rgba haze="0.15 0.25 0.35 1"/>
+            <quality shadowsize="2048"/>
+            <global offwidth="800" offheight="800"/>
+        </visual>
+
+        <worldbody>
+            <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
+            <camera name="fixed" pos="0 -4 1" zaxis="0 -1 0"/>
+
+            <light pos="0 0 6"/>
+            <light directional="false" diffuse=".2 .2 .2" specular="0 0 0" pos="0 0 5" dir="0 0 -1" castshadow="false"/>
+
+            <body name="shell" pos="0 0 0" euler="0 0 {roll_angle}">
+                <joint name="shell_floor" type="free"/>
+                <geom name="sphere_shell" type="sphere" pos="0 0 0" size=".2 .19" rgba=".0 .0 .0 .2" mass="0.5" friction="1 5 1" group="1"/>
+
+                <body name="wheel">
+                    <joint name="wheel_with_shell" type="ball" frictionloss="0.01"/>
+                    <geom name="wheel_" type="cylinder" fromto="-0.008 0 -0.15  0.008 0 -0.15" size="0.049 0.005" mass="0.7"/>
+                    <!-- friction[0] sliding friction, friction[1] torsional friction, friction[2] rolling friction -->
+
+                    <body>
+                       <geom name="wheel_axis1" type="cylinder" fromto="-0.03 0 -0.15  -0.008 0 -0.15" size="0.005" mass="0.005"/>
+                       <geom name="wheel_axis2" type="cylinder" fromto="0.008 0 -0.15  0.03 0 -0.15" size="0.005" mass="0.005"/>
+
+                       <geom name="fork1" type="capsule" fromto="-0.03 0 -0.07  -0.03 0 -0.16" size="0.01" mass="0.01" group="1"/>
+                       <geom name="fork2" type="capsule" fromto="0.03 0 -0.07  0.03 0 -0.16" size="0.01" mass="0.01" group="1"/>
+                       <geom name="link_f1_f2" type="capsule" fromto="-0.03 0 -0.07   0.03 0 -0.07" size="0.01" mass="0.001" group="1"/>
+                       <geom name="fork0" type="capsule" fromto="0 0 -0.03  0 0 -0.07" size="0.01" mass="0.1" group="0.01"/>
+                    </body>
+
+                    <body>
+                        <joint name="fork_with_platform" type="hinge" axis="0 0 1" frictionloss="0.1"/>
+                        <geom name="platform" type="cylinder" pos="0 0 -0.03" size=".15 .005" rgba=".0 .0 .3 .5" mass="2" group="1"/>
+                        <geom name="line1" type="cylinder" fromto="0       -0.15 -0.03    0     -0.167 -0.03" size="0.005"/>
+                        <geom name="line2" type="cylinder" fromto="0.1299  0.075 -0.03    0.1472 0.085 -0.03" size="0.005"/>
+                        <geom name="line3" type="cylinder" fromto="-0.1299 0.075 -0.03   -0.1472 0.085 -0.03" size="0.005"/>
+                        <site name="mpu9250" pos="0 0 -0.03" size=".03 .03 .03" type="ellipsoid" rgba="0.3 0.2 0.1 0.3"/>
+                    </body>
+                </body>
+            </body>
+        </worldbody>
+
+    <!--     <contact>-->
+    <!--       <pair name="friction_shell" geom1="floor" geom2="sphere_shell" condim="3" friction="0 1"/>-->
+    <!--     </contact>-->
+
+        <actuator>
+            <motor name="platform_motor" gear="0.5" joint="fork_with_platform" ctrllimited="true" ctrlrange="-1 1"/>
+            <motor name="wheel_motor" gear="200" joint="wheel_with_shell" ctrllimited="true" ctrlrange="-1 1"/>
+        </actuator>
+
+        <sensor>
+            <subtreecom name="shell_center" body="shell"/>
+
+            <jointpos name="fork_wheel_angle" joint="fork_with_platform"/> <!-- угол поворота колеса -->
+
+            <subtreelinvel name="sphere_vel" body="shell"/>
+
+            <accelerometer name="imu_accel" site="mpu9250"/>
+            <gyro name="imu_gyro" site="mpu9250"/>
+        </sensor>
+    </mujoco>
+    """
+
+
 def curve():
-    t = np.linspace(0, 2 * np.pi, 16)
+    t = np.linspace(0, 2 * np.pi, 20)
     x_ = [np.sin(t_) for t_ in t]
-    y_ = [- np.cos(t_/2) + 1 for t_ in t]
-
-    deg = np.rad2deg(np.arctan(y_[1] / x_[1]))
-    print("deg curve = ", deg)
-
+    y_ = [- np.cos(t_ / 2) + 1 for t_ in t]
     return x_, y_
 
 
@@ -25,36 +109,51 @@ def circle():
     t = np.linspace(0, 2 * np.pi, 30)
     x_ = [np.sin(t_) for t_ in t]
     y_ = [- np.cos(t_) + 1 for t_ in t]
-
-    deg = np.rad2deg(np.arctan(y_[1] / x_[1]))
-    print("deg circle = ", deg)
-
     return x_, y_
 
 
-def point(type):
+def determine_trajectory(type):
     if type == 'circle':
-        x, y = circle()
-        return collections.OrderedDict().fromkeys(zip(x, y))
+        return circle
     elif type == 'curve':
-        x, y = curve()
-        return collections.OrderedDict().fromkeys(zip(x, y))
+        return curve
 
 
-def make_env(xml_file='robot_4.xml', episode_timeout=30, type_task=2, trajectory=None):
-    physics = RobotPhysics.from_xml_path(xml_file)
+def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
+    trajectory_fun = determine_trajectory(trajectory)
+
+    points = np.array(trajectory_fun()).T
+    dy = points[begin_index_ + 1][1] - points[begin_index_][1]
+    dx = points[begin_index_ + 1][0] - points[begin_index_][0]
+
+    sign_y = np.sign(np.dot([dx, dy], [0, 1]))
+    sign_x = np.sign(np.dot([dx, dy], [1, 0]))
+
+    deg = np.rad2deg(np.arctan(dy / dx))
+
+    roll_angle = deg - 90  # y / x
+
+    if sign_y < 0 and sign_x < 0:
+        roll_angle -= 180
+    elif sign_x < 0:
+        roll_angle += 180
+
+    physics = RobotPhysics.from_xml_string(get_string_xml(roll_angle))
 
     if type_task == 1:
         state_dim = 4  # x y cos_a sin_a
-        task = TrakingTrajectoryTask1(points_function=point,  type_curve=trajectory, timeout=episode_timeout)
+        task = TrakingTrajectoryTask1(trajectory_function=trajectory_fun, begin_index=begin_index_,
+                                      timeout=episode_timeout)
     elif type_task == 2:
         state_dim = 2  # x y
-        task = TrakingTrajectoryTask2(points_function=point,  type_curve=trajectory, timeout=episode_timeout)
+        task = TrakingTrajectoryTask2(trajectory_function=trajectory_fun, begin_index=begin_index_,
+                                      timeout=episode_timeout)
     elif type_task == 3:
         state_dim = 4  # x y v_x v_y
-        task = TrakingTrajectoryTask3(points_function=point, type_curve=trajectory, timeout=episode_timeout)
+        task = TrakingTrajectoryTask3(trajectory_function=trajectory_fun, begin_index=begin_index_,
+                                      timeout=episode_timeout)
     else:
         state_dim = 4  # x y v_x v_y
-        task = MockTask(points_function=point, type_curve=trajectory, timeout=episode_timeout)
+        task = MockTask(trajectory_function=trajectory_fun, begin_index=begin_index_, timeout=episode_timeout)
 
     return control.Environment(physics, task, time_limit=50, n_sub_steps=50), state_dim
