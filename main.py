@@ -175,7 +175,7 @@ with trange(step, total_steps + 1) as progress_bar:
 
         if step % change_env_freq:
             env = np.random.choice(env_list, size=1)[0]
-            state = env.reset().bservation
+            state = env.reset().observation
 
         if loss is not None:
             writer.add_scalar("TD_loss #" + str(number), loss.data.cpu().item(), step)
