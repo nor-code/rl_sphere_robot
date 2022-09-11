@@ -20,6 +20,9 @@ class ReplayBuffer(object):
     def buffer_len(self):
         return len(self._storage)
 
+    def get_maxsize(self):
+        return self._maxsize
+
     def add(self, obs_t, action, reward, obs_tp1, done):
         data = (obs_t, action, reward, obs_tp1, done)
 

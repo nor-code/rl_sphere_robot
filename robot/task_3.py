@@ -121,7 +121,7 @@ class TrakingTrajectoryTask3(base.Task):
 
             self.achievedPoints += 1
             if len(self.points) == self.achievedPoints:
-                print("FINAL")
+                print("FINAL. init index of point = ", self.begin_index)
                 return 100
 
             self.prev_dist = self.current_dist = self.__distance_to_current_point(x, y)
@@ -132,7 +132,9 @@ class TrakingTrajectoryTask3(base.Task):
             return -50
 
         if self.achievedPoints > 1:
-            print("count achieved points = ", self.achievedPoints, " time = ", physics.data.time)
+            print("count achieved points = ", self.achievedPoints,
+                  " time = ", physics.data.time,
+                  " init index of point = ", self.begin_index)
 
         PC = TrakingTrajectoryTask3.vector(self.prev_point, self.current_point)
 
