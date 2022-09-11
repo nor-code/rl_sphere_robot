@@ -99,9 +99,9 @@ def get_string_xml(roll_angle):
 
 
 def curve():
-    t = np.linspace(0, 2 * np.pi, 30)
-    x_ = [np.sin(t_) for t_ in t]
-    y_ = [- np.cos(t_ / 2) + 1 for t_ in t]
+    t = np.linspace(0, 3 * np.pi, 30)
+    x_ = [np.sin(t_ * 0.8) for t_ in t]
+    y_ = [- np.cos(t_ / 1.5) + 1 for t_ in t]
     return x_, y_
 
 
