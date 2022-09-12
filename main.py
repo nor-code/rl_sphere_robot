@@ -26,7 +26,7 @@ v_y_max = 0.190
 
 def get_learn_freq(_cash):
     if _cash.buffer_len() >= _cash.get_maxsize():
-        return 256
+        return 512
     return 512
 
 
@@ -117,7 +117,7 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
 def get_envs(size):
     env_list_ = []
     dim = 0
-    for i in [0, size // 4, size // 2, 3 * size // 4]:
+    for i in [0, size // 2]:
         env_i, dim = make_env(
             episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=i
         )
@@ -146,11 +146,11 @@ number = args.simu_number
 writer = SummaryWriter()
 timeout = 50
 env_list, state_dim = get_envs(get_size())
-cash = ReplayBuffer(1_500_000)
+cash = ReplayBuffer(1_000_000)
 
 timesteps_per_epoch = 2000
-batch_size = 4 * 2048
-total_steps = 25 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+batch_size = 2 * 2048
+total_steps = 40 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
 decay_steps = 25 * 10 ** 4  # 40 * 10 ** 4 name1 # 10 ** 4
 
 agent = DeepQLearningAgent(state_dim,
@@ -161,7 +161,7 @@ agent = DeepQLearningAgent(state_dim,
                            algo=args.algo)
 
 # loss_freq = 250  # 300 # 300
-refresh_target_network_freq = 800  # 350 # 400
+refresh_target_network_freq = 1200  # 350 # 400
 eval_freq = 200  # 300  # 400statestate = env.reset().observation = env.reset().observation
 change_env_freq = 5
 
@@ -172,7 +172,7 @@ initial_state_v_history = []
 step = 0
 
 init_epsilon = 1
-final_epsilon = 0.15
+final_epsilon = 0.18
 
 env = np.random.choice(env_list, size=1)[0]
 state = env.reset().observation

@@ -1,0 +1,33 @@
+DDQN
+
+state[0] = state[0] / x_max
+state[1] = state[1] / y_max
+state[2] = state[2] / v_x_max
+state[3] = state[3] / v_y_max
+
+self.optimizer = torch.optim.Adam(self.q_network.parameters(), lr=1e-2)
+
+iteratiom % 512
+
+cash = ReplayBuffer(1_500_000)
+
+timesteps_per_epoch = 2000
+batch_size = 4 * 2048
+total_steps = 25 * 10 ** 4
+decay_steps = 25 * 10 ** 4
+
+agent = DeepQLearningAgent(state_dim,
+                           batch_size=batch_size,
+                           epsilon=1,
+                           gamma=0.99,
+                           device=device,
+                           algo=args.algo)
+
+
+refresh_target_network_freq = 800
+eval_freq = 200
+change_env_freq = 5
+
+
+init_epsilon = 1
+final_epsilon = 0.15
