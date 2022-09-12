@@ -1,0 +1,29 @@
+DDQN
+
+cash = ReplayBuffer(1_000_000)
+
+timesteps_per_epoch = 2000
+batch_size = 2 * 2048
+total_steps = 40 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+decay_steps = 25 * 10 ** 4  # 40 * 10 ** 4 name1 # 10 ** 4
+
+agent = DeepQLearningAgent(state_dim,
+                           batch_size=batch_size,
+                           epsilon=1,
+                           gamma=0.99,
+                           device=device,
+                           algo=args.algo)
+
+# loss_freq = 250  # 300 # 300
+refresh_target_network_freq = 1200  # 350 # 400
+eval_freq = 200  # 300  # 400statestate = env.reset().observation = env.reset().observation
+change_env_freq = 5
+
+mean_rw_history = []
+td_loss_history = []
+grad_norm_history = []
+initial_state_v_history = []
+step = 0
+
+init_epsilon = 1
+final_epsilon = 0.18

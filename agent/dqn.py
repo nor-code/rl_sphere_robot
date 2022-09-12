@@ -40,7 +40,7 @@ class DeepQLearningAgent(nn.Module):
             nn.Linear(1024, self.action_count)
         ).to(self.device)
 
-        self.optimizer = torch.optim.Adam(self.q_network.parameters(), lr=1e-2)
+        self.optimizer = torch.optim.Adam(self.q_network.parameters(), lr=2e-3)
 
         self.target_network = nn.Sequential(
             nn.Linear(state_dim, 1024),
@@ -64,11 +64,11 @@ class DeepQLearningAgent(nn.Module):
         rand = np.random.rand()
 
         if rand <= self.epsilon:
-            return np.random.choice(range(self.action_count), size=self.batch_size)
+            return np.random.choice(range(self.action_count), size=1)
         else:
             return q_values.argmax(axis=-1)
 
-    def train_network(self, replay_buffer):
+    def train_model(self, replay_buffer):
         s, action_index, r, next_s, is_done = replay_buffer.sample(self.batch_size)
 
         current_state = torch.tensor(s, device=self.device, dtype=torch.float32)

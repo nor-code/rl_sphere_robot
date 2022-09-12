@@ -69,7 +69,7 @@ def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, 
         cash.add(s, action_idx, _time_step.reward, state, is_done)
 
         if iteration > _agent.batch_size and iteration % get_learn_freq(_cash) == 0:
-            loss = _agent.train_network(_cash)
+            loss = _agent.train_model(_cash)
 
         if is_done:
             _enviroment = _enviroment.reset()
@@ -117,7 +117,7 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
 def get_envs(size):
     env_list_ = []
     dim = 0
-    for i in [0, size // 2]:
+    for i in [0]:
         env_i, dim = make_env(
             episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=i
         )
@@ -139,19 +139,26 @@ parser.add_argument('--simu_number', type=int, default=1, help='number of simula
 parser.add_argument('--type_task', type=int, default=3, help='type of task. now available 1, 2, 3')
 parser.add_argument('--algo', type=str, default='ddqn', help='type agent, dqn or ddqn available')
 parser.add_argument('--trajectory', type=str, default='circle', help='trajectory for agent')
+parser.add_argument('--buffer_size', type=int, default=10**4, help='size of buffer')
+parser.add_argument('--batch_size', type=int, default=2**10, help='batch size')
+parser.add_argument('--refresh_target', type=int, default=600, help='refresh target network')
+parser.add_argument('--total_steps', type=int, default=40*10**4, help='total_steps')
+parser.add_argument('--decay_steps', type=int, default=40*10**4, help='decay_steps')
+
 args = parser.parse_args()
 
-number = args.simu_number
+print("buffer size = ", args.buffer_size)
 
+number = args.simu_number
 writer = SummaryWriter()
-timeout = 50
+timeout = 80
 env_list, state_dim = get_envs(get_size())
-cash = ReplayBuffer(1_000_000)
+cash = ReplayBuffer(args.buffer_size)
 
 timesteps_per_epoch = 2000
-batch_size = 2 * 2048
-total_steps = 40 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
-decay_steps = 25 * 10 ** 4  # 40 * 10 ** 4 name1 # 10 ** 4
+batch_size = args.batch_size
+total_steps = args.total_steps  # 40 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+decay_steps = args.decay_steps  # 25 * 10 ** 4  # 40 * 10 ** 4 name1 # 10 ** 4
 
 agent = DeepQLearningAgent(state_dim,
                            batch_size=batch_size,
@@ -161,8 +168,8 @@ agent = DeepQLearningAgent(state_dim,
                            algo=args.algo)
 
 # loss_freq = 250  # 300 # 300
-refresh_target_network_freq = 1200  # 350 # 400
-eval_freq = 200  # 300  # 400statestate = env.reset().observation = env.reset().observation
+refresh_target = args.refresh_target  # 1200  # 350 # 400
+eval_freq = 150  # 300  # 400 statestate = env.reset().observation = env.reset().observation
 change_env_freq = 5
 
 mean_rw_history = []
@@ -172,7 +179,7 @@ initial_state_v_history = []
 step = 0
 
 init_epsilon = 1
-final_epsilon = 0.18
+final_epsilon = 0.1
 
 env = np.random.choice(env_list, size=1)[0]
 state = env.reset().observation
@@ -190,10 +197,13 @@ with trange(step, total_steps + 1) as progress_bar:
             state = env.reset().observation
 
         if loss is not None:
-            writer.add_scalar("TD_loss #" + str(number), loss.data.cpu().item(), step)
+            writer.add_scalar("TD_loss #simu_number = " + str(number) + "| batch_size = " + str(batch_size)
+                              + "| refresh_target = " + str(refresh_target) + " |total_steps = " + str(total_steps)
+                              + "| decay steps = " + str(decay_steps) + "| buffer_size = " + str(args.buffer_size),
+                              loss.data.cpu().item(), step)
             # grad_norm_history.append(grad_norm.data.cpu().item())
 
-        if step % refresh_target_network_freq == 0 and iteration > batch_size:
+        if step % refresh_target == 0 and iteration > batch_size:
             print("copy parameters from agent to target")
             agent.update_target_network()
             state = env.reset().observation
@@ -216,7 +226,7 @@ with trange(step, total_steps + 1) as progress_bar:
 
             initial_state_q_values = agent.get_qvalues(env.reset().observation)
             writer.add_scalar("size of replay buffer # " + str(number), cash.buffer_len(), step)
-
+            writer.add_scalar("epsilon change # " + str(number), agent.epsilon, step)
 writer.flush()
 
 PATH = './models/'
