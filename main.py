@@ -33,10 +33,6 @@ def get_learn_freq(_cash):
 def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, n_steps=1000):
     global iteration
     s = initial_state
-    s[0] = s[0] / x_max
-    s[1] = s[1] / y_max
-    s[2] = s[2] / v_x_max
-    s[3] = s[3] / v_y_max
 
     sum_rewards = 0
     loss = None
@@ -121,7 +117,7 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
 def get_envs(size):
     env_list_ = []
     dim = 0
-    for i in [0, size // 2]:
+    for i in [0, size // 4, size // 2, 3 * size // 4]:
         env_i, dim = make_env(
             episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=i
         )
@@ -140,7 +136,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
-parser.add_argument('--type_task', type=int, default=3, help='type of task. now available 1 and 2')
+parser.add_argument('--type_task', type=int, default=3, help='type of task. now available 1, 2, 3')
 parser.add_argument('--algo', type=str, default='ddqn', help='type agent, dqn or ddqn available')
 parser.add_argument('--trajectory', type=str, default='circle', help='trajectory for agent')
 args = parser.parse_args()
@@ -167,7 +163,7 @@ agent = DeepQLearningAgent(state_dim,
 # loss_freq = 250  # 300 # 300
 refresh_target_network_freq = 800  # 350 # 400
 eval_freq = 200  # 300  # 400statestate = env.reset().observation = env.reset().observation
-change_env_freq = 2
+change_env_freq = 5
 
 mean_rw_history = []
 td_loss_history = []
@@ -189,8 +185,9 @@ with trange(step, total_steps + 1) as progress_bar:
         # play 1 episode and push to replay buffer
         _, state, loss = play_and_record(state, agent, env, cash, timeout, timesteps_per_epoch)
 
-        env = env_list[step % 2]
-        state = env.reset().observation
+        if step % change_env_freq:
+            env = np.random.choice(env_list, size=1)[0]
+            state = env.reset().observation
 
         if loss is not None:
             writer.add_scalar("TD_loss #" + str(number), loss.data.cpu().item(), step)
