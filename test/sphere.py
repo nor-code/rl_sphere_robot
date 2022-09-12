@@ -22,8 +22,8 @@ agent = DeepQLearningAgent(state_dim=4,
                            gamma=0.99,
                            device='cpu',
                            algo='ddqn')
-
-agent.q_network.load_state_dict(torch.load('../models/name2.pt', map_location=torch.device('cpu')))
+#
+agent.q_network.load_state_dict(torch.load('../models/circle_ddqn.pt', map_location=torch.device('cpu')))
 agent.eval()
 
 def action_policy(time_step):
@@ -38,20 +38,23 @@ def action_policy(time_step):
     V.append(observation[2])
     U.append(observation[3])
 
-    if i < 200:
-        # return [0, 0.33]
-        q = agent.get_qvalues(observation)
-        index = agent.sample_actions(q)
-        print(index)
-        action = agent.index_to_pair[index]
-        return action
-    else:
-        return [-0.22, 0.31]
+    q = agent.get_qvalues([observation])
+    index = q.argmax(axis=-1)[0]
+    print(index)
+    action = agent.index_to_pair[index]
+    return action
+
+    # if i < 200:
+    #     return [0.2205, 0.20]
+    #
+    # else:
+    #     return [-0.22, 0.31]
 
 
-env = make_env(type_task=-1, trajectory='curve', begin_index_=0)[0]
+env = make_env(episode_timeout=50, type_task=-1, trajectory='curve', begin_index_=0)[0]
 app = application.Application()
 app.launch(env, policy=action_policy)
+
 
 traj = plt.figure().add_subplot()
 traj.plot(pos[:, 0][1:], pos[:, 1][1:], label="trajectory")
@@ -59,4 +62,8 @@ traj.plot(circle()[0], circle()[1], label="desired_trajectory")
 traj.quiver(pos[:, 0][1:], pos[:, 1][1:], V, U, color=['r', 'b', 'g'], angles='xy', width=0.002)
 traj.set_xlabel('x')
 traj.set_ylabel('y')
+
+print("V_max = ", max(V))
+print("U_max = ", max(U))
+print("count iteration: i = ", i)
 plt.show()

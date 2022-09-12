@@ -18,16 +18,26 @@ from utils.utils import build_trajectory
 
 iteration = 0
 
+x_max = 1.15
+y_max = 2.15
+v_x_max = 0.250
+v_y_max = 0.190
+
 
 def get_learn_freq(_cash):
     if _cash.buffer_len() >= _cash.get_maxsize():
-        return 512
+        return 256
     return 512
 
 
 def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, n_steps=1000):
     global iteration
     s = initial_state
+    s[0] = s[0] / x_max
+    s[1] = s[1] / y_max
+    s[2] = s[2] / v_x_max
+    s[3] = s[3] / v_y_max
+
     sum_rewards = 0
     loss = None
 
@@ -54,6 +64,12 @@ def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, 
             break
 
         sum_rewards += _time_step.reward
+
+        state[0] = state[0] / x_max
+        state[1] = state[1] / y_max
+        state[2] = state[2] / v_x_max
+        state[3] = state[3] / v_y_max
+
         cash.add(s, action_idx, _time_step.reward, state, is_done)
 
         if iteration > _agent.batch_size and iteration % get_learn_freq(_cash) == 0:
@@ -134,12 +150,12 @@ number = args.simu_number
 writer = SummaryWriter()
 timeout = 50
 env_list, state_dim = get_envs(get_size())
-cash = ReplayBuffer(4_000_000)
+cash = ReplayBuffer(1_500_000)
 
 timesteps_per_epoch = 2000
 batch_size = 4 * 2048
-total_steps = 36 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
-decay_steps = 36 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+total_steps = 25 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
+decay_steps = 25 * 10 ** 4  # 40 * 10 ** 4 name1 # 10 ** 4
 
 agent = DeepQLearningAgent(state_dim,
                            batch_size=batch_size,
@@ -173,9 +189,8 @@ with trange(step, total_steps + 1) as progress_bar:
         # play 1 episode and push to replay buffer
         _, state, loss = play_and_record(state, agent, env, cash, timeout, timesteps_per_epoch)
 
-        if step % change_env_freq:
-            env = np.random.choice(env_list, size=1)[0]
-            state = env.reset().observation
+        env = env_list[step % 2]
+        state = env.reset().observation
 
         if loss is not None:
             writer.add_scalar("TD_loss #" + str(number), loss.data.cpu().item(), step)
