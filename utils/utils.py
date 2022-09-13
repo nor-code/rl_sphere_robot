@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from dm_control.rl.control import PhysicsError
 
-x_max = 1.15
-y_max = 2.15
-v_x_max = 0.250
-v_y_max = 0.190
+# x_max = 1.15
+# y_max = 2.15
+# v_x_max = 0.250
+# v_y_max = 0.190
 
 def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=None, type_task=None):
 
@@ -27,10 +27,10 @@ def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=No
     total_reward = 0
     time_step = env.reset()
     prev_time = env.physics.data.time
-    s = time_step.observation
+    # s = time_step.observation
     # frames = []
     while env.physics.data.time < timeout:
-        qvalues = agent.get_qvalues([s])
+        qvalues = agent.get_qvalues([observation])
         action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
         actions = np.append(actions, action)
 
@@ -48,10 +48,10 @@ def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=No
         prev_time = env.physics.data.time
 
         observation = time_step.observation
-        s[0] = observation[0] / x_max
-        s[1] = observation[1] / y_max
-        s[2] = observation[2] / v_x_max
-        s[3] = observation[3] / v_y_max
+        # s[0] = observation[0] / x_max
+        # s[1] = observation[1] / y_max
+        # s[2] = observation[2] / v_x_max
+        # s[3] = observation[3] / v_y_max
         if type_task == 1:
             V.append(observation[2])
             U.append(observation[3])

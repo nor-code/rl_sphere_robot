@@ -23,7 +23,7 @@ agent = DeepQLearningAgent(state_dim=4,
                            device='cpu',
                            algo='ddqn')
 #
-agent.q_network.load_state_dict(torch.load('../models/name1.pt', map_location=torch.device('cpu')))
+agent.q_network.load_state_dict(torch.load('../models/model_3/name1.pt', map_location=torch.device('cpu')))
 agent.eval()
 
 def action_policy(time_step):
@@ -51,7 +51,7 @@ def action_policy(time_step):
     #     return [-0.22, 0.31]
 
 
-env = make_env(episode_timeout=50, type_task=-1, trajectory='curve', begin_index_=0)[0]
+env = make_env(episode_timeout=50, type_task=-1, trajectory='circle', begin_index_=0)[0]
 app = application.Application()
 app.launch(env, policy=action_policy)
 

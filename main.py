@@ -18,10 +18,10 @@ from utils.utils import build_trajectory
 
 iteration = 0
 
-x_max = 1.15
-y_max = 2.15
-v_x_max = 0.250
-v_y_max = 0.190
+# x_max = 1.15
+# y_max = 2.15
+# v_x_max = 0.250
+# v_y_max = 0.190
 
 
 def get_learn_freq(_cash):
@@ -61,10 +61,10 @@ def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, 
 
         sum_rewards += _time_step.reward
 
-        state[0] = state[0] / x_max
-        state[1] = state[1] / y_max
-        state[2] = state[2] / v_x_max
-        state[3] = state[3] / v_y_max
+        # state[0] = state[0] / x_max
+        # state[1] = state[1] / y_max
+        # state[2] = state[2] / v_x_max
+        # state[3] = state[3] / v_y_max
 
         cash.add(s, action_idx, _time_step.reward, state, is_done)
 
@@ -117,7 +117,7 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
 def get_envs(size):
     env_list_ = []
     dim = 0
-    for i in [0]:
+    for i in [0, size//5, (2 * size) // 5, (3 * size) // 5, (4 * size)//5]:
         env_i, dim = make_env(
             episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=i
         )
@@ -169,8 +169,8 @@ agent = DeepQLearningAgent(state_dim,
 
 # loss_freq = 250  # 300 # 300
 refresh_target = args.refresh_target  # 1200  # 350 # 400
-eval_freq = 150  # 300  # 400 statestate = env.reset().observation = env.reset().observation
-change_env_freq = 5
+eval_freq = 200  # 300  # 400 statestate = env.reset().observation = env.reset().observation
+change_env_freq = 6
 
 mean_rw_history = []
 td_loss_history = []
