@@ -171,7 +171,7 @@ agent = DeepQLearningAgent(state_dim,
 # loss_freq = 250  # 300 # 300
 refresh_target = args.refresh_target  # 1200  # 350 # 400
 eval_freq = 200  # 300  # 400 statestate = env.reset().observation = env.reset().observation
-change_env_freq = 6
+change_env_freq = 3
 
 mean_rw_history = []
 td_loss_history = []
