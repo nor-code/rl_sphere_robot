@@ -27,7 +27,7 @@ def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=No
     total_reward = 0
     time_step = env.reset()
     prev_time = env.physics.data.time
-    # s = time_step.observation
+    observation = time_step.observation
     # frames = []
     while env.physics.data.time < timeout:
         qvalues = agent.get_qvalues([observation])
