@@ -117,7 +117,7 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
 def get_envs(size):
     env_list_ = []
     dim = 0
-    for i in [0, size//5, (2 * size) // 5, (3 * size) // 5, (4 * size)//5]:
+    for i in [0, size//7, (2 * size) // 7, (3 * size) // 7, (4 * size) // 7, (5 * size) // 7, (6 * size) // 7]:
         env_i, dim = make_env(
             episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=i
         )
@@ -132,6 +132,7 @@ def get_size():
         return 30
 
 
+np.random.seed(42)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN Spherical Robot')
@@ -155,7 +156,7 @@ timeout = 80
 env_list, state_dim = get_envs(get_size())
 cash = ReplayBuffer(args.buffer_size)
 
-timesteps_per_epoch = 2000
+timesteps_per_epoch = 3000
 batch_size = args.batch_size
 total_steps = args.total_steps  # 40 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
 decay_steps = args.decay_steps  # 25 * 10 ** 4  # 40 * 10 ** 4 name1 # 10 ** 4

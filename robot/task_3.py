@@ -65,7 +65,7 @@ class TrakingTrajectoryTask3(base.Task):
         # координаты центра колеса
         x, y, z = physics.named.data.geom_xpos['wheel_']
         # вектор скорости в абс системе координат
-        v_x, v_y, v_z = physics.named.data.sensordata['sphere_vel']
+        v_x, v_y, v_z = physics.named.data.sensordata['wheel_vel']
         self.state = [x, y, v_x, v_y]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
@@ -105,7 +105,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         x, y = np.dot(M, [x, y])
 
-        if (not is_belong_rectangle(x, y, (len_PC / 2) + 0.05, 0.05)) or self.current_dist > self.prev_dist:
+        if (not is_belong_rectangle(x, y, (len_PC / 2) + 0.04, 0.04)) or self.current_dist > self.prev_dist:
             return True
 
         return False
@@ -115,21 +115,21 @@ class TrakingTrajectoryTask3(base.Task):
 
         self.current_dist = self.__distance_to_current_point(x, y)
 
-        if self.current_dist < 0.05:
+        if self.current_dist < 0.04:
             self.prev_point = self.current_point
             self.current_point = self.get_next_point(self.points)
 
             self.achievedPoints += 1
             if len(self.points) == self.achievedPoints:
                 print("FINAL. init index of point = ", self.begin_index)
-                return 100
+                # return 100
 
             self.prev_dist = self.current_dist = self.__distance_to_current_point(x, y)
             return 10
 
         if self.is_invalid_state():
             self.count_invalid_states += 1
-            return -50
+            return -10  # -50
 
         if self.achievedPoints > 1:
             print("count achieved points = ", self.achievedPoints,
@@ -138,7 +138,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         PC = TrakingTrajectoryTask3.vector(self.prev_point, self.current_point)
 
-        reward = self.achievedPoints + np.linalg.norm(PC) / self.current_dist
+        reward = np.linalg.norm(PC) / self.current_dist  # self.achievedPoints + np.linalg.norm(PC) / self.current_dist
         self.prev_dist = self.current_dist
         return reward
 

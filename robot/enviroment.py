@@ -90,7 +90,9 @@ def get_string_xml(roll_angle):
             <jointpos name="fork_wheel_angle" joint="fork_with_platform"/> <!-- угол поворота колеса -->
 
             <subtreelinvel name="sphere_vel" body="shell"/>
-
+            
+            <subtreelinvel name="wheel_vel" body="wheel"/>
+            
             <accelerometer name="imu_accel" site="mpu9250"/>
             <gyro name="imu_gyro" site="mpu9250"/>
         </sensor>
@@ -156,4 +158,4 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
         state_dim = 4  # x y v_x v_y
         task = MockTask(trajectory_function=trajectory_fun, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=50), state_dim
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=25), state_dim

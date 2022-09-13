@@ -27,3 +27,7 @@ step = 0
 
 init_epsilon = 1
 final_epsilon = 0.18
+
+n_sub_steps=50
+
+delta = 0.05

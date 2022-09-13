@@ -1,0 +1,25 @@
+nohup python3 main.py
+            --simu_number=2
+            --type_task=3
+            --algo=ddqn
+            --trajectory=circle
+            --buffer_size=3000000
+            --batch_size=8192
+            --refresh_target=750
+            --total_steps=500000
+            --decay_steps=380000 > out2.log &
+
+
+self.q_network = nn.Sequential(
+        nn.Linear(state_dim, 1024),
+        nn.LeakyReLU(),
+        nn.Linear(1024, 2048),
+        nn.LeakyReLU(),
+        nn.Linear(2048, 1024),
+        nn.LeakyReLU(),
+        nn.Linear(1024, self.action_count)
+    )
+
+n_sub_steps=50
+
+delta = 0.05
