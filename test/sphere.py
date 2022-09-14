@@ -51,7 +51,7 @@ def action_policy(time_step):
     #     return [-0.22, 0.31]
 
 
-env = make_env(episode_timeout=50, type_task=-1, trajectory='circle', begin_index_=0)[0]
+env = make_env(episode_timeout=50, type_task=-1, trajectory='circle', begin_index_=17)[0]
 app = application.Application()
 app.launch(env, policy=action_policy)
 

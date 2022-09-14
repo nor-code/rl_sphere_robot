@@ -113,6 +113,12 @@ def circle():
     y_ = [- np.cos(t_) + 1 for t_ in t]
     return x_, y_
 
+# def circle():
+#     t = np.linspace(0, 2 * np.pi, 30)
+#     x_ = [0.7 * np.sin(t_) for t_ in t]
+#     y_ = [- 0.7 * np.cos(t_) + 0.7 for t_ in t]
+#     return x_, y_
+
 
 def determine_trajectory(type):
     if type == 'circle':

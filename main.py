@@ -26,8 +26,8 @@ iteration = 0
 
 def get_learn_freq(_cash):
     if _cash.buffer_len() >= _cash.get_maxsize():
-        return 512
-    return 512
+        return 256
+    return 256
 
 
 def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, n_steps=1000):
@@ -117,7 +117,7 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
 def get_envs(size):
     env_list_ = []
     dim = 0
-    for i in [0, size//7, (2 * size) // 7, (3 * size) // 7, (4 * size) // 7, (5 * size) // 7, (6 * size) // 7]:
+    for i in [0, size//8, size // 4, (3 * size) // 8, size // 2, (5 * size) // 8, (3 * size) // 4, (7 * size) // 8]:
         env_i, dim = make_env(
             episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=i
         )
@@ -171,7 +171,7 @@ agent = DeepQLearningAgent(state_dim,
 # loss_freq = 250  # 300 # 300
 refresh_target = args.refresh_target  # 1200  # 350 # 400
 eval_freq = 200  # 300  # 400 statestate = env.reset().observation = env.reset().observation
-change_env_freq = 3
+change_env_freq = 1
 
 mean_rw_history = []
 td_loss_history = []
