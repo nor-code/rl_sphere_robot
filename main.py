@@ -193,9 +193,12 @@ with trange(step, total_steps + 1) as progress_bar:
         # play 1 episode and push to replay buffer
         _, state, loss = play_and_record(state, agent, env, cash, timeout, timesteps_per_epoch)
 
-        if step % change_env_freq:
-            env = np.random.choice(env_list, size=1)[0]
-            state = env.reset().observation
+        # if step % change_env_freq:
+        #     env = np.random.choice(env_list, size=1)[0]
+        #     state = env.reset().observation
+
+        env = env_list[step % len(env_list)]
+        state = env.reset().observation
 
         if loss is not None:
             writer.add_scalar("TD_loss #simu_number = " + str(number) + "| batch_size = " + str(batch_size)
