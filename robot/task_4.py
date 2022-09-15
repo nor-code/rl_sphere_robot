@@ -6,7 +6,7 @@ def is_belong_rectangle(x, y, a, b):
     return (-a <= x) and (x <= a) and (-b <= y) and (y <= b)
 
 
-class TrakingTrajectoryTask3(base.Task):
+class TrakingTrajectoryTask4(base.Task):
 
     def __init__(self, trajectory_function, begin_index, timeout, random=None):
         """тайм-аут одного эпизода"""
@@ -70,7 +70,7 @@ class TrakingTrajectoryTask3(base.Task):
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 1\
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 6 \
                 or len(self.points) == self.achievedPoints:
             return 0.0
 
@@ -86,28 +86,12 @@ class TrakingTrajectoryTask3(base.Task):
 
     def is_invalid_state(self):
         x, y, _, _ = self.state
-        PC = TrakingTrajectoryTask3.vector(self.prev_point, self.current_point)
+        PC = TrakingTrajectoryTask4.vector(self.prev_point, self.current_point)
+        PO = TrakingTrajectoryTask4.vector(self.prev_point, np.array([x, y]))
 
-        x_center = self.prev_point[0] + (self.current_point[0] - self.prev_point[0]) / 2
-        y_center = self.prev_point[1] + (self.current_point[1] - self.prev_point[1]) / 2
-
-        len_PC = np.linalg.norm(PC)
-
-        cos_a = np.dot(PC, [1, 0]) / len_PC
-        a = np.arccos(cos_a)
-        if np.dot(PC, [0, 1]) < 0:
-            a = 2 * np.pi - a
-
-        M = np.array([[np.cos(a), np.sin(a)], [-np.sin(a), np.cos(a)]])  # от Ox'y' -> Oxy
-
-        x -= x_center
-        y -= y_center
-
-        x, y = np.dot(M, [x, y])
-
-        if (not is_belong_rectangle(x, y, (len_PC / 2) + 0.06, 0.06)) or self.current_dist > self.prev_dist:
+        if PO > PC or self.current_dist > self.prev_dist:
+            self.current_dist = self.__distance_to_current_point(x, y)
             return True
-
         return False
 
     def get_reward(self, physics):
@@ -131,12 +115,17 @@ class TrakingTrajectoryTask3(base.Task):
             self.count_invalid_states += 1
             return -10  # -50
 
-        if self.achievedPoints > 1:
+        if self.count_invalid_states > 1:
+            self.count_invalid_states = 0
+            print("back to the road, init index of point = ", self.begin_index,
+                  "achieved points = ", self.achievedPoints)
+
+        if self.achievedPoints > 3:
             print("count achieved points = ", self.achievedPoints,
                   " time = ", physics.data.time,
                   " init index of point = ", self.begin_index)
 
-        PC = TrakingTrajectoryTask3.vector(self.prev_point, self.current_point)
+        PC = TrakingTrajectoryTask4.vector(self.prev_point, self.current_point)
 
         reward = np.linalg.norm(PC) / self.current_dist  # self.achievedPoints + np.linalg.norm(PC) / self.current_dist
         self.prev_dist = self.current_dist
@@ -149,5 +138,5 @@ class TrakingTrajectoryTask3(base.Task):
         self.current_index += 1
         self.current_index %= len(points)
         if self.current_index == self.begin_index:
-            return None
+            return points[self.begin_index]
         return points[self.current_index]

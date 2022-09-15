@@ -26,7 +26,7 @@ iteration = 0
 
 def get_learn_freq(_cash):
     if _cash.buffer_len() >= _cash.get_maxsize():
-        return 256
+        return 128
     return 256
 
 
@@ -127,7 +127,7 @@ def get_envs(size):
 
 def get_size():
     if args.trajectory == 'circle':
-        return 30
+        return 20
     elif args.trajectory == 'curve':
         return 30
 
@@ -137,7 +137,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
-parser.add_argument('--type_task', type=int, default=3, help='type of task. now available 1, 2, 3')
+parser.add_argument('--type_task', type=int, default=4, help='type of task. now available 1, 2, 3')
 parser.add_argument('--algo', type=str, default='ddqn', help='type agent, dqn or ddqn available')
 parser.add_argument('--trajectory', type=str, default='circle', help='trajectory for agent')
 parser.add_argument('--buffer_size', type=int, default=10**4, help='size of buffer')
@@ -152,11 +152,11 @@ print("buffer size = ", args.buffer_size)
 
 number = args.simu_number
 writer = SummaryWriter()
-timeout = 80
+timeout = 50
 env_list, state_dim = get_envs(get_size())
 cash = ReplayBuffer(args.buffer_size)
 
-timesteps_per_epoch = 3000
+timesteps_per_epoch = 1100
 batch_size = args.batch_size
 total_steps = args.total_steps  # 40 * 10 ** 4  # 40 * 10 ** 4  # 10 ** 4
 decay_steps = args.decay_steps  # 25 * 10 ** 4  # 40 * 10 ** 4 name1 # 10 ** 4

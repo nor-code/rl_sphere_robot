@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 # от Ox'y' -> Oxy
-t = np.linspace(0, 2 * np.pi, 30)
+t = np.linspace(0, 2 * np.pi, 20)
 x_ = [np.sin(t_) for t_ in t]
 y_ = [- np.cos(t_) + 1 for t_ in t]
 

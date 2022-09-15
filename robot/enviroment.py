@@ -8,6 +8,7 @@ from robot.model import RobotPhysics
 from robot.task_1 import TrakingTrajectoryTask1
 from robot.task_2 import TrakingTrajectoryTask2
 from robot.task_3 import TrakingTrajectoryTask3
+from robot.task_4 import TrakingTrajectoryTask4
 
 
 def get_string_xml(roll_angle):
@@ -108,7 +109,7 @@ def curve():
 
 
 def circle():
-    t = np.linspace(0, 2 * np.pi, 30)
+    t = np.linspace(0, 2 * np.pi, 20)
     x_ = [np.sin(t_) for t_ in t]
     y_ = [- np.cos(t_) + 1 for t_ in t]
     return x_, y_
@@ -160,8 +161,12 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
         state_dim = 4  # x y v_x v_y
         task = TrakingTrajectoryTask3(trajectory_function=trajectory_fun, begin_index=begin_index_,
                                       timeout=episode_timeout)
+    elif type_task == 4:
+        state_dim = 4  # x y v_x v_y
+        task = TrakingTrajectoryTask4(trajectory_function=trajectory_fun, begin_index=begin_index_,
+                                      timeout=episode_timeout)
     else:
         state_dim = 4  # x y v_x v_y
         task = MockTask(trajectory_function=trajectory_fun, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=25), state_dim
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20), state_dim
