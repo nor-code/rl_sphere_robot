@@ -180,7 +180,7 @@ initial_state_v_history = []
 step = 0
 
 init_epsilon = 1
-final_epsilon = 0.1
+final_epsilon = 0
 
 env = np.random.choice(env_list, size=1)[0]
 state = env.reset().observation
