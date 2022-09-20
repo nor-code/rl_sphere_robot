@@ -25,9 +25,9 @@ iteration = 0
 
 
 def get_learn_freq(_cash):
-    if _cash.buffer_len() >= _cash.get_maxsize():
+    if _cash.buffer_len() >= _cash.get_maxsize() / 2:
         return 128
-    return 256
+    return 512
 
 
 def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, n_steps=1000):
@@ -127,7 +127,7 @@ def get_envs(size):
 
 def get_size():
     if args.trajectory == 'circle':
-        return 20
+        return 25
     elif args.trajectory == 'curve':
         return 30
 
@@ -137,7 +137,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
-parser.add_argument('--type_task', type=int, default=4, help='type of task. now available 1, 2, 3')
+parser.add_argument('--type_task', type=int, default=3, help='type of task. now available 1, 2, 3')
 parser.add_argument('--algo', type=str, default='ddqn', help='type agent, dqn or ddqn available')
 parser.add_argument('--trajectory', type=str, default='circle', help='trajectory for agent')
 parser.add_argument('--buffer_size', type=int, default=10**4, help='size of buffer')

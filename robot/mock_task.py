@@ -61,8 +61,12 @@ class MockTask(base.Task):
         # координаты центра колеса
         x, y, z = physics.named.data.geom_xpos['wheel_']
         # вектор скорости в абс системе координат
-        v_x, v_y, v_z = physics.named.data.sensordata['sphere_vel']
-        self.state = [x, y, v_x, v_y]
+        v_x, v_y, v_z = physics.named.data.sensordata['wheel_vel']
+
+        w_x, w_y, w_z = physics.named.data.sensordata['sphere_angular_vel']
+        print("w_x = ", w_x, " w_y = ", w_y, " w_z = ", w_z)
+
+        self.state = [x, y, v_x, v_y, physics.data.time]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_reward(self, physics):

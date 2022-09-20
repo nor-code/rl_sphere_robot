@@ -8,6 +8,8 @@ from dm_control.rl.control import PhysicsError
 # y_max = 2.15
 # v_x_max = 0.250
 # v_y_max = 0.190
+from dm_env import StepType
+
 
 def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=None, type_task=None):
 
@@ -40,7 +42,7 @@ def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=No
             print("physicx error  time = ", prev_time)
             break
 
-        if time_step.reward is None:
+        if time_step.reward is None or time_step.step_type == StepType.LAST:
             # print("reward is None ! time = ", prev_time)
             break
 

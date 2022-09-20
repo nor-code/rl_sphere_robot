@@ -3,7 +3,7 @@ from dm_control.suite import base
 
 
 def is_belong_rectangle(x, y, a, b):
-    return (-a <= x) and (x <= a) and (-b <= y) and (y <= b)
+    return (-a - 0.05 <= x) and (x <= a) and (-b <= y) and (y <= b)
 
 
 class TrakingTrajectoryTask3(base.Task):
@@ -66,7 +66,12 @@ class TrakingTrajectoryTask3(base.Task):
         x, y, z = physics.named.data.geom_xpos['wheel_']
         # вектор скорости в абс системе координат
         v_x, v_y, v_z = physics.named.data.sensordata['wheel_vel']
-        self.state = [x, y, v_x, v_y]
+        # угловая скорость сферической оболочки
+        w_x, w_y, w_z = physics.named.data.sensordata['sphere_angular_vel']
+        # отклонение от траектории
+        h_error = 0.0 if self.begin_index == self.current_index else self.get_h_error(x, y)
+
+        self.state = [x, y, v_x, v_y, w_x, w_y, w_z, self.current_point[0], self.current_point[1], h_error]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
@@ -84,19 +89,36 @@ class TrakingTrajectoryTask3(base.Task):
         """
         return [pointB[0] - pointA[0], pointB[1] - pointA[1]]
 
+    def get_angle(self, PC, len_PC):
+        cos_a = np.round(np.dot(PC, [1, 0]) / len_PC, 6)
+        a = np.arccos(cos_a)
+        if np.dot(PC, [0, 1]) < 0:
+            a = 2 * np.pi - a
+        return a
+
+    def get_angle_between_2_vector(self, v1, v2, len_v1, len_v2):
+        cos = np.round(np.dot(v1, v2) / (len_v1 * len_v2), 6)
+        return np.arccos(cos)
+
+    def get_h_error(self, x, y):
+        PO = TrakingTrajectoryTask3.vector(self.prev_point, np.array([x, y]))
+        PC = TrakingTrajectoryTask3.vector(self.prev_point, self.current_point)
+        len_PO = np.linalg.norm(PO)
+        len_PC = np.linalg.norm(PC)
+
+        angle_PO_PC = self.get_angle_between_2_vector(PO, PC, len_PC, len_PO)
+        return len_PO * np.sin(angle_PO_PC)
+
+
     def is_invalid_state(self):
-        x, y, _, _ = self.state
+        x, y, _, _, _, _, _, _, _, _ = self.state
         PC = TrakingTrajectoryTask3.vector(self.prev_point, self.current_point)
 
         x_center = self.prev_point[0] + (self.current_point[0] - self.prev_point[0]) / 2
         y_center = self.prev_point[1] + (self.current_point[1] - self.prev_point[1]) / 2
 
         len_PC = np.linalg.norm(PC)
-
-        cos_a = np.dot(PC, [1, 0]) / len_PC
-        a = np.arccos(cos_a)
-        if np.dot(PC, [0, 1]) < 0:
-            a = 2 * np.pi - a
+        a = self.get_angle(PC, len_PC)
 
         M = np.array([[np.cos(a), np.sin(a)], [-np.sin(a), np.cos(a)]])  # от Ox'y' -> Oxy
 
@@ -105,17 +127,17 @@ class TrakingTrajectoryTask3(base.Task):
 
         x, y = np.dot(M, [x, y])
 
-        if (not is_belong_rectangle(x, y, (len_PC / 2) + 0.06, 0.06)) or self.current_dist > self.prev_dist:
+        if (not is_belong_rectangle(x, y, (len_PC / 2), 0.05)) or self.current_dist > self.prev_dist:
             return True
 
         return False
 
     def get_reward(self, physics):
-        x, y, _, _ = self.state
+        x, y, _, _, _, _, _, _, _, _ = self.state
 
         self.current_dist = self.__distance_to_current_point(x, y)
 
-        if self.current_dist < 0.06:
+        if self.current_dist < 0.035:
             self.prev_point = self.current_point
             self.current_point = self.get_next_point(self.points)
 
@@ -131,14 +153,18 @@ class TrakingTrajectoryTask3(base.Task):
             self.count_invalid_states += 1
             return -10  # -50
 
-        if self.achievedPoints > 1:
+        if self.achievedPoints > 3:
             print("count achieved points = ", self.achievedPoints,
                   " time = ", physics.data.time,
                   " init index of point = ", self.begin_index)
 
         PC = TrakingTrajectoryTask3.vector(self.prev_point, self.current_point)
+        len_PC = np.linalg.norm(PC)
 
-        reward = np.linalg.norm(PC) / self.current_dist  # self.achievedPoints + np.linalg.norm(PC) / self.current_dist
+        h_error = self.get_h_error(x, y)
+        dh = 0.05 - h_error
+
+        reward = (len_PC / self.current_dist) - 0.75 * (0.05 / dh)  # self.achievedPoints + np.linalg.norm(PC) / self.current_dist
         self.prev_dist = self.current_dist
         return reward
 

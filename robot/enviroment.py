@@ -94,6 +94,8 @@ def get_string_xml(roll_angle):
             
             <subtreelinvel name="wheel_vel" body="wheel"/>
             
+            <frameangvel name="sphere_angular_vel" objtype="geom" objname="sphere_shell"/>
+            
             <accelerometer name="imu_accel" site="mpu9250"/>
             <gyro name="imu_gyro" site="mpu9250"/>
         </sensor>
@@ -109,7 +111,7 @@ def curve():
 
 
 def circle():
-    t = np.linspace(0, 2 * np.pi, 20)
+    t = np.linspace(0, 2 * np.pi, 25)
     x_ = [np.sin(t_) for t_ in t]
     y_ = [- np.cos(t_) + 1 for t_ in t]
     return x_, y_
@@ -158,7 +160,7 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
         task = TrakingTrajectoryTask2(trajectory_function=trajectory_fun, begin_index=begin_index_,
                                       timeout=episode_timeout)
     elif type_task == 3:
-        state_dim = 4  # x y v_x v_y
+        state_dim = 10  # x y v_x v_y
         task = TrakingTrajectoryTask3(trajectory_function=trajectory_fun, begin_index=begin_index_,
                                       timeout=episode_timeout)
     elif type_task == 4:
