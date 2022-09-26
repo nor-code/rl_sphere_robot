@@ -57,7 +57,7 @@ class TrakingTrajectoryTask3(base.Task):
 
         self.prev_dist = self.current_dist = 0
 
-        self.state = [0, 0, 0, 0]
+        self.state = [self.current_point[0], self.current_point[1], 0, 0, 0, 0, 0, self.current_point[0], self.current_point[1], 0]
 
         super().initialize_episode(physics)
 

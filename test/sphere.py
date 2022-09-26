@@ -16,14 +16,14 @@ U = []
 #     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
 #     return action
 #
-agent = DeepQLearningAgent(state_dim=4,
+agent = DeepQLearningAgent(state_dim=26,
                            batch_size=1,
                            epsilon=0,
                            gamma=0.99,
                            device='cpu',
                            algo='ddqn')
 #
-agent.q_network.load_state_dict(torch.load('../models/circle_ddqn.pt', map_location=torch.device('cpu')))
+agent.q_network.load_state_dict(torch.load('../models/name3.pt', map_location=torch.device('cpu')))
 agent.eval()
 
 final_time = 0
@@ -40,7 +40,7 @@ def action_policy(time_step):
     V.append(observation[2])
     U.append(observation[3])
 
-    q = agent.get_qvalues([observation[:4]])
+    q = agent.get_qvalues([observation])
     index = q.argmax(axis=-1)[0]
     print(index)
     action = agent.index_to_pair[index]
@@ -55,7 +55,7 @@ def action_policy(time_step):
     #     return [-0.22, 0.31]
 
 
-env = make_env(episode_timeout=50, type_task=-1, trajectory='circle', begin_index_=0)[0]
+env = make_env(episode_timeout=50, type_task=3, trajectory='circle', begin_index_=18)[0]
 app = application.Application()
 app.launch(env, policy=action_policy)
 

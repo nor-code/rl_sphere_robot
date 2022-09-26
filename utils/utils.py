@@ -3,25 +3,18 @@ import io
 import matplotlib.pyplot as plt
 import numpy as np
 from dm_control.rl.control import PhysicsError
-
-# x_max = 1.15
-# y_max = 2.15
-# v_x_max = 0.250
-# v_y_max = 0.190
 from dm_env import StepType
 
 
 def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=None, type_task=None):
-
     if trajectory_type == 'curve':
         from robot.enviroment import curve
         trajectory_func = curve
     elif trajectory_type == 'circle':
-        from robot.enviroment import  circle
+        from robot.enviroment import circle
         trajectory_func = circle
 
     times = []
-    actions = []
     V = []
     U = []
     pos = np.array([[0, 0]])
@@ -30,11 +23,15 @@ def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=No
     time_step = env.reset()
     prev_time = env.physics.data.time
     observation = time_step.observation
-    # frames = []
+
+    t = np.linspace(0, 2 * np.pi, 20)
+    local_x_O = [0.24 * np.sin(t_) for t_ in t]
+    local_y_O = [0.24 * np.cos(t_) for t_ in t]
+    circles = np.array([local_x_O, local_y_O]).T
+
     while env.physics.data.time < timeout:
         qvalues = agent.get_qvalues([observation])
         action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
-        actions = np.append(actions, action)
 
         try:
             time_step = env.step(action=action)
@@ -50,10 +47,10 @@ def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=No
         prev_time = env.physics.data.time
 
         observation = time_step.observation
-        # s[0] = observation[0] / x_max
-        # s[1] = observation[1] / y_max
-        # s[2] = observation[2] / v_x_max
-        # s[3] = observation[3] / v_y_max
+
+        array = np.array([[x_ + observation[0] for x_ in local_x_O], [y_ + observation[1] for y_ in local_y_O]]).T
+        circles = np.append(circles, array, axis=0)
+
         if type_task == 1:
             V.append(observation[2])
             U.append(observation[3])
@@ -61,23 +58,18 @@ def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=No
 
         times.append(env.physics.data.time)
 
-        # frame = env.physics.render(camera_id=0, width=300, height=300)
-        # if env.physics.data.time > 1:
-        #     frames.append(frame)
-
-    # actions = actions.reshape(-1, 2)
-    # fig1, ax = plt.subplots(5, 1)
-    # ax[0].plot(times, pos[:, 0][1:])
-    # ax[1].plot(times, pos[:, 1][1:])
-    # ax[3].plot(times, actions[:, 0][:-1])
-    # ax[4].plot(times, actions[:, 1][:-1])
-
     figure = plt.figure(figsize=(10, 10))
     trajectory = figure.add_subplot()
     trajectory.plot(pos[:, 0][1:], pos[:, 1][1:], label="trajectory")
     trajectory.plot(trajectory_func()[0], trajectory_func()[1], label="desired_trajectory")
+
+    circles = circles[21:]
+    trajectory.plot(circles.T[0], circles.T[1], alpha=0.4)
+    trajectory.scatter(trajectory_func()[0], trajectory_func()[1], color='red', lw=0.01)
+
     if type_task == 1:
         trajectory.quiver(pos[:, 0][1:], pos[:, 1][1:], V, U, color=['r', 'b', 'g'], angles='xy', width=0.002)
+
     trajectory.set_xlabel('x, total_reward = ' + str(total_reward))
     trajectory.set_ylabel('y')
 

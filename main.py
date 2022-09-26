@@ -129,7 +129,7 @@ def get_size():
     if args.trajectory == 'circle':
         return 25
     elif args.trajectory == 'curve':
-        return 30
+        return 50
 
 
 np.random.seed(42)
@@ -137,14 +137,14 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
-parser.add_argument('--type_task', type=int, default=3, help='type of task. now available 1, 2, 3')
+parser.add_argument('--type_task', type=int, default=4, help='type of task. now available 1, 2, 3')
 parser.add_argument('--algo', type=str, default='ddqn', help='type agent, dqn or ddqn available')
 parser.add_argument('--trajectory', type=str, default='circle', help='trajectory for agent')
-parser.add_argument('--buffer_size', type=int, default=10**4, help='size of buffer')
+parser.add_argument('--buffer_size', type=int, default=10**6, help='size of buffer')
 parser.add_argument('--batch_size', type=int, default=2**10, help='batch size')
 parser.add_argument('--refresh_target', type=int, default=600, help='refresh target network')
-parser.add_argument('--total_steps', type=int, default=40*10**4, help='total_steps')
-parser.add_argument('--decay_steps', type=int, default=40*10**4, help='decay_steps')
+parser.add_argument('--total_steps', type=int, default=10**4, help='total_steps')
+parser.add_argument('--decay_steps', type=int, default=5 * 10**3, help='decay_steps')
 
 args = parser.parse_args()
 
