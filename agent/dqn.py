@@ -42,7 +42,7 @@ class DeepQLearningAgent(nn.Module):
             nn.Linear(8192, self.action_count)
         ).to(self.device)
 
-        self.optimizer = torch.optim.Adam(self.q_network.parameters(), lr=5e-3)
+        self.optimizer = torch.optim.Adam(self.q_network.parameters(), lr=1e-3, weight_decay=1e-4)
 
         self.target_network = nn.Sequential(
             nn.Linear(state_dim, 1024),
@@ -101,6 +101,7 @@ class DeepQLearningAgent(nn.Module):
         loss.backward()
         self.optimizer.step()
 
+        del current_state, next_state, rewards, done, action_index
         return loss.detach().cpu()
 
     def update_target_network(self):

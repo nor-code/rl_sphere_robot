@@ -2,27 +2,26 @@
 sudo apt update -y
 sudo apt upgrade -y
 
-# установка git
-sudo apt install git -y
+sudo apt install git mc curl -y
 
-# установка драйвера
-sudo apt install nvidia-driver-455 -y
-
-# установка conda
-sudo apt install curl -y
+# установка conda и PyTorch скомпилированный под cuda
 touch anaconda.sh
-curl https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh --output anaconda.sh
+curl https://repo.anaconda.com/archive/Anaconda3-2022.05-Linux-x86_64.sh --output anaconda.sh
 sha256sum anaconda.sh
 bash anaconda.sh
 cd $HOME
-conda install pytorch torchvision cudatoolkit=11 -c pytorch-nightly
-pip install matplotlib
-pip install numpy
-pip install tqdm
-pip install Pillow
-pip install dm_control
-
-# акстивируем анаконду
 bash ~/.bashrc
 
+conda create --name=env
+
+# установка драйвера
+sudo apt install nvidia-driver-470 -y
 reboot
+sudo apt install nvidia-cuda-toolkit -y # sudo nvidia-smi -pm 1
+export CUDA_PATH=/usr/lib/cuda # whereis cuda
+source ~/.bashrc./
+
+sudo apt install python3-pip
+sudo pip install --upgrade pip setuptools wheel
+conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch-nightly -c nvidia
+sudo pip install matplotlib numpy tqdm dm_control tensorboard

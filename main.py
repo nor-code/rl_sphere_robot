@@ -25,9 +25,9 @@ iteration = 0
 
 
 def get_learn_freq(_cash):
-    if _cash.buffer_len() >= _cash.get_maxsize() / 2:
-        return 128
-    return 512
+    if _cash.buffer_len() >= _cash.get_maxsize():
+        return 32
+    return 64
 
 
 def play_and_record(initial_state, _agent, _enviroment, _cash, episode_timeout, n_steps=1000):
@@ -127,9 +127,9 @@ def get_envs(size):
 
 def get_size():
     if args.trajectory == 'circle':
-        return 25
-    elif args.trajectory == 'curve':
         return 50
+    elif args.trajectory == 'curve':
+        return 25
 
 
 np.random.seed(42)
