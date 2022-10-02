@@ -67,11 +67,9 @@ class DeepDeterministicPolicyGradient(object):
 
     def sample_actions(self, state):
         if self.epsilon > 0:
-            platform_action = np.random.uniform(-0.22, 0.22, size=1)[0]
-            wheel_action = np.random.uniform(0.15, 0.35, size=1)[0]
-            return np.array([platform_action, wheel_action])
+            return self.select_action(state)  # with noise
         else:
-            return self.select_action(state)
+            return self.get_action(state)  # without noise
 
     def select_action(self, state):
         state = torch.tensor(state, dtype=torch.float32, device=self.device)
