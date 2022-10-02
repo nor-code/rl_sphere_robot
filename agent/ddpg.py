@@ -2,88 +2,94 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 import torch.nn as nn
+from dm_control.rl.control import PhysicsError
+from dm_env import StepType
 
 
-class Agent(object):
+class DeepDeterministicPolicyGradient(object):
     """An implementation of the Deep Deterministic Policy Gradient (DDPG) agent."""
 
     def __init__(self,
-                 env,
-                 args,
-                 device,
                  obs_dim,
+                 device,
                  act_dim,
                  act_limit,
-                 steps=0,
-                 expl_before=2000,
-                 train_after=1000,
+                 replay_buffer,
+                 writer,
                  gamma=0.99,
                  act_noise=0.3,
-                 hidden_sizes=(1024, 2048, 1024),
+                 hidden_sizes_actor=(1024, 2048, 1024),
+                 hidden_sizes_critic=(1024, 2048, 1024),
                  batch_size=1,
-                 gradient_clip_policy=0.5,
-                 gradient_clip_qf=1.0,
-                 eval_mode=False,
+                 gradient_clip_policy=0.5,  # 0.5
+                 gradient_clip_qf=1.0,  # 1.0
                  policy_losses=list(),
-                 qf_losses=list(),
-                 logger=dict(),
-                 ):
+                 qf_losses=list()):
 
-        self.env = env
-        self.args = args
         self.device = device
         self.obs_dim = obs_dim
         self.act_dim = act_dim
         self.act_limit = act_limit
-        self.steps = steps
-        self.expl_before = expl_before
-        self.train_after = train_after
+        self.replay_buffer = replay_buffer
+        self.epsilon = 1
         self.gamma = gamma
         self.act_noise = act_noise
-        self.hidden_sizes = hidden_sizes
-
+        self.hidden_sizes_critic = hidden_sizes_critic
+        self.hidden_sizes_actor = hidden_sizes_actor
+        self.writer = writer
         self.batch_size = batch_size
 
         self.gradient_clip_policy = gradient_clip_policy
         self.gradient_clip_qf = gradient_clip_qf
-        self.eval_mode = eval_mode
         self.policy_losses = policy_losses
         self.qf_losses = qf_losses
-        self.logger = logger
 
-        # Main network
+        # Main network Actor
         self.policy = MLP(self.obs_dim, self.act_dim, self.act_limit,
-                          hidden_sizes=self.hidden_sizes,
-                          output_activation=torch.tanh,
+                          hidden_sizes=self.hidden_sizes_actor,
                           use_actor=True).to(self.device)
-        self.qf = FlattenMLP(self.obs_dim + self.act_dim, 1, hidden_sizes=self.hidden_sizes).to(self.device)
+        # Critic
+        self.qf = FlattenMLP(self.obs_dim + self.act_dim, 1, hidden_sizes=self.hidden_sizes_critic).to(self.device)
+
         # Target network Actor
         self.policy_target = MLP(self.obs_dim, self.act_dim, self.act_limit,
-                                 hidden_sizes=self.hidden_sizes,
-                                 output_activation=torch.tanh,
+                                 hidden_sizes=self.hidden_sizes_actor,
                                  use_actor=True).to(self.device)
-        self.qf_target = FlattenMLP(self.obs_dim + self.act_dim, 1, hidden_sizes=self.hidden_sizes).to(self.device)
+        self.qf_target = FlattenMLP(self.obs_dim + self.act_dim, 1, hidden_sizes=self.hidden_sizes_critic).to(self.device)
 
         # Initialize target parameters to match main parameters
         self.policy_target.load_state_dict(self.policy.state_dict())
         self.qf.load_state_dict(self.qf_target.state_dict())
 
         # Create optimizers
-        self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=1e-4)
-        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=1e-3)
+        self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=1e-4, weight_decay=1e-4)
+        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=1e-3, weight_decay=1e-3)
 
+    def sample_actions(self, state):
+        if self.epsilon > 0:
+            platform_action = np.random.uniform(-0.22, 0.22, size=1)[0]
+            wheel_action = np.random.uniform(0.15, 0.35, size=1)[0]
+            return np.array([platform_action, wheel_action])
+        else:
+            return self.select_action(state)
 
-    def select_action(self, obs):
-        action = self.policy(obs).detach().cpu().numpy()
+    def select_action(self, state):
+        state = torch.tensor(state, dtype=torch.float32, device=self.device)
+        action = self.policy(state).detach().cpu().numpy()
         action += self.act_noise * np.random.randn(self.act_dim)
-        return np.clip(action, -self.act_limit, self.act_limit)
 
-    def train_model(self, replay_buffer):
-        s, action_index, r, next_s, is_done = replay_buffer.sample(self.batch_size)
+        for key in self.act_limit:
+            interval = self.act_limit[key]
+            action[key] = np.clip(action[key], interval[0], interval[1])
+
+        return action
+
+    def train_model(self):
+        s, actions, r, next_s, is_done = self.replay_buffer.sample(self.batch_size)
 
         obs1 = torch.tensor(s, device=self.device, dtype=torch.float32)
         obs2 = torch.tensor(next_s, device=self.device, dtype=torch.float32)
-        acts = torch.tensor(action_index.reshape(-1, 1), device=self.device, dtype=torch.long)
+        acts = torch.tensor(actions, device=self.device, dtype=torch.float32)
         rews = torch.tensor(r, device=self.device, dtype=torch.float32)
         done = torch.tensor(is_done.astype('float32'), device=self.device, dtype=torch.float32)
 
@@ -120,56 +126,84 @@ class Agent(object):
         self.policy_losses.append(policy_loss.item())
         self.qf_losses.append(qf_loss.item())
 
-    def run(self, max_step):
-        step_number = 0
-        total_reward = 0.
+    def get_learn_freq(self):
+        if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
+            return 32
+        return 32
 
-        obs = self.env.reset()
-        done = False
+    def play_episode(self, initial_state, enviroment, episode_timeout, n_steps, global_iteration, episode):
+        s = initial_state
+        total_reward = 0
+        for i in range(n_steps):
+            global_iteration += 1
+            action = self.sample_actions(s)
 
-        # Keep interacting until agent reaches a terminal state.
-        while not (done or step_number == max_step):
-            if self.args.render:
-                self.env.render()
+            try:
+                timestep = enviroment.step(action)
+            except PhysicsError:
+                print("поломка в физике, метод play_and_record")
+                _enviroment = enviroment.reset()
+                s = _enviroment.observation
+                break
 
-            if self.eval_mode:
-                action = self.policy(torch.Tensor(obs).to(self.device))
-                action = action.detach().cpu().numpy()
-                next_obs, reward, done, _ = self.env.step(action)
-            else:
-                self.steps += 1
+            state = timestep.observation
+            is_done = timestep.step_type == StepType.LAST or enviroment.physics.data.time > episode_timeout
 
-                # Until expl_before have elapsed, randomly sample actions
-                # from a uniform distribution for better exploration.
-                # Afterwards, use the learned policy.
-                if self.steps > self.expl_before:
-                    action = self.select_action(torch.Tensor(obs).to(self.device))
-                else:
-                    action = self.env.action_space.sample()
+            if timestep.reward is None:
+                break
 
-                # Collect experience (s, a, r, s') using some policy
-                next_obs, reward, done, _ = self.env.step(action)
+            total_reward += timestep.reward
 
-                # Add experience to replay buffer
-                self.replay_buffer.add(obs, action, reward, next_obs, done)
+            self.replay_buffer.add(s, action, timestep.reward, state, is_done)  # agent add to cash
 
-                # Start training when the number of experience is greater than train_after
-                if self.steps > self.train_after:
-                    self.train_model()
+            if global_iteration > self.batch_size and global_iteration % self.get_learn_freq() == 0:
+                self.train_model()
 
-            total_reward += reward
-            step_number += 1
-            obs = next_obs
+            if is_done:
+                _enviroment = enviroment.reset()
+                break
 
-        # Save logs
-        self.logger['LossPi'] = round(np.mean(self.policy_losses), 5)
-        self.logger['LossQ'] = round(np.mean(self.qf_losses), 5)
-        return step_number, total_reward
+            s = state
+
+        if len(self.policy_losses) > 0 and len(self.qf_losses) > 0:
+            self.writer.add_scalar("average loss actor", round(np.mean(self.policy_losses), 5), episode)
+            self.writer.add_scalar("average loss critic", round(np.mean(self.qf_losses), 5), episode)
+            self.writer.add_scalar("loss actor", self.policy_losses[-1], episode)
+            self.writer.add_scalar("loss critic", self.qf_losses[-1], episode)
+
+        return total_reward, global_iteration
+
+    def run_eval_mode(self, enviroment, episode_timeout, s, t_max):
+        reward = 0.0
+        for _ in range(t_max):
+            action = self.policy(torch.tensor(s, dtype=torch.float32, device=self.device)).detach().cpu()
+            try:
+                timestep = enviroment.step(action)
+                is_done = timestep.step_type == StepType.LAST or enviroment.physics.data.time > episode_timeout
+                if timestep.reward is None:
+                    break
+
+                reward += timestep.reward
+                if is_done:
+                    break
+            except PhysicsError:
+                print("поломка в физике, метод run_eval_mode")
+                break
+        return reward
+
+    def get_action(self, state):
+        state = torch.tensor(state, dtype=torch.float32, device=self.device)
+        return self.policy(state).detach().cpu().numpy()
 
 
 def identity(x):
     """Return input without any change."""
     return x
+
+
+def soft_target_update(main, target, tau=0.005):  # tau = 0.005
+    for main_param, target_param in zip(main.parameters(), target.parameters()):
+        target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
 
 
 """
@@ -183,7 +217,7 @@ class MLP(nn.Module):
                  output_size,
                  output_limit=1.0,
                  hidden_sizes=(64, 64),
-                 activation=F.relu,
+                 activation=F.leaky_relu,
                  output_activation=identity,
                  use_output_layer=True,
                  use_actor=False,
@@ -216,13 +250,17 @@ class MLP(nn.Module):
     def forward(self, x):
         for hidden_layer in self.hidden_layers:
             x = self.activation(hidden_layer(x))
-        x = self.output_activation(self.output_layer(x))
-        # If the network is used as actor network, make sure output is in correct range
-        x = x * self.output_limit if self.use_actor else x
+        if self.use_actor:
+            x = self.output_layer(x)
+            for key in self.output_limit:
+                interval = self.output_limit[key]
+                x[key] = ((interval[1] - interval[0])/2) * torch.tanh(x[key]) + (interval[1] + interval[0])/2
+        else:
+            x = self.output_activation(self.output_layer(x))
         return x
 
 
 class FlattenMLP(MLP):
     def forward(self, x, a):
-        q = torch.cat([x,a], dim=-1)
+        q = torch.cat([x, a], dim=-1)
         return super(FlattenMLP, self).forward(q)

@@ -30,11 +30,9 @@ def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=No
     circles = np.array([local_x_O, local_y_O]).T
 
     while env.physics.data.time < timeout:
-        qvalues = agent.get_qvalues([observation])
-        action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
-
+        action = agent.get_action(observation)
         try:
-            time_step = env.step(action=action)
+            time_step = env.step(action)
         except PhysicsError:
             print("physicx error  time = ", prev_time)
             break
