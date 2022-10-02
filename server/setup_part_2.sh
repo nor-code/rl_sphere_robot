@@ -19,4 +19,5 @@ export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so
 source ~/.bashrc
 
 # 4 обвязка на питоне для reinforcement learning
+conda activate env
 pip install dm_control
