@@ -17,7 +17,7 @@ class DeepDeterministicPolicyGradient(object):
                  replay_buffer,
                  writer,
                  gamma=0.99,
-                 act_noise=0.3,
+                 act_noise=0.11,
                  hidden_sizes_actor=(1024, 2048, 1024),
                  hidden_sizes_critic=(1024, 2048, 1024),
                  batch_size=1,
@@ -62,8 +62,8 @@ class DeepDeterministicPolicyGradient(object):
         self.qf.load_state_dict(self.qf_target.state_dict())
 
         # Create optimizers
-        self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=1e-4, weight_decay=1e-4)
-        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=1e-3, weight_decay=1e-3)
+        self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=1e-3, weight_decay=1e-4)
+        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=1e-3, weight_decay=1e-4)
 
     def sample_actions(self, state):
         if self.epsilon > 0:
@@ -107,13 +107,13 @@ class DeepDeterministicPolicyGradient(object):
         # Update policy network parameter
         self.policy_optimizer.zero_grad()
         policy_loss.backward()
-        nn.utils.clip_grad_norm_(self.policy.parameters(), self.gradient_clip_policy)
+        # nn.utils.clip_grad_norm_(self.policy.parameters(), self.gradient_clip_policy)
         self.policy_optimizer.step()
 
         # Update Q-function network parameter
         self.qf_optimizer.zero_grad()
         qf_loss.backward()
-        nn.utils.clip_grad_norm_(self.qf.parameters(), self.gradient_clip_qf)
+        # nn.utils.clip_grad_norm_(self.qf.parameters(), self.gradient_clip_qf)
         self.qf_optimizer.step()
 
         # Polyak averaging for target parameter
