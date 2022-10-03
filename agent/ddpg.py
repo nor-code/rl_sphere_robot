@@ -17,7 +17,7 @@ class DeepDeterministicPolicyGradient(object):
                  replay_buffer,
                  writer,
                  gamma=0.99,
-                 act_noise=0.11,
+                 act_noise=0.05,
                  hidden_sizes_actor=(1024, 2048, 1024),
                  hidden_sizes_critic=(1024, 2048, 1024),
                  batch_size=1,
@@ -45,15 +45,17 @@ class DeepDeterministicPolicyGradient(object):
         self.qf_losses = qf_losses
 
         # Main network Actor
-        self.policy = MLP(self.obs_dim, self.act_dim, self.act_limit,
+        self.policy = MLP(self.obs_dim, 1, self.act_limit,
                           hidden_sizes=self.hidden_sizes_actor,
+                          output_activation_actor={0: nn.Tanh(), 1: nn.Sigmoid()},
                           use_actor=True).to(self.device)
         # Critic
         self.qf = FlattenMLP(self.obs_dim + self.act_dim, 1, hidden_sizes=self.hidden_sizes_critic).to(self.device)
 
         # Target network Actor
-        self.policy_target = MLP(self.obs_dim, self.act_dim, self.act_limit,
+        self.policy_target = MLP(self.obs_dim, 1, self.act_limit,
                                  hidden_sizes=self.hidden_sizes_actor,
+                                 output_activation_actor={0: nn.Tanh(), 1: nn.Sigmoid()},
                                  use_actor=True).to(self.device)
         self.qf_target = FlattenMLP(self.obs_dim + self.act_dim, 1, hidden_sizes=self.hidden_sizes_critic).to(self.device)
 
@@ -62,8 +64,8 @@ class DeepDeterministicPolicyGradient(object):
         self.qf.load_state_dict(self.qf_target.state_dict())
 
         # Create optimizers
-        self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=1e-3, weight_decay=1e-4)
-        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=1e-3, weight_decay=1e-4)
+        self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=5e-3, weight_decay=1e-4)
+        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=7e-3, weight_decay=1e-4)
 
     def sample_actions(self, state):
         if self.epsilon > 0:
@@ -191,7 +193,9 @@ class DeepDeterministicPolicyGradient(object):
 
     def get_action(self, state):
         state = torch.tensor(state, dtype=torch.float32, device=self.device)
-        return self.policy(state).detach().cpu().numpy()
+        numpy = self.policy(state).detach().cpu().numpy()
+        print("eval = ", numpy)
+        return numpy
 
 
 def identity(x):
@@ -199,14 +203,9 @@ def identity(x):
     return x
 
 
-def soft_target_update(main, target, tau=0.005):  # tau = 0.005
+def soft_target_update(main, target, tau=0.008):  # tau = 0.005
     for main_param, target_param in zip(main.parameters(), target.parameters()):
         target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
-
-
-"""
-DQN, DDQN, A2C critic, VPG critic, TRPO critic, PPO critic, DDPG actor, TD3 actor
-"""
 
 
 class MLP(nn.Module):
@@ -217,6 +216,7 @@ class MLP(nn.Module):
                  hidden_sizes=(64, 64),
                  activation=F.leaky_relu,
                  output_activation=identity,
+                 output_activation_actor=None,
                  use_output_layer=True,
                  use_actor=False,
                  ):
@@ -230,6 +230,7 @@ class MLP(nn.Module):
         self.output_activation = output_activation
         self.use_output_layer = use_output_layer
         self.use_actor = use_actor
+        self.output_activation_actor = output_activation_actor
 
         # Set hidden layers
         self.hidden_layers = nn.ModuleList()
@@ -249,13 +250,14 @@ class MLP(nn.Module):
         for hidden_layer in self.hidden_layers:
             x = self.activation(hidden_layer(x))
         if self.use_actor:
-            x = self.output_layer(x)
-            for key in self.output_limit:
-                interval = self.output_limit[key]
-                x[key] = ((interval[1] - interval[0])/2) * torch.tanh(x[key]) + (interval[1] + interval[0])/2
+            interval_1 = self.output_limit[0]
+            platform = ((interval_1[1] - interval_1[0])/2) * self.output_activation_actor[0](self.output_layer(x)) + (interval_1[1] + interval_1[0]) / 2
+
+            interval_2 = self.output_limit[1]
+            wheel = ((interval_2[1] - interval_2[0]) / 2) * self.output_activation_actor[1](self.output_layer(x)) + (interval_2[1] + interval_2[0]) / 2
+            return torch.cat([platform, wheel], dim=-1)
         else:
-            x = self.output_activation(self.output_layer(x))
-        return x
+            return self.output_activation(self.output_layer(x))
 
 
 class FlattenMLP(MLP):

@@ -14,6 +14,8 @@ from replay_buffer import ReplayBuffer
 from robot.enviroment import make_env
 # from IPython.display import clear_output
 from utils.utils import build_trajectory
+from torchsummary import summary
+
 
 iteration = 0
 
@@ -93,7 +95,7 @@ parser.add_argument('--buffer_size', type=int, default=10 ** 6, help='size of bu
 parser.add_argument('--batch_size', type=int, default=2 ** 10, help='batch size')
 parser.add_argument('--refresh_target', type=int, default=600, help='refresh target network')
 parser.add_argument('--total_steps', type=int, default=10**4, help='total_steps')
-parser.add_argument('--decay_steps', type=int, default=10, help='decay_steps')
+parser.add_argument('--decay_steps', type=int, default=2000, help='decay_steps')
 parser.add_argument('--agent_type', type=str, default='ddpg', help='type of agent. available now: dqn, ddqn, ddpg')
 args = parser.parse_args()
 
@@ -130,7 +132,7 @@ elif agent_type == 'ddpg':
                                             device=device,
                                             act_dim=2,
                                             replay_buffer=replay_buffer,
-                                            act_limit={0: [-0.22, 0.22], 1: [0.15, 0.35]},  # 0 - platform, 1 - wheel
+                                            act_limit={0: [-0.21, 0.21], 1: [0.15, 0.35]},  # 0 - platform, 1 - wheel
                                             hidden_sizes_actor=(2048, 8192, 2048),
                                             hidden_sizes_critic=(2048, 8192, 2048),
                                             batch_size=batch_size,
