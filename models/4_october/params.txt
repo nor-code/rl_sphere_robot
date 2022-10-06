@@ -1,0 +1,28 @@
+python3 main.py --simu_number=4 --type_task=4 --algo=ddqn --trajectory=circle --buffer_size=6000000 --batch_size=2048 --refresh_target=400 --total_steps=120000 --decay_steps=60000 > out4.log
+
+
+self.wheel_action_arr = np.array([0.15, 0.18, 0.21, 0.23, 0.24, 0.26, 0.28, 0.3])
+
+self.platform_wheel_action_pair = np.array(
+    np.meshgrid(
+        np.array([-0.15, -0.18, -0.205, -0.22, 0.15, 0.18, 0.205, 0.22]),
+        np.array([0.20, 0.23, 0.26, 0.28, 0.3, 0.33])
+    )
+).T.reshape(-1, 2)
+
+self.wheel_action_pair = np.array(np.meshgrid(np.zeros(1), self.wheel_action_arr)).T.reshape(-1, 2)
+
+self.action_count = len(self.platform_wheel_action_pair) + len(self.wheel_action_pair)
+self.all_pairs_actions = np.concatenate((self.platform_wheel_action_pair, self.wheel_action_pair), axis=0)
+
+nn.Sequential(
+            nn.Linear(state_dim, 1024),
+            nn.Tanhshrink(),
+            nn.Linear(1024, 4096),
+            nn.LeakyReLU(),
+            nn.Linear(4096, 8192),
+            nn.LeakyReLU(),
+            nn.Linear(8192, 8192),
+            nn.LeakyReLU(),
+            nn.Linear(8192, self.action_count)
+)

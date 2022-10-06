@@ -38,13 +38,21 @@ class DeepQLearningAgent(nn.Module):
 
         self.q_network = nn.Sequential(
             nn.Linear(state_dim, 1024),
+            nn.BatchNorm1d(1024),
             nn.Tanhshrink(),
+
             nn.Linear(1024, 4096),
+            nn.BatchNorm1d(4096),
             nn.LeakyReLU(),
+
             nn.Linear(4096, 8192),
+            nn.BatchNorm1d(8192),
             nn.LeakyReLU(),
+
             nn.Linear(8192, 8192),
+            nn.BatchNorm1d(8192),
             nn.LeakyReLU(),
+
             nn.Linear(8192, self.action_count)
         ).to(self.device)
 
@@ -52,13 +60,21 @@ class DeepQLearningAgent(nn.Module):
 
         self.target_network = nn.Sequential(
             nn.Linear(state_dim, 1024),
+            nn.BatchNorm1d(1024),
             nn.Tanhshrink(),
+
             nn.Linear(1024, 4096),
+            nn.BatchNorm1d(4096),
             nn.LeakyReLU(),
+
             nn.Linear(4096, 8192),
+            nn.BatchNorm1d(8192),
             nn.LeakyReLU(),
+
             nn.Linear(8192, 8192),
+            nn.BatchNorm1d(8192),
             nn.LeakyReLU(),
+
             nn.Linear(8192, self.action_count)
         ).to(self.device)
 
@@ -79,6 +95,8 @@ class DeepQLearningAgent(nn.Module):
             return q_values.argmax(axis=-1)
 
     def train_model(self):
+        self.q_network.train()
+
         s, action_index, r, next_s, is_done = self.replay_buffer.sample(self.batch_size)
 
         current_state = torch.tensor(s, device=self.device, dtype=torch.float32)
@@ -121,6 +139,8 @@ class DeepQLearningAgent(nn.Module):
     def play_episode(self, initial_state, enviroment, episode_timeout, n_steps, global_iteration, episode):
         s = initial_state
         total_reward = 0
+        self.q_network.eval()
+
         for i in range(n_steps):
             global_iteration += 1
 
@@ -168,6 +188,8 @@ class DeepQLearningAgent(nn.Module):
 
     def run_eval_mode(self, enviroment, episode_timeout, s, t_max):
         reward = 0.0
+        self.q_network.eval()
+
         for _ in range(t_max):
             qvalues = self.get_qvalues([s])
             action = self.index_to_pair[qvalues.argmax(axis=-1)[0]]
@@ -185,6 +207,7 @@ class DeepQLearningAgent(nn.Module):
             except PhysicsError:
                 print("поломка в физике, метод run_eval_mode")
                 break
+
         return reward
 
     def get_action(self, state):
