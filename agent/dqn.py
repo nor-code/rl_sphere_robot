@@ -127,7 +127,7 @@ class DeepQLearningAgent(nn.Module):
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
             return 16
-        return 16
+        return 32
 
     def play_episode(self, initial_state, enviroment, episode_timeout, n_steps, global_iteration, episode):
         s = initial_state
