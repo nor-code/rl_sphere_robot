@@ -171,4 +171,4 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
         state_dim = 4  # x y v_x v_y
         task = MockTask(trajectory_function=trajectory_fun, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=10), state_dim
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20), state_dim

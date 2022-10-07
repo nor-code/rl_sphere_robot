@@ -26,7 +26,7 @@ agent = DeepQLearningAgent(state_dim=26,
                            refresh_target=None,
                            writer=None)
 #
-agent.q_network.load_state_dict(torch.load('../models/ddqn1_4.pt', map_location=torch.device('cpu')))
+agent.q_network.load_state_dict(torch.load('../models/4_october/name4.pt', map_location=torch.device('cpu')))
 agent.q_network.eval()
 
 final_time = 0
@@ -60,7 +60,7 @@ def action_policy(time_step):
     # if i < 200:
     #     return [0.2205, 0.20]
     #
-    # else:
+    # else:nohup python3 main.py --simu_number=1 --type_task=4 --agent_type=ddqn --trajectory=circle --buffer_size=6000000 --batch_size=2048 --total_steps=12000 --decay_steps=6000 > out1.log &
     #     return [-0.22, 0.31]
 
 
