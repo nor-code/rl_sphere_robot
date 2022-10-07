@@ -38,19 +38,15 @@ class DeepQLearningAgent(nn.Module):
 
         self.q_network = nn.Sequential(
             nn.Linear(state_dim, 1024),
-            nn.BatchNorm1d(1024),
             nn.Tanhshrink(),
 
             nn.Linear(1024, 4096),
-            nn.BatchNorm1d(4096),
             nn.LeakyReLU(),
 
             nn.Linear(4096, 8192),
-            nn.BatchNorm1d(8192),
             nn.LeakyReLU(),
 
             nn.Linear(8192, 8192),
-            nn.BatchNorm1d(8192),
             nn.LeakyReLU(),
 
             nn.Linear(8192, self.action_count)
@@ -60,19 +56,15 @@ class DeepQLearningAgent(nn.Module):
 
         self.target_network = nn.Sequential(
             nn.Linear(state_dim, 1024),
-            nn.BatchNorm1d(1024),
             nn.Tanhshrink(),
 
             nn.Linear(1024, 4096),
-            nn.BatchNorm1d(4096),
             nn.LeakyReLU(),
 
             nn.Linear(4096, 8192),
-            nn.BatchNorm1d(8192),
             nn.LeakyReLU(),
 
             nn.Linear(8192, 8192),
-            nn.BatchNorm1d(8192),
             nn.LeakyReLU(),
 
             nn.Linear(8192, self.action_count)
