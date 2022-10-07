@@ -26,3 +26,46 @@ nn.Sequential(
             nn.LeakyReLU(),
             nn.Linear(8192, self.action_count)
 )
+
+в task4.py:
+def get_termination(self, physics):
+    if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 20 \
+            or len(self.points) == self.achievedPoints:
+        print("end episode at t = ", np.round(physics.data.time, 2))
+        return 0.0
+
+в dqn.py:
+def get_learn_freq(self):
+    if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
+        return 32
+    return 64
+
+
+в enviroment.py:
+control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20)
+
+
+то что находится в папках, там запускались модели с меньшим числом шагов:
+nohup python3 main.py --simu_number=1 --type_task=4 --agent_type=ddqn --trajectory=circle --buffer_size=6000000 --batch_size=2048 --refresh_target=400 --total_steps=12000 --decay_steps=4000 > out1.log &
+
+
+с нормализаией была следующая нейронка:
+self.q_network = nn.Sequential(
+            nn.Linear(state_dim, 1024),
+            nn.BatchNorm1d(1024),
+            nn.Tanhshrink(),
+
+            nn.Linear(1024, 4096),
+            nn.BatchNorm1d(4096),
+            nn.LeakyReLU(),
+
+            nn.Linear(4096, 8192),
+            nn.BatchNorm1d(8192),
+            nn.LeakyReLU(),
+
+            nn.Linear(8192, 8192),
+            nn.BatchNorm1d(8192),
+            nn.LeakyReLU(),
+
+            nn.Linear(8192, self.action_count)
+        )

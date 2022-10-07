@@ -172,7 +172,7 @@ class TrakingTrajectoryTask4(base.Task):
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 20 \
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 30 \
                 or len(self.points) == self.achievedPoints:
             print("end episode at t = ", np.round(physics.data.time, 2))
             return 0.0

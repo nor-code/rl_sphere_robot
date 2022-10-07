@@ -142,7 +142,7 @@ else:
     raise RuntimeError('unknown type agent')
 
 # loss_freq = 250  # 300 # 300
-eval_freq = 100  # 300  # 400 statestate = env.reset().observation = env.reset().observation
+eval_freq = 2  # 300  # 400 statestate = env.reset().observation = env.reset().observation
 change_env_freq = 1
 
 step = 0
