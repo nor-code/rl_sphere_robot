@@ -82,6 +82,7 @@ class DeepQLearningAgent(nn.Module):
         return self.q_network(state)
 
     def get_qvalues(self, state):
+        self.q_network.eval()
         model_device = next(self.q_network.parameters()).device
         tensor_state = torch.tensor(state, device=model_device, dtype=torch.float32)
         return self.q_network(tensor_state).data.cpu().numpy()
