@@ -27,7 +27,7 @@ agent = DeepQLearningAgent(state_dim=26,
                            writer=None,
                            file=None)
 #
-agent.q_network.load_state_dict(torch.load('../models/4_october/name4.pt', map_location=torch.device('cpu')))
+agent.q_network.load_state_dict(torch.load('../models/ddqn1_3.pt', map_location=torch.device('cpu')))
 agent.q_network.eval()
 
 final_time = 0
@@ -65,7 +65,7 @@ def action_policy(time_step):
     #     return [-0.22, 0.31]
 
 
-env = make_env(episode_timeout=90, type_task=4, trajectory='circle', begin_index_=0)[0]
+env, x_y = make_env(episode_timeout=90, type_task=4, trajectory='circle', begin_index_=0)
 app = application.Application()
 app.launch(env, policy=action_policy)
 
@@ -73,8 +73,8 @@ actions = actions.T.reshape(-1, 2)
 
 traj = plt.figure().add_subplot()
 traj.plot(pos[:, 0][1:], pos[:, 1][1:], label="trajectory")
-traj.plot(circle()[0], circle()[1], label="desired_trajectory")
-# traj.quiver(pos[:, 0][1:], pos[:, 1][1:], V, U, color=['r', 'b', 'g'], angles='xy', width=0.002)
+traj.plot(x_y[0], x_y[1], label="desired_trajectory")
+traj.quiver(pos[:, 0][1:], pos[:, 1][1:], V, U, color=['r', 'b', 'g'], angles='xy', width=0.002)
 traj.legend(loc='upper right')
 traj.set_xlabel('x,    total reward = ' + str(round(total_reward, 3)))
 traj.set_ylabel('y')

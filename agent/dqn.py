@@ -10,8 +10,7 @@ class DeepQLearningAgent(nn.Module):
     def __init__(self,
                  state_dim, batch_size, epsilon,
                  gamma, device, algo,
-                 replay_buffer, writer, refresh_target,
-                 file):
+                 replay_buffer, writer, refresh_target):
         super().__init__()
         self.epsilon = epsilon
         self.batch_size = batch_size
@@ -75,29 +74,6 @@ class DeepQLearningAgent(nn.Module):
             nn.Linear(8192, self.action_count)
         ).to(self.device)
 
-        self.file = file
-        self.write_sample_to_file('x,y,'
-                        'point_1x,point_1y,r1,'
-                        'point_2x,point_2y,r2,'
-                        'point_3x,point_3y,r3,'
-                        'point_4x,point_4y,r4,'
-                        'prev_point_1x,prev_point_1y,prev_r1,'
-                        'prev_point_2x,prev_point_2y,prev_r2,'
-                        'prev_point_3x,prev_point_3y,prev_r3,'
-                        'prev_point_4x,prev_point_4y,prev_r4,'
-                        'action_idx,'
-                        'reward,'
-                        'next_x,next_y,'
-                        'next_point_1x,next_point_1y,next_r1,'
-                        'next_point_2x,next_point_2y,next_r2,'
-                        'next_point_3x,next_point_3y,next_r3,'
-                        'next_point_4x,next_point_4y,next_r4,'
-                        'next_prev_point_1x,next_prev_point_1y,next_prev_r1,'
-                        'next_prev_point_2x,next_prev_point_2y,next_prev_r2,'
-                        'next_prev_point_3x,next_prev_point_3y,next_prev_r3,'
-                        'next_prev_point_4x,next_prev_point_4y,next_prev_r4,'
-                        'is_done')
-
     def forward(self, state):
         return self.q_network(state)
 
@@ -108,12 +84,16 @@ class DeepQLearningAgent(nn.Module):
         return self.q_network(tensor_state).data.cpu().numpy()
 
     def sample_actions(self, q_values):
-        rand = np.random.rand()
-
-        if rand <= self.epsilon:
+        if self.epsilon > 0:
             return np.random.choice(range(self.action_count), size=1)
         else:
             return q_values.argmax(axis=-1)
+        # rand = np.random.rand()
+        #
+        # if rand <= self.epsilon:
+        #     return np.random.choice(range(self.action_count), size=1)
+        # else:
+        #     return q_values.argmax(axis=-1)
 
     def train_model(self):
         self.q_network.train()
@@ -154,12 +134,8 @@ class DeepQLearningAgent(nn.Module):
 
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
-            return 16
+            return 32
         return 32
-
-    def write_sample_to_file(self, str):
-        if self.file is not None:
-            self.file.write(str)
 
     def play_episode(self, initial_state, enviroment, episode_timeout, n_steps, global_iteration, episode):
         s = initial_state
@@ -189,7 +165,6 @@ class DeepQLearningAgent(nn.Module):
 
             total_reward += timestep.reward
 
-            self.write_sample_to_file(str(s).strip('[').strip(']') + ',' + str(action_idx).strip('[').strip(']') + ',' + str(timestep.reward).strip('[').strip(']') + ',' + str(state).strip('[').strip(']') + ',' + str(int(is_done)))
             self.replay_buffer.add(s, action_idx, timestep.reward, state, is_done)  # agent add to cash
 
             if global_iteration > self.batch_size and global_iteration % self.get_learn_freq() == 0:
@@ -217,8 +192,7 @@ class DeepQLearningAgent(nn.Module):
         self.q_network.eval()
 
         for _ in range(t_max):
-            qvalues = self.get_qvalues([s])
-            action = self.index_to_pair[qvalues.argmax(axis=-1)[0]]
+            action = self.get_action(s)
 
             try:
                 timestep = enviroment.step(action)

@@ -88,7 +88,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN/DDPG Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
-parser.add_argument('--type_task', type=int, default=4, help='type of task. now available 1, 2, 3, 4')
+parser.add_argument('--type_task', type=int, default=5, help='type of task. now available 4, 5')
 parser.add_argument('--trajectory', type=str, default='random', help='trajectory for agent, circle, curve, random')
 parser.add_argument('--buffer_size', type=int, default=10 ** 6, help='size of buffer')
 parser.add_argument('--batch_size', type=int, default=2 ** 10, help='batch size')
@@ -114,7 +114,7 @@ writer = SummaryWriter(comment="  agent = " + args.agent_type + ", simulation_nu
                                + ", batch_size = " + str(batch_size) + ", refresh_target = " + str(refresh_target)
                                + " ,total_steps = " + str(total_steps) + ", decay steps = " + str(decay_steps)
                                + ", buffer_size = " + str(args.buffer_size))
-dataset_file = open('dataset/' + 'dataset_' + str(args.agent_type) + "_" + str(args.simu_number) + '.csv', 'a')
+# dataset_file = open('dataset/' + 'dataset_' + str(args.agent_type) + "_" + str(args.simu_number) + '.csv', 'a')
 
 agent_type = args.agent_type
 if agent_type == 'dqn' or agent_type == 'ddqn':
@@ -126,8 +126,7 @@ if agent_type == 'dqn' or agent_type == 'ddqn':
                                algo=agent_type,
                                writer=writer,
                                refresh_target=refresh_target,
-                               replay_buffer=replay_buffer,
-                               file=dataset_file)
+                               replay_buffer=replay_buffer)
 elif agent_type == 'ddpg':
     agent = DeepDeterministicPolicyGradient(state_dim,
                                             device=device,
@@ -143,7 +142,7 @@ else:
     raise RuntimeError('unknown type agent')
 
 # loss_freq = 250  # 300 # 300
-eval_freq = 100 # 300  # 400 statestate = env.reset().observation = env.reset().observation
+eval_freq = 150 # 300  # 400 statestate = env.reset().observation = env.reset().observation
 change_env_freq = 1
 
 step = 0

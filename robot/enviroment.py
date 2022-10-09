@@ -5,10 +5,8 @@ from dm_control.rl import control
 
 from robot.mock_task import MockTask
 from robot.model import RobotPhysics
-from robot.task_1 import TrakingTrajectoryTask1
-from robot.task_2 import TrakingTrajectoryTask2
-from robot.task_3 import TrakingTrajectoryTask3
 from robot.task_4 import TrakingTrajectoryTask4
+from robot.task_5 import TrakingTrajectoryTask5
 
 
 def get_string_xml(roll_angle):
@@ -155,6 +153,8 @@ def determine_trajectory(type):
 def get_state_dim(type_task):
     if type_task == 4:
         return 26
+    elif type_task == 5:
+        return 9
     return -1
 
 
@@ -180,23 +180,9 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
 
     physics = RobotPhysics.from_xml_string(get_string_xml(roll_angle))
 
-    if type_task == 1:
-        state_dim = 4  # x y cos_a sin_a
-        task = TrakingTrajectoryTask1(trajectory_function=trajectory_fun, begin_index=begin_index_,
-                                      timeout=episode_timeout)
-    elif type_task == 2:
-        state_dim = 2  # x y
-        task = TrakingTrajectoryTask2(trajectory_function=trajectory_fun, begin_index=begin_index_,
-                                      timeout=episode_timeout)
-    elif type_task == 3:
-        state_dim = 10  # x y v_x v_y
-        task = TrakingTrajectoryTask3(trajectory_function=trajectory_fun, begin_index=begin_index_,
-                                      timeout=episode_timeout)
-    elif type_task == 4:
-        task = TrakingTrajectoryTask4(trajectory_x_y=points, begin_index=begin_index_,
-                                      timeout=episode_timeout)
-    else:
-        state_dim = 4  # x y v_x v_y
-        task = MockTask(trajectory_function=trajectory_fun, begin_index=begin_index_, timeout=episode_timeout)
+    if type_task == 4:
+        task = TrakingTrajectoryTask4(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
+    elif type_task == 5:
+        task = TrakingTrajectoryTask5(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
     return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20), x_y  # n_sub_steps = 17

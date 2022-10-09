@@ -2,9 +2,9 @@ import numpy as np
 from dm_control.suite import base
 
 
-class TrakingTrajectoryTask4(base.Task):
+class TrakingTrajectoryTask5(base.Task):
 
-    def __init__(self, trajectory_x_y, begin_index, timeout, R=0.24, random=None):
+    def __init__(self, trajectory_x_y, begin_index, timeout, R=0.256, random=None):
         """тайм-аут одного эпизода"""
         self.timeout = timeout
         """ количество точек, которые мы достигли в рамках текущего эпищода """
@@ -22,14 +22,12 @@ class TrakingTrajectoryTask4(base.Task):
         self.index4 = self.get_index(begin_index + 1)
 
         self.prev_index1 = self.get_index(begin_index - 2)
-        self.prev_index2 = self.get_index(begin_index - 1)
-        self.prev_index3 = self.get_index(begin_index)
-        self.prev_index4 = self.get_index(begin_index + 1)
 
         self.radius = R
 
         """текущая и предыдущая целевая точка ( координаты ) """
         self.current_point = self.points[begin_index]
+        self.robot_position = [self.points[begin_index][0], self.points[begin_index][1]]
         self.prev_point = None
 
         """ общее количество точек на пути """
@@ -41,7 +39,7 @@ class TrakingTrajectoryTask4(base.Task):
         """предыдущее расстояние и текущее до целевой точки на кривой"""
         self.prev_dist = self.current_dist = 0
 
-        self.state = [0, 0, 0, 0]
+        self.state = []
 
         super().__init__(random=random)
 
@@ -64,9 +62,6 @@ class TrakingTrajectoryTask4(base.Task):
         self.index4 = self.get_index(index + 1)
 
         self.prev_index1 = self.get_index(index - 2)
-        self.prev_index2 = self.get_index(index - 1)
-        self.prev_index3 = self.get_index(index)
-        self.prev_index4 = self.get_index(index + 1)
 
         physics.named.data.qpos[0:3] = [self.points[index][0], self.points[index][1], 0.2]
         physics.named.data.qvel[:] = 0
@@ -75,6 +70,7 @@ class TrakingTrajectoryTask4(base.Task):
 
         x = self.current_point[0]
         y = self.current_point[1]
+        self.robot_position = [self.points[index][0], self.points[index][1]]
 
         r1 = np.linalg.norm([x - self.points[self.index1][0], y - self.points[self.index1][1]])
         r2 = np.linalg.norm([x - self.points[self.index2][0], y - self.points[self.index2][1]])
@@ -82,19 +78,25 @@ class TrakingTrajectoryTask4(base.Task):
         r4 = np.linalg.norm([x - self.points[self.index4][0], y - self.points[self.index4][1]])
 
         prev_r1 = np.linalg.norm([x - self.points[self.prev_index1][0], y - self.points[self.prev_index1][1]])
-        prev_r2 = np.linalg.norm([x - self.points[self.prev_index2][0], y - self.points[self.prev_index2][1]])
-        prev_r3 = np.linalg.norm([x - self.points[self.prev_index3][0], y - self.points[self.prev_index3][1]])
-        prev_r4 = np.linalg.norm([x - self.points[self.prev_index4][0], y - self.points[self.prev_index4][1]])
 
-        self.state = [x, y,                                                          # 0,  1
-                      self.points[self.index1][0], self.points[self.index1][1], r1,  # 2,  3,  4
-                      self.points[self.index2][0], self.points[self.index2][1], r2,  # 5,  6,  7
-                      self.points[self.index3][0], self.points[self.index3][1], r3,  # 8,  9, 10
-                      self.points[self.index4][0], self.points[self.index4][1], r4,  # 11, 12, 13
-                      self.points[self.prev_index1][0], self.points[self.prev_index1][1], prev_r1,  # 14, 15, 16
-                      self.points[self.prev_index2][0], self.points[self.prev_index2][1], prev_r2,  # 17, 18, 19
-                      self.points[self.prev_index3][0], self.points[self.prev_index3][1], prev_r3,  # 20, 21, 22
-                      self.points[self.prev_index4][0], self.points[self.prev_index4][1], prev_r4,  # 23, 24, 25
+        index5 = self.get_index(self.index4 + 1)
+        index6 = self.get_index(self.index4 + 2)
+        index7 = self.get_index(self.index4 + 3)
+        index8 = self.get_index(self.index4 + 4)
+        r5 = np.linalg.norm([x - self.points[index5][0], y - self.points[index5][1]])
+        r6 = np.linalg.norm([x - self.points[index6][0], y - self.points[index6][1]])
+        r7 = np.linalg.norm([x - self.points[index7][0], y - self.points[index7][1]])
+        r8 = np.linalg.norm([x - self.points[index8][0], y - self.points[index8][1]])
+
+        self.state = [prev_r1,  # 0
+                      r1,       # 1
+                      r2,       # 2
+                      r3,       # 3
+                      r4,       # 4
+                      r5,       # 5
+                      r6,       # 6
+                      r7,       # 7
+                      r8        # 8
         ]
         super().initialize_episode(physics)
 
@@ -104,8 +106,7 @@ class TrakingTrajectoryTask4(base.Task):
         return self.index1 < self.prev_index1  # получается что повернули обратно
 
     def get_nearest_4_points_index(self):
-        state = self.state
-        x, y = state[0], state[1]
+        x, y = self.robot_position
         dist = np.array([np.sqrt((x - point[0])**2 + (y - point[1])**2) for point in self.points])
 
         arr = dist.argsort()[:4]
@@ -123,9 +124,6 @@ class TrakingTrajectoryTask4(base.Task):
             arr.sort()
 
         self.prev_index1 = self.index1
-        self.prev_index2 = self.index2
-        self.prev_index3 = self.index3
-        self.prev_index4 = self.index4
 
         self.index1 = arr[0]
         self.index2 = arr[1]
@@ -138,6 +136,8 @@ class TrakingTrajectoryTask4(base.Task):
         # вектор скорости в абс системе координат
         v_x, v_y, v_z = physics.named.data.sensordata['wheel_vel']
 
+        self.robot_position = [x, y]
+
         self.get_nearest_4_points_index()
 
         r1 = np.linalg.norm([x - self.points[self.index1][0], y - self.points[self.index1][1]])
@@ -145,25 +145,26 @@ class TrakingTrajectoryTask4(base.Task):
         r3 = np.linalg.norm([x - self.points[self.index3][0], y - self.points[self.index3][1]])
         r4 = np.linalg.norm([x - self.points[self.index4][0], y - self.points[self.index4][1]])
 
-        # print("index1 = ", self.index1, "index2 = ", self.index2, "index3 = ", self.index3, "index4 = ", self.index4)
-
         prev_r1 = np.linalg.norm([x - self.points[self.prev_index1][0], y - self.points[self.prev_index1][1]])
-        prev_r2 = np.linalg.norm([x - self.points[self.prev_index2][0], y - self.points[self.prev_index2][1]])
-        prev_r3 = np.linalg.norm([x - self.points[self.prev_index3][0], y - self.points[self.prev_index3][1]])
-        prev_r4 = np.linalg.norm([x - self.points[self.prev_index4][0], y - self.points[self.prev_index4][1]])
 
-        # print("prev_index1 = ", self.prev_index1, "prev_index2 = ", self.prev_index2,
-        #       "prev_index3 = ", self.prev_index3, "prev_index4 = ", self.prev_index4)
+        index5 = self.get_index(self.index4 + 1)
+        index6 = self.get_index(self.index4 + 2)
+        index7 = self.get_index(self.index4 + 3)
+        index8 = self.get_index(self.index4 + 4)
+        r5 = np.linalg.norm([x - self.points[index5][0], y - self.points[index5][1]])
+        r6 = np.linalg.norm([x - self.points[index6][0], y - self.points[index6][1]])
+        r7 = np.linalg.norm([x - self.points[index7][0], y - self.points[index7][1]])
+        r8 = np.linalg.norm([x - self.points[index8][0], y - self.points[index8][1]])
 
-        self.state = [x, y,                                                                    # 0, 1
-                      self.points[self.index1][0],      self.points[self.index1][1],      r1,  # 2,  3,  4
-                      self.points[self.index2][0],      self.points[self.index2][1],      r2,  # 5,  6,  7,
-                      self.points[self.index3][0],      self.points[self.index3][1],      r3,  # 8,  9,  10
-                      self.points[self.index4][0],      self.points[self.index4][1],      r4,  # 11, 12, 13
-                      self.points[self.prev_index1][0], self.points[self.prev_index1][1], prev_r1,  # 14, 15, 16
-                      self.points[self.prev_index2][0], self.points[self.prev_index2][1], prev_r2,  # 17, 18, 19
-                      self.points[self.prev_index3][0], self.points[self.prev_index3][1], prev_r3,  # 20, 21, 22
-                      self.points[self.prev_index4][0], self.points[self.prev_index4][1], prev_r4,  # 23, 24, 25
+        self.state = [prev_r1,  # 0
+                      r1,  # 1
+                      r2,  # 2
+                      r3,  # 3
+                      r4,  # 4
+                      r5,  # 5
+                      r6,  # 6
+                      r7,  # 7
+                      r8  # 8
         ]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
@@ -200,10 +201,10 @@ class TrakingTrajectoryTask4(base.Task):
             print("вернулись на траекторию")
             self.count_invalid_states = 0
 
-        r1 = state[4]
-        r2 = state[7]
-        r3 = state[10]
-        r4 = state[13]
+        r1 = state[1]
+        r2 = state[2]
+        r3 = state[3]
+        r4 = state[4]
 
         distance_reward1 = self.get_reward_for_distance(0.05, r1)
         distance_reward2 = self.get_reward_for_distance(0.15, r2)
@@ -216,9 +217,7 @@ class TrakingTrajectoryTask4(base.Task):
 
     # если количество точек в окретности робота не осталось, т.е. робот ушел с траектории, либо робот повернул назад
     def is_invalid_state(self):
-        state = self.state
-        x = state[0]
-        y = state[1]
+        x, y = self.robot_position
         for point in self.points:
             if np.sqrt((point[0] - x) ** 2 + (point[1] - y) ** 2) <= self.radius:
                 return False

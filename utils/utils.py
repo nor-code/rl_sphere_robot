@@ -20,8 +20,8 @@ def build_trajectory(agent=None, enviroment=None, timeout=50, x_y=None, type_tas
     observation = time_step.observation
 
     t = np.linspace(0, 2 * np.pi, 20)
-    local_x_O = [0.24 * np.sin(t_) for t_ in t]
-    local_y_O = [0.24 * np.cos(t_) for t_ in t]
+    local_x_O = [0.256 * np.sin(t_) for t_ in t]
+    local_y_O = [0.256 * np.cos(t_) for t_ in t]
     circles = np.array([local_x_O, local_y_O]).T
 
     while env.physics.data.time < timeout:
