@@ -39,15 +39,15 @@ def build_trajectory(agent=None, enviroment=None, timeout=50, x_y=None, type_tas
         total_reward += time_step.reward
         prev_time = env.physics.data.time
 
-        observation = time_step.observation
+        x, y, _ = env.physics.named.data.geom_xpos['wheel_']
 
-        array = np.array([[x_ + observation[0] for x_ in local_x_O], [y_ + observation[1] for y_ in local_y_O]]).T
+        array = np.array([[x_ + x for x_ in local_x_O], [y_ + y for y_ in local_y_O]]).T
         circles = np.append(circles, array, axis=0)
 
         if type_task == 1:
             V.append(observation[2])
             U.append(observation[3])
-        pos = np.append(pos, [observation[0:2]], axis=0)
+        pos = np.append(pos, [[x, y]], axis=0)
 
         times.append(env.physics.data.time)
 
