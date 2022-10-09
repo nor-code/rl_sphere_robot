@@ -11,7 +11,7 @@ from tqdm import trange
 from agent.ddpg import DeepDeterministicPolicyGradient
 from agent.dqn import DeepQLearningAgent
 from replay_buffer import ReplayBuffer
-from robot.enviroment import make_env
+from robot.enviroment import make_env, get_state_dim
 # from IPython.display import clear_output
 from utils.utils import build_trajectory
 from torchsummary import summary
@@ -50,16 +50,13 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
             final_val * cur_step) / total_steps
 
 
-def get_envs(size):
-    env_list_ = []
-    dim = 0
-    for i in [0, size // 10, 2 * size // 10, (3 * size) // 10, (4 * size) // 10, size // 2, (6 * size) // 10,
-              (7 * size) // 10, (8 * size) // 10, (9 * size) // 10]:
-        env_i, dim = make_env(
-            episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=i
-        )
-        env_list_.append(env_i)
-    return env_list_, dim
+def get_env(size):
+    begin_index = [0, size // 10, 2 * size // 10, (3 * size) // 10, (4 * size) // 10,
+                   size // 2, (6 * size) // 10, (7 * size) // 10, (8 * size) // 10, (9 * size) // 10]
+    env_i, x_y = make_env(
+        episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=np.random.choice(begin_index, size=1)[0]
+    )
+    return env_i, x_y
 
 
 def get_size():
@@ -67,6 +64,8 @@ def get_size():
         return 50
     elif args.trajectory == 'curve':
         return 25
+    elif args.trajectory == 'random':
+        return 50
 
 
 def save_model(backup_iteration, _number, name_agent):
@@ -90,19 +89,19 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 parser = argparse.ArgumentParser(description='DQN/DDPG Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
 parser.add_argument('--type_task', type=int, default=4, help='type of task. now available 1, 2, 3, 4')
-parser.add_argument('--trajectory', type=str, default='circle', help='trajectory for agent')
+parser.add_argument('--trajectory', type=str, default='random', help='trajectory for agent, circle, curve, random')
 parser.add_argument('--buffer_size', type=int, default=10 ** 6, help='size of buffer')
 parser.add_argument('--batch_size', type=int, default=2 ** 10, help='batch size')
 parser.add_argument('--refresh_target', type=int, default=600, help='refresh target network')
 parser.add_argument('--total_steps', type=int, default=10**4, help='total_steps')
 parser.add_argument('--decay_steps', type=int, default=2000, help='decay_steps')
-parser.add_argument('--agent_type', type=str, default='ddpg', help='type of agent. available now: dqn, ddqn, ddpg')
+parser.add_argument('--agent_type', type=str, default='ddqn', help='type of agent. available now: dqn, ddqn, ddpg')
 args = parser.parse_args()
 
 timeout = 50
 max_steps_per_episode = 1500
 
-env_list, state_dim = get_envs(get_size())
+state_dim = get_state_dim(type_task=args.type_task)
 replay_buffer = ReplayBuffer(args.buffer_size)
 
 number = args.simu_number
@@ -115,6 +114,7 @@ writer = SummaryWriter(comment="  agent = " + args.agent_type + ", simulation_nu
                                + ", batch_size = " + str(batch_size) + ", refresh_target = " + str(refresh_target)
                                + " ,total_steps = " + str(total_steps) + ", decay steps = " + str(decay_steps)
                                + ", buffer_size = " + str(args.buffer_size))
+dataset_file = open('dataset/' + 'dataset_' + str(args.agent_type) + "_" + str(args.simu_number) + '.csv', 'a')
 
 agent_type = args.agent_type
 if agent_type == 'dqn' or agent_type == 'ddqn':
@@ -126,7 +126,8 @@ if agent_type == 'dqn' or agent_type == 'ddqn':
                                algo=agent_type,
                                writer=writer,
                                refresh_target=refresh_target,
-                               replay_buffer=replay_buffer)
+                               replay_buffer=replay_buffer,
+                               file=dataset_file)
 elif agent_type == 'ddpg':
     agent = DeepDeterministicPolicyGradient(state_dim,
                                             device=device,
@@ -146,16 +147,16 @@ eval_freq = 100 # 300  # 400 statestate = env.reset().observation = env.reset().
 change_env_freq = 1
 
 step = 0
+count_point_on_trajectory = get_size()
 
 init_epsilon = 1
 final_epsilon = 0
 
-env = np.random.choice(env_list, size=1)[0]
-state = env.reset().observation
-
 rewards = list()
 with trange(step, total_steps + 1) as progress_bar:
     for step in progress_bar:
+        env, x_y = get_env(count_point_on_trajectory)
+        state = env.reset().observation
 
         agent.epsilon = linear_decay(init_epsilon, final_epsilon, step, decay_steps)
 
@@ -165,12 +166,11 @@ with trange(step, total_steps + 1) as progress_bar:
         writer.add_scalar("episode reward ", total_reward, step)
         writer.add_scalar("average reward per episode", round(np.mean(rewards), 4), step)
 
-        env = env_list[step % len(env_list)]
-        state = env.reset().observation
-
         if step % eval_freq == 0:
+            env.reset()
+
             plot_buf, fig = build_trajectory(
-                agent=agent, enviroment=env, timeout=timeout, trajectory_type=args.trajectory, type_task=args.type_task
+                agent=agent, enviroment=env, timeout=timeout, x_y=x_y, type_task=args.type_task
             )
 
             pillow_img = PIL.Image.open(plot_buf)

@@ -102,6 +102,11 @@ def get_string_xml(roll_angle):
     </mujoco>
     """
 
+# область в которой будут генерироваться начало замкнутой траектории
+scope = {
+    "x": [-1.5, 1.5],
+    "y": [-0.5, 2.5],
+}
 
 def curve():
     t = np.linspace(0, 3 * np.pi, 30)
@@ -116,11 +121,26 @@ def circle():
     y_ = [- np.cos(t_) + 1 for t_ in t]
     return x_, y_
 
-# def circle():
-#     t = np.linspace(0, 2 * np.pi, 30)
-#     x_ = [0.7 * np.sin(t_) for t_ in t]
-#     y_ = [- 0.7 * np.cos(t_) + 0.7 for t_ in t]
-#     return x_, y_
+
+def random_trajectory():
+    global scope
+    # общее количество точек на кривой
+    total_points = 50
+
+    x_init = np.random.uniform(scope['x'][0], scope['x'][1])
+    y_init = np.random.uniform(scope['y'][0], scope['y'][1])
+
+    radius = np.random.randn(1, 15) * np.logspace(-0.7, -2.5, 15)
+    phi = 2 * np.random.randn(1, 15) * np.pi
+
+    t = np.linspace(0, 2 * np.pi, total_points)
+    r = np.ones(total_points)
+    for i in range(15):
+        r += radius[0][i] * np.sin(i * t + phi[0][i])
+
+    x = r * np.sin(t) + x_init
+    y = - r * np.cos(t) + y_init
+    return x.tolist(), y.tolist()
 
 
 def determine_trajectory(type):
@@ -128,12 +148,21 @@ def determine_trajectory(type):
         return circle
     elif type == 'curve':
         return curve
+    elif type == 'random':
+        return random_trajectory
+
+
+def get_state_dim(type_task):
+    if type_task == 4:
+        return 26
+    return -1
 
 
 def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
     trajectory_fun = determine_trajectory(trajectory)
 
-    points = np.array(trajectory_fun()).T
+    x_y = trajectory_fun()
+    points = np.array(x_y).T
     dy = points[begin_index_ + 1][1] - points[begin_index_][1]
     dx = points[begin_index_ + 1][0] - points[begin_index_][0]
 
@@ -164,11 +193,10 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
         task = TrakingTrajectoryTask3(trajectory_function=trajectory_fun, begin_index=begin_index_,
                                       timeout=episode_timeout)
     elif type_task == 4:
-        state_dim = 26  # x y v_x v_y
-        task = TrakingTrajectoryTask4(trajectory_function=trajectory_fun, begin_index=begin_index_,
+        task = TrakingTrajectoryTask4(trajectory_x_y=points, begin_index=begin_index_,
                                       timeout=episode_timeout)
     else:
         state_dim = 4  # x y v_x v_y
         task = MockTask(trajectory_function=trajectory_fun, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20), state_dim
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20), x_y  # n_sub_steps = 17

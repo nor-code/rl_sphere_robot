@@ -6,13 +6,8 @@ from dm_control.rl.control import PhysicsError
 from dm_env import StepType
 
 
-def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=None, type_task=None):
-    if trajectory_type == 'curve':
-        from robot.enviroment import curve
-        trajectory_func = curve
-    elif trajectory_type == 'circle':
-        from robot.enviroment import circle
-        trajectory_func = circle
+def build_trajectory(agent=None, enviroment=None, timeout=50, x_y=None, type_task=None):
+    _x_y = x_y
 
     times = []
     V = []
@@ -59,11 +54,11 @@ def build_trajectory(agent=None, enviroment=None, timeout=30, trajectory_type=No
     figure = plt.figure(figsize=(10, 10))
     trajectory = figure.add_subplot()
     trajectory.plot(pos[:, 0][1:], pos[:, 1][1:], label="trajectory")
-    trajectory.plot(trajectory_func()[0], trajectory_func()[1], label="desired_trajectory")
+    trajectory.plot(_x_y[0], _x_y[1], label="desired_trajectory")
 
     circles = circles[21:]
     trajectory.plot(circles.T[0], circles.T[1], alpha=0.4)
-    trajectory.scatter(trajectory_func()[0], trajectory_func()[1], color='red', lw=0.01)
+    trajectory.scatter(_x_y[0], _x_y[1], color='red', lw=0.01)
 
     if type_task == 1:
         trajectory.quiver(pos[:, 0][1:], pos[:, 1][1:], V, U, color=['r', 'b', 'g'], angles='xy', width=0.002)

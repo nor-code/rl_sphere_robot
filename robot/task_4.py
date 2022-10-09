@@ -8,15 +8,15 @@ def is_belong_rectangle(x, y, a, b):
 
 class TrakingTrajectoryTask4(base.Task):
 
-    def __init__(self, trajectory_function, begin_index, timeout, R=0.24, random=None):
+    def __init__(self, trajectory_x_y, begin_index, timeout, R=0.24, random=None):
         """тайм-аут одного эпизода"""
         self.timeout = timeout
         """ количество точек, которые мы достигли в рамках текущего эпищода """
         self.achievedPoints = 0
 
         """ целевая траектория и начальная точка на ней """
-        self.p_fun = trajectory_function
-        self.points = np.array(self.p_fun()).T
+        self.point_x_y = trajectory_x_y
+        self.points = np.copy(self.point_x_y, order='K')
         self.begin_index = begin_index
         self.current_index = begin_index
 
@@ -57,7 +57,7 @@ class TrakingTrajectoryTask4(base.Task):
         return index
 
     def initialize_episode(self, physics):
-        self.points = np.array(self.p_fun()).T
+        self.points = np.copy(self.point_x_y, order='K')
 
         index = self.begin_index
         print("begin index = ", index)
