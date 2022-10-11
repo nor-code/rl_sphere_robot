@@ -23,15 +23,19 @@ class DeepQLearningAgent(nn.Module):
         self.refresh_target = refresh_target
 
         # TODO добавить отрицательные действия
-        self.wheel_action_arr = np.array([0.15, 0.18, 0.21, 0.23, 0.24, 0.26, 0.28, 0.3])
+        self.wheel_action_arr = np.array([0.24, 0.3])
 
         self.platform_wheel_action_pair = np.array(
             np.meshgrid(
-                np.array([-0.15, -0.18, -0.205, -0.22, 0.15, 0.18, 0.205, 0.22]),
-                np.array([0.20, 0.23, 0.26, 0.28, 0.3, 0.33])  # 0.15
+                np.array([-0.22, -0.15, 0.15, 0.22]),
+                np.array([0.1, 0.3, 0.33])  # 0.15
             )
         ).T.reshape(-1, 2)
         # [0.2205, 0.15]
+
+        # in self.platform_wheel_action_pair
+        # np.array([-0.15, -0.18, -0.205, -0.22, 0.15, 0.18, 0.205, 0.22]), # add 0.2205
+        # np.array([0.20, 0.23, 0.26, 0.28, 0.3, 0.33])  # 0.15
 
         self.wheel_action_pair = np.array(np.meshgrid(np.zeros(1), self.wheel_action_arr)).T.reshape(-1, 2)
 
@@ -84,16 +88,16 @@ class DeepQLearningAgent(nn.Module):
         return self.q_network(tensor_state).data.cpu().numpy()
 
     def sample_actions(self, q_values):
-        if self.epsilon > 0:
-            return np.random.choice(range(self.action_count), size=1)
-        else:
-            return q_values.argmax(axis=-1)
-        # rand = np.random.rand()
-        #
-        # if rand <= self.epsilon:
+        # if self.epsilon > 0:
         #     return np.random.choice(range(self.action_count), size=1)
         # else:
         #     return q_values.argmax(axis=-1)
+        rand = np.random.rand()
+
+        if rand <= self.epsilon:
+            return np.random.choice(range(self.action_count), size=1)
+        else:
+            return q_values.argmax(axis=-1)
 
     def train_model(self):
         self.q_network.train()

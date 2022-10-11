@@ -99,7 +99,7 @@ parser.add_argument('--agent_type', type=str, default='ddqn', help='type of agen
 args = parser.parse_args()
 
 timeout = 50
-max_steps_per_episode = 1500
+max_steps_per_episode = 1600
 
 state_dim = get_state_dim(type_task=args.type_task)
 replay_buffer = ReplayBuffer(args.buffer_size)
@@ -142,7 +142,7 @@ else:
     raise RuntimeError('unknown type agent')
 
 # loss_freq = 250  # 300 # 300
-eval_freq = 150 # 300  # 400 statestate = env.reset().observation = env.reset().observation
+eval_freq = 100 # 300  # 400 statestate = env.reset().observation = env.reset().observation
 change_env_freq = 1
 
 step = 0
@@ -179,7 +179,7 @@ with trange(step, total_steps + 1) as progress_bar:
 
             env.reset()
             mean_reward = mean_reward_per_episode(
-                agent, env, timeout, n_games=3, t_max=1500
+                agent, env, timeout, n_games=3, t_max=1600
             )
             writer.add_scalar("Mean reward per 3 episode #" + str(number), mean_reward, step)
             writer.add_scalar("size of replay buffer # " + str(number), replay_buffer.buffer_len(), step)
