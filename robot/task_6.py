@@ -153,6 +153,8 @@ class TrakingTrajectoryTask6(base.Task):
 
         len_P1P2 = np.linalg.norm(P1P2)
         len_P1O = np.linalg.norm(P1O)
+        if len_P1O < 0.001:
+            return 0
 
         cos = np.round(np.dot(P1P2, P1O) / (len_P1P2 * len_P1O), 3)
         alpha = np.arccos(cos)
