@@ -16,9 +16,7 @@ class DeepDeterministicPolicyGradient(object):
                  replay_buffer,
                  writer,
                  gamma=0.99,
-                 act_noise=0.05,
-                 hidden_sizes_actor=(1024, 2048, 1024),
-                 hidden_sizes_critic=(1024, 2048, 1024),
+                 act_noise=0.1,
                  batch_size=1,
                  gradient_clip_policy=0.5,  # 0.5
                  gradient_clip_qf=1.0,  # 1.0
@@ -213,57 +211,6 @@ def identity(x):
 def soft_target_update(main, target, tau=0.008):  # tau = 0.005
     for main_param, target_param in zip(main.parameters(), target.parameters()):
         target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
-
-class MLP(nn.Module):
-    def __init__(self,
-                 input_size,
-                 output_size,
-                 output_limit=1.0,
-                 hidden_sizes=(64, 64),
-                 activation=F.leaky_relu,
-                 output_activation=identity,
-                 output_activation_actor=None,
-                 use_output_layer=True,
-                 use_actor=False,
-                 ):
-        super(MLP, self).__init__()
-
-        self.input_size = input_size
-        self.output_size = output_size
-        self.output_limit = output_limit
-        self.hidden_sizes = hidden_sizes
-        self.activation = activation
-        self.output_activation = output_activation
-        self.use_output_layer = use_output_layer
-        self.use_actor = use_actor
-        self.output_activation_actor = output_activation_actor
-
-        # Set hidden layers
-        self.hidden_layers = nn.ModuleList()
-        in_size = self.input_size
-        for next_size in self.hidden_sizes:
-            fc = nn.Linear(in_size, next_size)
-            in_size = next_size
-            self.hidden_layers.append(fc)
-
-        # Set output layers
-        if self.use_output_layer:
-            self.output_layer = nn.Linear(in_size, self.output_size)
-        else:
-            self.output_layer = identity
-
-    def forward(self, x):
-        for hidden_layer in self.hidden_layers:
-            x = self.activation(hidden_layer(x))
-        if self.use_actor:
-            interval_1 = self.output_limit[0]
-            platform = ((interval_1[1] - interval_1[0])/2) * self.output_activation_actor[0](self.output_layer(x)) + (interval_1[1] + interval_1[0]) / 2
-
-            interval_2 = self.output_limit[1]
-            wheel = ((interval_2[1] - interval_2[0]) / 2) * self.output_activation_actor[1](self.output_layer(x)) + (interval_2[1] + interval_2[0]) / 2
-            return torch.cat([platform, wheel], dim=-1)
-        else:
-            return self.output_activation(self.output_layer(x))
 
 
 class Actor(nn.Module):
