@@ -16,7 +16,7 @@ U = []
 #     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
 #     return action
 #
-agent = DeepQLearningAgent(state_dim=26,
+agent = DeepQLearningAgent(state_dim=20,
                            batch_size=1,
                            epsilon=0,
                            gamma=0.99,
@@ -24,10 +24,9 @@ agent = DeepQLearningAgent(state_dim=26,
                            algo='ddqn',
                            replay_buffer=None,
                            refresh_target=None,
-                           writer=None,
-                           file=None)
+                           writer=None)
 #
-agent.q_network.load_state_dict(torch.load('../models/ddqn1_3.pt', map_location=torch.device('cpu')))
+agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
 agent.q_network.eval()
 
 final_time = 0
@@ -42,9 +41,10 @@ def action_policy(time_step):
     val = np.random.random()
     observation = time_step.observation
 
-    pos = np.append(pos, [observation[0:2]], axis=0)
-    V.append(observation[2])
-    U.append(observation[3])
+    x, y, _ = env.physics.named.data.geom_xpos['wheel_']
+    pos = np.append(pos, [[x, y]], axis=0)
+    V.append(observation[0])
+    U.append(observation[1])
 
     q = agent.get_qvalues([observation])
     index = q.argmax(axis=-1)[0]
@@ -55,7 +55,7 @@ def action_policy(time_step):
 
     action = agent.index_to_pair[index]
     actions = np.concatenate((actions, action), axis=0)
-    final_time = observation[4]
+    final_time = env.physics.data.time
     return action
 
     # if i < 200:
@@ -65,7 +65,7 @@ def action_policy(time_step):
     #     return [-0.22, 0.31]
 
 
-env, x_y = make_env(episode_timeout=90, type_task=4, trajectory='circle', begin_index_=0)
+env, x_y = make_env(episode_timeout=90, type_task=5, trajectory='circle', begin_index_=0)
 app = application.Application()
 app.launch(env, policy=action_policy)
 
