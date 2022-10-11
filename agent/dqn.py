@@ -210,6 +210,6 @@ class DeepQLearningAgent(nn.Module):
         return reward
 
     def get_action(self, state):
-        qvalues = self.get_qvalues([state])
+        qvalues = self.get_qvalues(state)
         action = self.index_to_pair[qvalues.argmax(axis=-1)[0]]
         return action

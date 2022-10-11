@@ -7,6 +7,7 @@ from robot.mock_task import MockTask
 from robot.model import RobotPhysics
 from robot.task_4 import TrakingTrajectoryTask4
 from robot.task_5 import TrakingTrajectoryTask5
+from robot.task_6 import TrakingTrajectoryTask6
 
 
 def get_string_xml(roll_angle):
@@ -48,7 +49,7 @@ def get_string_xml(roll_angle):
                 <geom name="sphere_shell" type="sphere" pos="0 0 0" size=".2 .19" rgba=".0 .0 .0 .2" mass="0.5" friction="1 5 1" group="1"/>
 
                 <body name="wheel">
-                    <joint name="wheel_with_shell" type="ball" frictionloss="0.01"/>
+                    <joint name="wheel_with_shell" type="ball" frictionloss="0.008"/>
                     <geom name="wheel_" type="cylinder" fromto="-0.008 0 -0.15  0.008 0 -0.15" size="0.049 0.005" mass="0.7"/>
                     <!-- friction[0] sliding friction, friction[1] torsional friction, friction[2] rolling friction -->
 
@@ -79,8 +80,8 @@ def get_string_xml(roll_angle):
     <!--     </contact>-->
 
         <actuator>
-            <motor name="platform_motor" gear="0.5" joint="fork_with_platform" ctrllimited="true" ctrlrange="-1 1"/>
-            <motor name="wheel_motor" gear="200" joint="wheel_with_shell" ctrllimited="true" ctrlrange="-1 1"/>
+            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-1 1"/>
+            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0 1"/>
         </actuator>
 
         <sensor>
@@ -128,7 +129,7 @@ def random_trajectory():
     x_init = np.random.uniform(scope['x'][0], scope['x'][1])
     y_init = np.random.uniform(scope['y'][0], scope['y'][1])
 
-    radius = np.random.randn(1, 15) * np.logspace(-0.7, -2.5, 15)
+    radius = np.random.randn(1, 15) * np.logspace(-0.9, -2.5, 15)
     phi = 2 * np.random.randn(1, 15) * np.pi
 
     t = np.linspace(0, 2 * np.pi, total_points)
@@ -155,6 +156,8 @@ def get_state_dim(type_task):
         return 26
     elif type_task == 5:
         return 20
+    elif type_task == 6:
+        return 16
     return -1
 
 
@@ -184,5 +187,7 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
         task = TrakingTrajectoryTask4(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
     elif type_task == 5:
         task = TrakingTrajectoryTask5(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
+    elif type_task == 6:
+        task = TrakingTrajectoryTask6(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
     return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20), x_y  # n_sub_steps = 17

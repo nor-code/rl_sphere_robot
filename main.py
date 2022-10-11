@@ -88,14 +88,14 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN/DDPG Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
-parser.add_argument('--type_task', type=int, default=5, help='type of task. now available 4, 5')
+parser.add_argument('--type_task', type=int, default=6, help='type of task. now available 4, 5')
 parser.add_argument('--trajectory', type=str, default='random', help='trajectory for agent, circle, curve, random')
 parser.add_argument('--buffer_size', type=int, default=10 ** 6, help='size of buffer')
 parser.add_argument('--batch_size', type=int, default=2 ** 10, help='batch size')
-parser.add_argument('--refresh_target', type=int, default=600, help='refresh target network')
+parser.add_argument('--refresh_target', type=int, default=400, help='refresh target network')
 parser.add_argument('--total_steps', type=int, default=10**4, help='total_steps')
-parser.add_argument('--decay_steps', type=int, default=2000, help='decay_steps')
-parser.add_argument('--agent_type', type=str, default='ddqn', help='type of agent. available now: dqn, ddqn, ddpg')
+parser.add_argument('--decay_steps', type=int, default=10, help='decay_steps')
+parser.add_argument('--agent_type', type=str, default='ddpg', help='type of agent. available now: dqn, ddqn, ddpg')
 args = parser.parse_args()
 
 timeout = 50
@@ -132,9 +132,6 @@ elif agent_type == 'ddpg':
                                             device=device,
                                             act_dim=2,
                                             replay_buffer=replay_buffer,
-                                            act_limit={0: [-0.21, 0.21], 1: [0.15, 0.35]},  # 0 - platform, 1 - wheel
-                                            hidden_sizes_actor=(2048, 8192, 2048),
-                                            hidden_sizes_critic=(2048, 8192, 2048),
                                             batch_size=batch_size,
                                             gamma=0.99,
                                             writer=writer)
@@ -142,7 +139,7 @@ else:
     raise RuntimeError('unknown type agent')
 
 # loss_freq = 250  # 300 # 300
-eval_freq = 100 # 300  # 400 statestate = env.reset().observation = env.reset().observation
+eval_freq = 10 # 300  # 400 statestate = env.reset().observation = env.reset().observation
 change_env_freq = 1
 
 step = 0
