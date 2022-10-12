@@ -65,7 +65,7 @@ def get_size():
     elif args.trajectory == 'curve':
         return 25
     elif args.trajectory == 'random':
-        return 50
+        return 25
 
 
 def save_model(backup_iteration, _number, name_agent):
@@ -88,13 +88,13 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN/DDPG Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
-parser.add_argument('--type_task', type=int, default=6, help='type of task. now available 4, 5')
+parser.add_argument('--type_task', type=int, default=3, help='type of task. now available 4, 5')
 parser.add_argument('--trajectory', type=str, default='random', help='trajectory for agent, circle, curve, random')
 parser.add_argument('--buffer_size', type=int, default=10 ** 6, help='size of buffer')
 parser.add_argument('--batch_size', type=int, default=2 ** 10, help='batch size')
 parser.add_argument('--refresh_target', type=int, default=400, help='refresh target network')
 parser.add_argument('--total_steps', type=int, default=10**4, help='total_steps')
-parser.add_argument('--decay_steps', type=int, default=10, help='decay_steps')
+parser.add_argument('--decay_steps', type=int, default=100, help='decay_steps')
 parser.add_argument('--agent_type', type=str, default='ddpg', help='type of agent. available now: dqn, ddqn, ddpg')
 args = parser.parse_args()
 
@@ -139,7 +139,7 @@ else:
     raise RuntimeError('unknown type agent')
 
 # loss_freq = 250  # 300 # 300
-eval_freq = 100  # 300  # 400 statestate = env.reset().observation = env.reset().observation
+eval_freq = 10  # 300  # 400 statestate = env.reset().observation = env.reset().observation
 change_env_freq = 1
 
 step = 0

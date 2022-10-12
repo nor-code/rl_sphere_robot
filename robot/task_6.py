@@ -69,7 +69,7 @@ class TrakingTrajectoryTask6(base.Task):
         y = self.robot_position[1]
 
         self.curr_indexes = self.init_16_indexes(index)
-        self.prev_index = self.curr_indexes[0].copy()
+        self.prev_index = self.curr_indexes[0]
         self.curr_dist = self.calculate_16_curr_dist(x, y)
 
         physics.named.data.qpos[0:3] = [self.points[index][0], self.points[index][1], 0.2]

@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from dm_control.viewer import application
 
+from agent.ddpg import DeepDeterministicPolicyGradient
 from agent.dqn import DeepQLearningAgent
 from robot.enviroment import make_env, curve, circle
 
@@ -16,18 +17,30 @@ U = []
 #     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
 #     return action
 #
-agent = DeepQLearningAgent(state_dim=20,
-                           batch_size=1,
-                           epsilon=0,
-                           gamma=0.99,
-                           device='cpu',
-                           algo='ddqn',
-                           replay_buffer=None,
-                           refresh_target=None,
-                           writer=None)
+# agent = DeepQLearningAgent(state_dim=20,
+#                            batch_size=1,
+#                            epsilon=0,
+#                            gamma=0.99,
+#                            device='cpu',
+#                            algo='ddqn',
+#                            replay_buffer=None,
+#                            refresh_target=None,
+#                            writer=None)
+agent = DeepDeterministicPolicyGradient(16,
+                                        device='cpu',
+                                        act_dim=2,
+                                        replay_buffer=None,
+                                        batch_size=1,
+                                        gamma=0.99,
+                                        writer=None)
 #
-agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
-agent.q_network.eval()
+# agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
+# agent.q_network.eval()
+
+agent.policy.load_state_dict(torch.load('../models/ddpg_policy_1_4.pt', map_location=torch.device('cpu')))
+agent.policy.eval()
+agent.qf.load_state_dict(torch.load('../models/ddpg_Q_1_4.pt', map_location=torch.device('cpu')))
+agent.qf.eval()
 
 final_time = 0
 actions = np.array([])
@@ -43,18 +56,26 @@ def action_policy(time_step):
 
     x, y, _ = env.physics.named.data.geom_xpos['wheel_']
     pos = np.append(pos, [[x, y]], axis=0)
-    V.append(observation[0])
-    U.append(observation[1])
 
-    q = agent.get_qvalues([observation])
-    index = q.argmax(axis=-1)[0]
-    print(index)
+    v_x, v_y, _ = env.physics.named.data.sensordata['wheel_vel']
+    V.append(v_x)
+    U.append(v_y)
+
+    # ddqn
+    # q = agent.get_qvalues([observation])
+    # index = q.argmax(axis=-1)[0]
+    # print(index)
 
     if time_step.reward is not None:
         total_reward += time_step.reward
 
-    action = agent.index_to_pair[index]
-    actions = np.concatenate((actions, action), axis=0)
+    # ddqn
+    # action = agent.index_to_pair[index]
+
+    # ddpg
+    action = agent.get_action([observation])
+
+    actions = np.concatenate((actions, action[0]), axis=0)
     final_time = env.physics.data.time
     return action
 
@@ -65,7 +86,7 @@ def action_policy(time_step):
     #     return [-0.22, 0.31]
 
 
-env, x_y = make_env(episode_timeout=90, type_task=5, trajectory='circle', begin_index_=0)
+env, x_y = make_env(episode_timeout=40, type_task=6, trajectory='random', begin_index_=0)
 app = application.Application()
 app.launch(env, policy=action_policy)
 

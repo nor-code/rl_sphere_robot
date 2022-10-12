@@ -5,6 +5,7 @@ from dm_control.rl import control
 
 from robot.mock_task import MockTask
 from robot.model import RobotPhysics
+from robot.task_3 import TrakingTrajectoryTask3
 from robot.task_4 import TrakingTrajectoryTask4
 from robot.task_5 import TrakingTrajectoryTask5
 from robot.task_6 import TrakingTrajectoryTask6
@@ -17,7 +18,7 @@ def get_string_xml(roll_angle):
 
         <compiler inertiafromgeom="true" angle="degree"/>
         <option integrator="RK4"/>
-        <option timestep="0.005" iterations="50" solver="Newton" tolerance="1e-10"/>
+        <option timestep="0.05" iterations="50" solver="Newton" tolerance="1e-10"/>
         <size njmax="1500" nconmax="5000" nstack="5000000"/>
 
 
@@ -46,10 +47,10 @@ def get_string_xml(roll_angle):
 
             <body name="shell" pos="0 0 0" euler="0 0 {roll_angle}">
                 <joint name="shell_floor" type="free"/>
-                <geom name="sphere_shell" type="sphere" pos="0 0 0" size=".2 .19" rgba=".0 .0 .0 .2" mass="0.5" friction="1 5 1" group="1"/>
+                <geom name="sphere_shell" type="sphere" pos="0 0 0" size=".2 .19" rgba=".0 .0 .0 .2" mass="0.2" friction="1 5 1" group="1"/>
 
                 <body name="wheel">
-                    <joint name="wheel_with_shell" type="ball" frictionloss="0.008"/>
+                    <joint name="wheel_with_shell" type="ball" frictionloss="0.0068"/>
                     <geom name="wheel_" type="cylinder" fromto="-0.008 0 -0.15  0.008 0 -0.15" size="0.049 0.005" mass="0.7"/>
                     <!-- friction[0] sliding friction, friction[1] torsional friction, friction[2] rolling friction -->
 
@@ -124,17 +125,17 @@ def circle():
 def random_trajectory():
     global scope
     # общее количество точек на кривой
-    total_points = 50
+    total_points = 25
 
     x_init = np.random.uniform(scope['x'][0], scope['x'][1])
     y_init = np.random.uniform(scope['y'][0], scope['y'][1])
 
-    radius = np.random.randn(1, 15) * np.logspace(-0.9, -2.5, 15)
-    phi = 2 * np.random.randn(1, 15) * np.pi
+    radius = np.random.randn(1, total_points) * np.logspace(-1, -3.5, total_points)
+    phi = 2 * np.random.randn(1, total_points) * np.pi
 
     t = np.linspace(0, 2 * np.pi, total_points)
     r = np.ones(total_points)
-    for i in range(15):
+    for i in range(total_points):
         r += radius[0][i] * np.sin(i * t + phi[0][i])
 
     x = r * np.sin(t) + x_init
@@ -152,7 +153,9 @@ def determine_trajectory(type):
 
 
 def get_state_dim(type_task):
-    if type_task == 4:
+    if type_task == 3:
+        return 19
+    elif type_task == 4:
         return 26
     elif type_task == 5:
         return 20
@@ -183,6 +186,8 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
 
     physics = RobotPhysics.from_xml_string(get_string_xml(roll_angle))
 
+    if type_task == 3:
+        task = TrakingTrajectoryTask3(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
     if type_task == 4:
         task = TrakingTrajectoryTask4(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
     elif type_task == 5:
@@ -190,4 +195,4 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
     elif type_task == 6:
         task = TrakingTrajectoryTask6(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20), x_y  # n_sub_steps = 17
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=2), x_y  # n_sub_steps = 17
