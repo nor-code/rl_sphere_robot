@@ -78,15 +78,15 @@ class TrakingTrajectoryTask3(base.Task):
         # координаты центра колеса
         x, y, z = physics.named.data.geom_xpos['wheel_']
         # вектор скорости в абс системе координат
-        v_x, v_y, _ = physics.named.data.sensordata['wheel_vel']
+        # v_x, v_y, _ = physics.named.data.sensordata['wheel_vel']
         # угловая скорость сферической оболочки
-        w_x, w_y, w_z = physics.named.data.sensordata['sphere_angular_vel']
+        # w_x, w_y, w_z = physics.named.data.sensordata['sphere_angular_vel']
         # отклонение от траектории
-        h_error = 0.0 if self.begin_index == self.current_index else self.get_h_error(x, y)
+        # h_error = 0.0 if self.begin_index == self.current_index else self.get_h_error(x, y)
 
         self.robot_position = [x, y]
 
-        self.state = self.calculate_16_curr_dist(x, y) + [v_x, v_y] + [h_error]
+        self.state = self.calculate_16_curr_dist(x, y)
         return self.state
 
     def get_termination(self, physics):
@@ -159,7 +159,6 @@ class TrakingTrajectoryTask3(base.Task):
             self.current_point = self.get_next_point(self.points)
 
             self.set_16_curr_indexes(self.current_index)
-            self.curr_dist = self.calculate_16_curr_dist(x, y)
 
             self.achievedPoints += 1
             if len(self.points) == self.achievedPoints:
@@ -171,10 +170,10 @@ class TrakingTrajectoryTask3(base.Task):
 
         if self.is_invalid_state():
             self.count_invalid_states += 1
-            return -1
+            return -1.5
 
         h_error = self.get_h_error(x, y)
-        h_error_norm = (0.05 - h_error) / 0.05
+        h_error_norm = (0.1 - h_error) / 0.1
 
         reward = 1 - h_error_norm
         self.prev_dist = self.current_dist

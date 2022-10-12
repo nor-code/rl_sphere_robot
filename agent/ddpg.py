@@ -1,9 +1,10 @@
-import torch
 import numpy as np
-import torch.nn.functional as F
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from dm_control.rl.control import PhysicsError
 from dm_env import StepType
+from torch import Tensor
 
 
 class DeepDeterministicPolicyGradient(object):
@@ -50,8 +51,8 @@ class DeepDeterministicPolicyGradient(object):
         self.qf.load_state_dict(self.qf_target.state_dict())
 
         # Create optimizers
-        self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=2e-3, weight_decay=1e-4)
-        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=5e-3, weight_decay=1e-4)
+        self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=1e-3, weight_decay=1e-4)
+        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=1e-3, weight_decay=1e-4)
 
         # for noize action per one episode
         self.phase_platform = np.random.uniform(-np.pi, np.pi, size=1)
@@ -60,22 +61,22 @@ class DeepDeterministicPolicyGradient(object):
 
     def sample_actions(self, state, t, i):
         if self.epsilon > 0:
-            return [np.random.uniform(-1, 1, size=1)[0], np.random.uniform(0.1, 1, size=1)[0]]  # only random
+            return [np.random.uniform(-1, 1, size=1)[0], np.random.uniform(0.1, 1.1, size=1)[0]]  # only random
         else:
             self.policy.to_eval_mode()
             action = self.get_action([state])
 
             platform, wheel = action[0][0], action[0][1]
 
-            mu_p = 0.1 * self.amp * np.sin(self.omega * t + self.phase_platform)
-            mu_w = 0.1 * self.amp * np.sin(self.omega * t + self.phase_wheel)
+            mu_p = 0.001 * self.amp * np.sin(self.omega * t + self.phase_platform)
+            mu_w = 0.001 * self.amp * np.sin(self.omega * t + self.phase_wheel)
             sigma = np.sqrt(self.sigma)
 
             platform += (sigma * np.random.randn(1) + mu_p)
             wheel += (sigma * np.random.randn(1) + mu_w)
 
             platform = np.clip(platform, -1, 1)
-            wheel = np.clip(wheel, 0, 1)
+            wheel = np.clip(wheel, 0.1, 1.1)
 
             self.writer.add_scalar("noise_action plat", platform, i)
             self.writer.add_scalar("noise_action wheel", wheel, i)
@@ -128,8 +129,8 @@ class DeepDeterministicPolicyGradient(object):
 
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
-            return 32
-        return 32
+            return 16
+        return 16
 
     def play_episode(self, initial_state, enviroment, episode_timeout, n_steps, global_iteration, episode):
         s = initial_state
@@ -220,11 +221,11 @@ class Actor(nn.Module):
         self.device = device
 
         self.base = nn.Sequential(
-            nn.Linear(self.input_dim, 1024),
-            nn.BatchNorm1d(1024),
+            nn.Linear(self.input_dim, 2048),
+            nn.BatchNorm1d(2048),
             nn.LeakyReLU(),
 
-            nn.Linear(1024, 1024),
+            nn.Linear(2048, 1024),
             nn.BatchNorm1d(1024),
             nn.LeakyReLU()
         ).to(self.device)
@@ -244,7 +245,7 @@ class Actor(nn.Module):
             nn.LeakyReLU(),
 
             nn.Linear(512, 1),
-            nn.Sigmoid()
+            WheelSigmoid()
         ).to(self.device)
 
     def forward(self, state):
@@ -288,3 +289,8 @@ class Critic(nn.Module):
     def forward(self, state, action):
         q = torch.cat([state, action], dim=-1)
         return self.base(q)
+
+
+class WheelSigmoid(nn.Sigmoid):
+    def forward(self, input: Tensor) -> Tensor:
+        return torch.sigmoid(input) + 0.1

@@ -18,7 +18,7 @@ def get_string_xml(roll_angle):
 
         <compiler inertiafromgeom="true" angle="degree"/>
         <option integrator="RK4"/>
-        <option timestep="0.05" iterations="50" solver="Newton" tolerance="1e-10"/>
+        <option timestep="0.01" iterations="50" solver="Newton" tolerance="1e-10"/>
         <size njmax="1500" nconmax="5000" nstack="5000000"/>
 
 
@@ -82,7 +82,7 @@ def get_string_xml(roll_angle):
 
         <actuator>
             <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-1 1"/>
-            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0 1"/>
+            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.1 1.1"/>
         </actuator>
 
         <sensor>
@@ -138,8 +138,8 @@ def random_trajectory():
     for i in range(total_points):
         r += radius[0][i] * np.sin(i * t + phi[0][i])
 
-    x = r * np.sin(t) + x_init
-    y = - r * np.cos(t) + y_init
+    x = r * np.sin(t)  # + x_init
+    y = - r * np.cos(t) + 1  # + y_init
     return x.tolist(), y.tolist()
 
 
@@ -154,7 +154,7 @@ def determine_trajectory(type):
 
 def get_state_dim(type_task):
     if type_task == 3:
-        return 19
+        return 16
     elif type_task == 4:
         return 26
     elif type_task == 5:
@@ -195,4 +195,4 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
     elif type_task == 6:
         task = TrakingTrajectoryTask6(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=2), x_y  # n_sub_steps = 17
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=5), x_y  # n_sub_steps = 17
