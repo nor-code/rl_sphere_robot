@@ -61,7 +61,7 @@ class DeepDeterministicPolicyGradient(object):
 
     def sample_actions(self, state, t, i):
         if self.epsilon > 0:
-            return [np.random.uniform(-1, 1, size=1)[0], np.random.uniform(0.1, 1.1, size=1)[0]]  # only random
+            return [np.random.uniform(-0.97, 0.97, size=1)[0], np.random.uniform(0.1, 1.1, size=1)[0]]  # only random
         else:
             self.policy.to_eval_mode()
             action = self.get_action([state])
@@ -75,7 +75,7 @@ class DeepDeterministicPolicyGradient(object):
             platform += (sigma * np.random.randn(1) + mu_p)
             wheel += (sigma * np.random.randn(1) + mu_w)
 
-            platform = np.clip(platform, -1, 1)
+            platform = np.clip(platform, -0.97, 0.97)
             wheel = np.clip(wheel, 0.1, 1.1)
 
             self.writer.add_scalar("noise_action plat", platform, i)
@@ -129,8 +129,8 @@ class DeepDeterministicPolicyGradient(object):
 
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
-            return 16
-        return 16
+            return 32
+        return 32
 
     def play_episode(self, initial_state, enviroment, episode_timeout, n_steps, global_iteration, episode):
         s = initial_state
@@ -236,7 +236,7 @@ class Actor(nn.Module):
             nn.LeakyReLU(),
 
             nn.Linear(512, 1),
-            nn.Tanh()
+            PlatformTanh()
         ).to(self.device)
 
         self.wheel_out = nn.Sequential(
@@ -289,6 +289,11 @@ class Critic(nn.Module):
     def forward(self, state, action):
         q = torch.cat([state, action], dim=-1)
         return self.base(q)
+
+
+class PlatformTanh(nn.Tanh):
+    def forward(self, input: Tensor) -> Tensor:
+        return 0.97 * torch.tanh(input)
 
 
 class WheelSigmoid(nn.Sigmoid):

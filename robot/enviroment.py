@@ -81,7 +81,7 @@ def get_string_xml(roll_angle):
     <!--     </contact>-->
 
         <actuator>
-            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-1 1"/>
+            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.97 0.97"/>
             <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.1 1.1"/>
         </actuator>
 
@@ -130,7 +130,7 @@ def random_trajectory():
     x_init = np.random.uniform(scope['x'][0], scope['x'][1])
     y_init = np.random.uniform(scope['y'][0], scope['y'][1])
 
-    radius = np.random.randn(1, total_points) * np.logspace(-1, -3.5, total_points)
+    radius = np.random.randn(1, total_points) * np.logspace(-1.25, -3.5, total_points)
     phi = 2 * np.random.randn(1, total_points) * np.pi
 
     t = np.linspace(0, 2 * np.pi, total_points)
@@ -195,4 +195,4 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
     elif type_task == 6:
         task = TrakingTrajectoryTask6(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=10), x_y  # n_sub_steps = 17
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=15), x_y  # n_sub_steps = 17
