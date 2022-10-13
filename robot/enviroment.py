@@ -82,7 +82,7 @@ def get_string_xml(roll_angle):
 
         <actuator>
             <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.97 0.97"/>
-            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.1 1.1"/>
+            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.1 0.5"/>
         </actuator>
 
         <sensor>

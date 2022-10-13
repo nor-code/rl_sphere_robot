@@ -61,7 +61,7 @@ class DeepDeterministicPolicyGradient(object):
 
     def sample_actions(self, state, t, i):
         if self.epsilon > 0:
-            return [np.random.uniform(-0.97, 0.97, size=1)[0], np.random.uniform(0.1, 1.1, size=1)[0]]  # only random
+            return [np.random.uniform(-0.97, 0.97, size=1)[0], np.random.uniform(0.1, 0.5, size=1)[0]]  # only random
         else:
             self.policy.to_eval_mode()
             action = self.get_action([state])
@@ -69,14 +69,14 @@ class DeepDeterministicPolicyGradient(object):
             platform, wheel = action[0][0], action[0][1]
 
             mu_p = 0.001 * self.amp * np.sin(self.omega * t + self.phase_platform)
-            mu_w = 0.001 * self.amp * np.sin(self.omega * t + self.phase_wheel)
+            mu_w = 0.0008 * self.amp * np.sin(self.omega * t + self.phase_wheel)
             sigma = np.sqrt(self.sigma)
 
             platform += (sigma * np.random.randn(1) + mu_p)
             wheel += (sigma * np.random.randn(1) + mu_w)
 
             platform = np.clip(platform, -0.97, 0.97)
-            wheel = np.clip(wheel, 0.1, 1.1)
+            wheel = np.clip(wheel, 0.1, 0.5)
 
             self.writer.add_scalar("noise_action plat", platform, i)
             self.writer.add_scalar("noise_action wheel", wheel, i)
@@ -298,4 +298,4 @@ class PlatformTanh(nn.Tanh):
 
 class WheelSigmoid(nn.Sigmoid):
     def forward(self, input: Tensor) -> Tensor:
-        return torch.sigmoid(input) + 0.1
+        return 0.4 * torch.sigmoid(input) + 0.1
