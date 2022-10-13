@@ -68,7 +68,7 @@ class TrakingTrajectoryTask5(base.Task):
         self.count_invalid_states = 0
         self.count_hard_invalid_state = 0
 
-        self.dist = np.linalg.norm([x - self.points[self.index1][0], y - self.points[self.index1][1]])
+        self.dist = 0.0
 
         r1 = np.linalg.norm([x - self.points[self.index1][0], y - self.points[self.index1][1]])
         r2 = np.linalg.norm([x - self.points[self.index2][0], y - self.points[self.index2][1]])
