@@ -9,6 +9,7 @@ from robot.task_3 import TrakingTrajectoryTask3
 from robot.task_4 import TrakingTrajectoryTask4
 from robot.task_5 import TrakingTrajectoryTask5
 from robot.task_6 import TrakingTrajectoryTask6
+from robot.task_7 import TrakingTrajectoryTask7
 
 
 def get_string_xml(roll_angle):
@@ -18,7 +19,7 @@ def get_string_xml(roll_angle):
 
         <compiler inertiafromgeom="true" angle="degree"/>
         <option integrator="RK4"/>
-        <option timestep="0.01" iterations="50" solver="Newton" tolerance="1e-10"/>
+        <option timestep="0.005" iterations="50" solver="Newton" tolerance="1e-10"/>
         <size njmax="1500" nconmax="5000" nstack="5000000"/>
 
 
@@ -81,8 +82,8 @@ def get_string_xml(roll_angle):
     <!--     </contact>-->
 
         <actuator>
-            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.97 0.97"/>
-            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.1 0.5"/>
+            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.975 0.975"/>
+            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.6"/>
         </actuator>
 
         <sensor>
@@ -164,6 +165,8 @@ def get_state_dim(type_task):
         return 9
     elif type_task == 6:
         return 16
+    elif type_task == 7:
+        return 12
     return -1
 
 
@@ -197,5 +200,7 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
         task = TrakingTrajectoryTask5(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
     elif type_task == 6:
         task = TrakingTrajectoryTask6(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
+    elif type_task == 7:
+        task = TrakingTrajectoryTask7(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=15), x_y  # n_sub_steps = 17
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=25), x_y  # n_sub_steps = 17

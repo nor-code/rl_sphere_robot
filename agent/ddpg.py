@@ -64,22 +64,22 @@ class DeepDeterministicPolicyGradient(object):
 
     def sample_actions(self, state, t, i):
         if self.epsilon > 0:
-            return [np.random.uniform(-0.97, 0.97, size=1)[0], np.random.uniform(0.1, 0.5, size=1)[0]]  # only random
-        else:
+        #     return [np.random.uniform(-0.975, 0.975, size=1)[0], np.random.uniform(0.26, 0.6, size=1)[0]]  # only random
+        # else:
             self.policy.to_eval_mode()
             action = self.get_action([state])
 
             platform, wheel = action[0][0], action[0][1]
 
             mu_p = 0.001 * self.amp * np.sin(self.omega * t + self.phase_platform)
-            mu_w = 0.0008 * self.amp * np.sin(self.omega * t + self.phase_wheel)
+            mu_w = 0.0005 * self.amp * np.sin(self.omega * t + self.phase_wheel)
             sigma = np.sqrt(self.sigma)
 
             platform += (sigma * np.random.randn(1) + mu_p)
             wheel += (sigma * np.random.randn(1) + mu_w)
 
-            platform = np.clip(platform, -0.97, 0.97)
-            wheel = np.clip(wheel, 0.1, 0.5)
+            platform = np.clip(platform, -0.975, 0.975)
+            wheel = np.clip(wheel, 0.26, 0.6)
 
             self.writer.add_scalar("noise_action plat", platform, i)
             self.writer.add_scalar("noise_action wheel", wheel, i)
@@ -88,6 +88,9 @@ class DeepDeterministicPolicyGradient(object):
             wheel = self.alpha * wheel + (1 - self.alpha) * self.prev_action_wheel
 
             return [platform[0], wheel[0]]  # with noise
+        else:
+            action = self.get_action([state])
+            return [action[0][1], action[0][1]]
 
     def train_model(self):
         self.policy.to_train_mode()
@@ -146,7 +149,7 @@ class DeepDeterministicPolicyGradient(object):
         self.phase_wheel = np.random.uniform(-np.pi, np.pi, size=1)[0]
         self.sigma, self.amp, self.omega = np.random.randn(3)
         self.sigma = abs(self.sigma)
-        self.alpha = np.random.uniform(0.3, 0.9, size=1)[0]
+        self.alpha = np.random.uniform(0.6, 0.95, size=1)[0]
 
         init_action = self.get_action([s])
         self.prev_action_platform = init_action[0][0]
@@ -304,9 +307,9 @@ class Critic(nn.Module):
 
 class PlatformTanh(nn.Tanh):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.97 * torch.tanh(input)
+        return 0.975 * torch.tanh(input)
 
 
 class WheelSigmoid(nn.Sigmoid):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.4 * torch.sigmoid(input) + 0.1
+        return 0.34 * torch.sigmoid(input) + 0.26
