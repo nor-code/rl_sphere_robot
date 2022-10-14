@@ -158,7 +158,8 @@ class TrakingTrajectoryTask5(base.Task):
                       prev_r1,  # 4
                       prev_r2,  # 5
                       prev_r3,  # 6
-                      prev_r4  # 7
+                      prev_r4,  # 7
+                      self.dist
                       ]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
@@ -186,6 +187,8 @@ class TrakingTrajectoryTask5(base.Task):
 
     def get_reward(self, physics):
         state = self.state
+        x, y = self.robot_position
+        new_dist = np.linalg.norm([x - self.points[self.no_return_index][0], y - self.points[self.no_return_index][1]])
 
         if self.is_invalid_state_soft():
             self.count_invalid_states += 1
@@ -207,7 +210,7 @@ class TrakingTrajectoryTask5(base.Task):
         distance_reward1 = self.get_reward_for_distance(0.05, r1)
         distance_reward2 = self.get_reward_for_distance(0.15, r2)
         distance_reward3 = self.get_reward_for_distance(0.45, r3)
-        distance_reward4 = self.get_reward_for_distance(1.2, r4)
+        distance_reward4 = self.get_reward_for_distance(1.0, r4)
 
         missed_index2 = self.get_index(self.index1 + 1)
         missed_index3 = self.get_index(self.index1 + 2)
@@ -221,8 +224,12 @@ class TrakingTrajectoryTask5(base.Task):
             print("пропущен ", missed_index4, " index2 = ", self.index4)
 
         reward = distance_reward1 + distance_reward2 + distance_reward3 + distance_reward4
-        - 50 * abs(self.index2 - missed_index2) - 50 * abs(self.index3 - missed_index3) - 50 * abs(
-            self.index4 - missed_index4)
+        - 10 * abs(self.index2 - missed_index2) - 10 * abs(self.index3 - missed_index3) - 10 * abs(self.index4 - missed_index4)
+
+        if new_dist <= self.dist:
+            reward -= 100
+        else:
+            reward += 2
 
         print("--step--")
 
@@ -242,12 +249,12 @@ class TrakingTrajectoryTask5(base.Task):
     def is_invalid_state_hard(self):
         x, y = self.robot_position
         new_dist = np.linalg.norm([x - self.points[self.no_return_index][0], y - self.points[self.no_return_index][1]])
-        if new_dist < self.dist:
-            print("new dist = ", round(new_dist, 4), " no return dist = ", round(self.dist, 4))
-            return True
+        # if new_dist <= self.dist:
+        #     print("new dist = ", round(new_dist, 4), " no return dist = ", round(self.dist, 4))
+        #     return True
         # поскольку индекс невозврата неуменьшается (всегда),
         # то эта проверка - еще один способ проверить не свернул ли робот назад
-        if self.no_return_index > self.index1 or self.no_return_index > self.index2 \
-                or self.no_return_index > self.index3 or self.no_return_index > self.index4:
+        if self.no_return_index > self.index1 or self.no_return_index >= self.index2 \
+                or self.no_return_index >= self.index3 or self.no_return_index >= self.index4:
             return True
         return False

@@ -52,17 +52,20 @@ class DeepDeterministicPolicyGradient(object):
 
         # Create optimizers
         self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=1e-3, weight_decay=1e-4)
-        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=1e-3, weight_decay=1e-4)
+        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=2e-3, weight_decay=1e-4)
 
         # for noize action per one episode
         self.phase_platform = np.random.uniform(-np.pi, np.pi, size=1)
         self.phase_wheel = np.random.uniform(-np.pi, np.pi, size=1)
         self.sigma, self.amp, self.omega = np.random.randn(3)
+        self.prev_action_platform = 0
+        self.prev_action_wheel = 0
+        self.alpha = 0 # для сглаживающего фильтра
 
     def sample_actions(self, state, t, i):
-        rand = np.random.rand()
-
-        if rand <= self.epsilon:
+        if self.epsilon > 0:
+            return [np.random.uniform(-0.97, 0.97, size=1)[0], np.random.uniform(0.1, 0.5, size=1)[0]]  # only random
+        else:
             self.policy.to_eval_mode()
             action = self.get_action([state])
 
@@ -81,33 +84,10 @@ class DeepDeterministicPolicyGradient(object):
             self.writer.add_scalar("noise_action plat", platform, i)
             self.writer.add_scalar("noise_action wheel", wheel, i)
 
-            return [platform[0], wheel[0]]  # with noise
-        else:
-            action = self.get_action([state])
-            return [action[0][0], action[0][1]]
+            platform = self.alpha * platform + (1 - self.alpha) * self.prev_action_platform
+            wheel = self.alpha * wheel + (1 - self.alpha) * self.prev_action_wheel
 
-        # if self.epsilon > 0:
-        #     return [np.random.uniform(-0.97, 0.97, size=1)[0], np.random.uniform(0.1, 0.5, size=1)[0]]  # only random
-        # else:
-        #     self.policy.to_eval_mode()
-        #     action = self.get_action([state])
-        #
-        #     platform, wheel = action[0][0], action[0][1]
-        #
-        #     mu_p = 0.001 * self.amp * np.sin(self.omega * t + self.phase_platform)
-        #     mu_w = 0.0008 * self.amp * np.sin(self.omega * t + self.phase_wheel)
-        #     sigma = np.sqrt(self.sigma)
-        #
-        #     platform += (sigma * np.random.randn(1) + mu_p)
-        #     wheel += (sigma * np.random.randn(1) + mu_w)
-        #
-        #     platform = np.clip(platform, -0.97, 0.97)
-        #     wheel = np.clip(wheel, 0.1, 0.5)
-        #
-        #     self.writer.add_scalar("noise_action plat", platform, i)
-        #     self.writer.add_scalar("noise_action wheel", wheel, i)
-        #
-        #     return [platform[0], wheel[0]]  # with noise
+            return [platform[0], wheel[0]]  # with noise
 
     def train_model(self):
         self.policy.to_train_mode()
@@ -166,6 +146,11 @@ class DeepDeterministicPolicyGradient(object):
         self.phase_wheel = np.random.uniform(-np.pi, np.pi, size=1)[0]
         self.sigma, self.amp, self.omega = np.random.randn(3)
         self.sigma = abs(self.sigma)
+        self.alpha = np.random.uniform(0.3, 0.9, size=1)[0]
+
+        init_action = self.get_action([s])
+        self.prev_action_platform = init_action[0][0]
+        self.prev_action_wheel = init_action[0][1]
 
         for i in range(n_steps):
             global_iteration += 1
@@ -248,17 +233,17 @@ class Actor(nn.Module):
 
         self.base = nn.Sequential(
             nn.Linear(self.input_dim, 2048),
-            # nn.BatchNorm1d(2048),
+            nn.BatchNorm1d(2048),
             nn.LeakyReLU(),
 
             nn.Linear(2048, 2048),
-            # nn.BatchNorm1d(1024),
+            nn.BatchNorm1d(2048),
             nn.LeakyReLU()
         ).to(self.device)
 
         self.platform_out = nn.Sequential(
             nn.Linear(2048, 1024),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(1024),
             nn.LeakyReLU(),
 
             nn.Linear(1024, 1),
@@ -267,7 +252,7 @@ class Actor(nn.Module):
 
         self.wheel_out = nn.Sequential(
             nn.Linear(2048, 1024),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(1024),
             nn.LeakyReLU(),
 
             nn.Linear(1024, 1),

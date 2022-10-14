@@ -125,21 +125,24 @@ def circle():
 def random_trajectory():
     global scope
     # общее количество точек на кривой
-    total_points = 50 # task 3 - 25
+    total_points = 60 # task 3 - 25
 
     x_init = np.random.uniform(scope['x'][0], scope['x'][1])
     y_init = np.random.uniform(scope['y'][0], scope['y'][1])
 
-    radius = np.random.randn(1, total_points) * np.logspace(-1.25, -3.5, total_points)
-    phi = 2 * np.random.randn(1, total_points) * np.pi
+    radius = np.random.randn(1, total_points) * np.logspace(-1.37, -3, total_points)
+    phi = np.random.randn(1, total_points) * np.logspace(-0.01, -1.2, total_points)
+    omega = 2 * np.random.randn(1, total_points) * np.logspace(-0.01, -0.85, total_points) * np.pi
 
     t = np.linspace(0, 2 * np.pi, total_points)
     r = np.ones(total_points)
     for i in range(total_points):
-        r += radius[0][i] * np.sin(i * t + phi[0][i])
+        r += radius[0][i] * np.sin(omega[0][i] * t + phi[0][i])
 
     x = r * np.sin(t)  # + x_init
     y = - r * np.cos(t) + 1  # + y_init
+    x[-1] = x[0]
+    y[-1] = y[0]
     return x.tolist(), y.tolist()
 
 
@@ -158,7 +161,7 @@ def get_state_dim(type_task):
     elif type_task == 4:
         return 26
     elif type_task == 5:
-        return 8
+        return 9
     elif type_task == 6:
         return 16
     return -1

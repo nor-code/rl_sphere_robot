@@ -65,7 +65,7 @@ def get_size():
     elif args.trajectory == 'curve':
         return 25
     elif args.trajectory == 'random':
-        return 50
+        return 60
 
 
 def save_model(backup_iteration, _number, name_agent):

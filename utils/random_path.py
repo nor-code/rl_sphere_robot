@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 from robot.enviroment import random_trajectory,circle
 
-for i in range(3):
+for i in range(15):
     x, y = random_trajectory()
     plt.plot(x, y)
     plt.scatter(x, y, lw=0.1)
