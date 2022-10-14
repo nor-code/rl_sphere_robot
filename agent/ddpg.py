@@ -60,9 +60,9 @@ class DeepDeterministicPolicyGradient(object):
         self.sigma, self.amp, self.omega = np.random.randn(3)
 
     def sample_actions(self, state, t, i):
-        if self.epsilon > 0:
-            return [np.random.uniform(-0.97, 0.97, size=1)[0], np.random.uniform(0.1, 0.5, size=1)[0]]  # only random
-        else:
+        rand = np.random.rand()
+
+        if rand <= self.epsilon:
             self.policy.to_eval_mode()
             action = self.get_action([state])
 
@@ -82,6 +82,32 @@ class DeepDeterministicPolicyGradient(object):
             self.writer.add_scalar("noise_action wheel", wheel, i)
 
             return [platform[0], wheel[0]]  # with noise
+        else:
+            action = self.get_action([state])
+            return [action[0][0], action[0][1]]
+
+        # if self.epsilon > 0:
+        #     return [np.random.uniform(-0.97, 0.97, size=1)[0], np.random.uniform(0.1, 0.5, size=1)[0]]  # only random
+        # else:
+        #     self.policy.to_eval_mode()
+        #     action = self.get_action([state])
+        #
+        #     platform, wheel = action[0][0], action[0][1]
+        #
+        #     mu_p = 0.001 * self.amp * np.sin(self.omega * t + self.phase_platform)
+        #     mu_w = 0.0008 * self.amp * np.sin(self.omega * t + self.phase_wheel)
+        #     sigma = np.sqrt(self.sigma)
+        #
+        #     platform += (sigma * np.random.randn(1) + mu_p)
+        #     wheel += (sigma * np.random.randn(1) + mu_w)
+        #
+        #     platform = np.clip(platform, -0.97, 0.97)
+        #     wheel = np.clip(wheel, 0.1, 0.5)
+        #
+        #     self.writer.add_scalar("noise_action plat", platform, i)
+        #     self.writer.add_scalar("noise_action wheel", wheel, i)
+        #
+        #     return [platform[0], wheel[0]]  # with noise
 
     def train_model(self):
         self.policy.to_train_mode()
@@ -222,29 +248,29 @@ class Actor(nn.Module):
 
         self.base = nn.Sequential(
             nn.Linear(self.input_dim, 2048),
-            nn.BatchNorm1d(2048),
+            # nn.BatchNorm1d(2048),
             nn.LeakyReLU(),
 
-            nn.Linear(2048, 1024),
-            nn.BatchNorm1d(1024),
+            nn.Linear(2048, 2048),
+            # nn.BatchNorm1d(1024),
             nn.LeakyReLU()
         ).to(self.device)
 
         self.platform_out = nn.Sequential(
-            nn.Linear(1024, 512),
-            nn.BatchNorm1d(512),
+            nn.Linear(2048, 1024),
+            # nn.BatchNorm1d(512),
             nn.LeakyReLU(),
 
-            nn.Linear(512, 1),
+            nn.Linear(1024, 1),
             PlatformTanh()
         ).to(self.device)
 
         self.wheel_out = nn.Sequential(
-            nn.Linear(1024, 512),
-            nn.BatchNorm1d(512),
+            nn.Linear(2048, 1024),
+            # nn.BatchNorm1d(512),
             nn.LeakyReLU(),
 
-            nn.Linear(512, 1),
+            nn.Linear(1024, 1),
             WheelSigmoid()
         ).to(self.device)
 
