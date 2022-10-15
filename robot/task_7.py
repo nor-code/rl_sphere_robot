@@ -204,8 +204,7 @@ class TrakingTrajectoryTask7(base.Task):
         distance_reward3 = self.get_reward_for_distance(0.55, r3)
         distance_reward4 = self.get_reward_for_distance(0.85, r4)
 
-        reward = distance_reward1 + distance_reward2 + distance_reward3 + distance_reward4 \
-                 - 20 * state[4] * r1 - 30 * state[5] * r2 - 10 * state[10] * prev_r1 - 15 * state[11] * prev_r2
+        reward = distance_reward1 + distance_reward2 + distance_reward3 + distance_reward4 - 20 * state[4] * r1 - 30 * state[5]
         return reward
 
     # если количество точек в окретности робота не осталось

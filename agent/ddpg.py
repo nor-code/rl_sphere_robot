@@ -241,6 +241,10 @@ class Actor(nn.Module):
 
             nn.Linear(2048, 2048),
             nn.BatchNorm1d(2048),
+            nn.LeakyReLU(),
+
+            nn.Linear(2048, 2048),
+            nn.BatchNorm1d(2048),
             nn.LeakyReLU()
         ).to(self.device)
 
@@ -291,10 +295,13 @@ class Critic(nn.Module):
             nn.Linear(self.input_dim, 2048),
             nn.LeakyReLU(),
 
-            nn.Linear(2048, 2048),
+            nn.Linear(2048, 4096),
             nn.LeakyReLU(),
 
-            nn.Linear(2048, 2048),
+            nn.Linear(4096, 4096),
+            nn.LeakyReLU(),
+
+            nn.Linear(4096, 2048),
             nn.LeakyReLU(),
 
             nn.Linear(2048, 1)
