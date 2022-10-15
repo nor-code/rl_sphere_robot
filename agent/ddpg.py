@@ -85,7 +85,7 @@ class DeepDeterministicPolicyGradient(object):
             self.writer.add_scalar("noise_action wheel", wheel, i)
 
             platform = self.alpha * platform + (1 - self.alpha) * self.prev_action_platform
-            wheel = 0.85 * wheel + (1 - 0.85) * self.prev_action_wheel
+            wheel = self.alpha * wheel + (1 - self.alpha) * self.prev_action_wheel
 
             return [platform[0], wheel[0]]  # with noise
         else:
@@ -149,7 +149,7 @@ class DeepDeterministicPolicyGradient(object):
         self.phase_wheel = np.random.uniform(-np.pi, np.pi, size=1)[0]
         self.sigma, self.amp, self.omega = np.random.randn(3)
         self.sigma = abs(self.sigma)
-        self.alpha = np.random.uniform(0.6, 0.95, size=1)[0]
+        self.alpha = np.random.uniform(0.2, 0.8, size=1)[0]
 
         init_action = self.get_action([s])
         self.prev_action_platform = init_action[0][0]
