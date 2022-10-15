@@ -26,7 +26,7 @@ U = []
 #                            replay_buffer=None,
 #                            refresh_target=None,
 #                            writer=None)
-agent = DeepDeterministicPolicyGradient(26,
+agent = DeepDeterministicPolicyGradient(12,
                                         device='cpu',
                                         act_dim=2,
                                         replay_buffer=None,
@@ -37,9 +37,9 @@ agent = DeepDeterministicPolicyGradient(26,
 # agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
 # agent.q_network.eval()
 
-agent.policy.load_state_dict(torch.load('../models/ddpg_policy_1_2.pt', map_location=torch.device('cpu')))
+agent.policy.load_state_dict(torch.load('../models/ddpg_policy_2_6.pt', map_location=torch.device('cpu')))
 agent.policy.eval()
-agent.qf.load_state_dict(torch.load('../models/ddpg_Q_1_2.pt', map_location=torch.device('cpu')))
+agent.qf.load_state_dict(torch.load('../models/ddpg_Q_2_6.pt', map_location=torch.device('cpu')))
 agent.qf.eval()
 
 final_time = 0
@@ -86,7 +86,7 @@ def action_policy(time_step):
     #     return [-0.22, 0.31]
 
 
-env, x_y = make_env(episode_timeout=40, type_task=4, trajectory='circle', begin_index_=0)
+env, x_y = make_env(episode_timeout=60, type_task=7, trajectory='random', begin_index_=5)
 app = application.Application()
 app.launch(env, policy=action_policy)
 
@@ -95,7 +95,7 @@ actions = actions.T.reshape(-1, 2)
 traj = plt.figure().add_subplot()
 traj.plot(pos[:, 0][1:], pos[:, 1][1:], label="trajectory")
 traj.plot(x_y[0], x_y[1], label="desired_trajectory")
-traj.quiver(pos[:, 0][1:], pos[:, 1][1:], V, U, color=['r', 'b', 'g'], angles='xy', width=0.002)
+# traj.quiver(pos[:, 0][1:], pos[:, 1][1:], V, U, color=['r', 'b', 'g'], angles='xy', width=0.002)
 traj.legend(loc='upper right')
 traj.set_xlabel('x,    total reward = ' + str(round(total_reward, 3)))
 traj.set_ylabel('y')

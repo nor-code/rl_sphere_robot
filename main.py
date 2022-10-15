@@ -51,7 +51,7 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
 
 
 def get_env(size):
-    begin_index = [0, size // 10, 2 * size // 10, (3 * size) // 10, (4 * size) // 10,
+    begin_index = [size // 10, 2 * size // 10, (3 * size) // 10, (4 * size) // 10,
                    size // 2, (6 * size) // 10, (7 * size) // 10, (8 * size) // 10, (9 * size) // 10]
     env_i, x_y = make_env(
         episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=np.random.choice(begin_index, size=1)[0]

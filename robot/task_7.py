@@ -15,7 +15,7 @@ def vector(pointA, pointB):
 
 class TrakingTrajectoryTask7(base.Task):
 
-    def __init__(self, trajectory_x_y, begin_index, timeout, R=0.24, random=None):
+    def __init__(self, trajectory_x_y, begin_index, timeout, R=0.242, random=None):
         """ тайм-аут одного эпизода """
         self.timeout = timeout
         """ количество точек, которые мы достигли в рамках текущего эпищода """
@@ -197,14 +197,15 @@ class TrakingTrajectoryTask7(base.Task):
             self.count_invalid_states = 0
 
         r1, r2, r3, r4 = state[0], state[1], state[2], state[3]
+        prev_r1, prev_r2 = state[6], state[7]
 
-        distance_reward1 = self.get_reward_for_distance(0.05, r1)
+        distance_reward1 = self.get_reward_for_distance(0.10, r1)
         distance_reward2 = self.get_reward_for_distance(0.15, r2)
-        distance_reward3 = self.get_reward_for_distance(0.45, r3)
-        distance_reward4 = self.get_reward_for_distance(1.0, r4)
+        distance_reward3 = self.get_reward_for_distance(0.55, r3)
+        distance_reward4 = self.get_reward_for_distance(0.85, r4)
 
-        reward = distance_reward1 + distance_reward2 + distance_reward3 + distance_reward4 - 10 * state[4] * r1 - 15 * state[5] * r2
-
+        reward = distance_reward1 + distance_reward2 + distance_reward3 + distance_reward4 \
+                 - 20 * state[4] * r1 - 30 * state[5] * r2 - 10 * state[10] * prev_r1 - 15 * state[11] * prev_r2
         return reward
 
     # если количество точек в окретности робота не осталось
@@ -226,7 +227,9 @@ class TrakingTrajectoryTask7(base.Task):
         #     return True
         # поскольку индекс невозврата неуменьшается (всегда),
         # то эта проверка - еще один способ проверить не свернул ли робот назад
-        if self.no_return_index > self.index1 or self.no_return_index >= self.index2 \
-                or self.no_return_index >= self.index3 or self.no_return_index >= self.index4:
+        if self.no_return_index == len(self.points) - 1 and self.index1 == 0:
+            return False
+        if self.no_return_index > self.index1 or self.no_return_index == self.index2 \
+                or self.no_return_index == self.index3 or self.no_return_index == self.index4:
             return True
         return False
