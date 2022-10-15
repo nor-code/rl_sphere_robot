@@ -204,7 +204,7 @@ class TrakingTrajectoryTask7(base.Task):
         distance_reward3 = self.get_reward_for_distance(0.55, r3)
         distance_reward4 = self.get_reward_for_distance(0.85, r4)
 
-        reward = distance_reward1 + distance_reward2 + distance_reward3 + distance_reward4 - 20 * state[4] * r1 - 30 * state[5]
+        reward = distance_reward1 + distance_reward2 + distance_reward3 + distance_reward4 - 20 * state[4] * r1 - 30 * state[5] * r2
         return reward
 
     # если количество точек в окретности робота не осталось
@@ -228,7 +228,6 @@ class TrakingTrajectoryTask7(base.Task):
         # то эта проверка - еще один способ проверить не свернул ли робот назад
         if self.no_return_index == len(self.points) - 1 and self.index1 == 0:
             return False
-        if self.no_return_index > self.index1 or self.no_return_index == self.index2 \
-                or self.no_return_index == self.index3 or self.no_return_index == self.index4:
+        if self.no_return_index > self.index1: # or self.no_return_index == self.index2 or self.no_return_index == self.index3 or self.no_return_index == self.index4:
             return True
         return False
