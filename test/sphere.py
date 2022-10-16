@@ -37,9 +37,9 @@ agent = DeepDeterministicPolicyGradient(12,
 # agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
 # agent.q_network.eval()
 
-agent.policy.load_state_dict(torch.load('../models/ddpg_policy_2_6.pt', map_location=torch.device('cpu')))
+agent.policy.load_state_dict(torch.load('../models/ddpg_policy_1_5.pt', map_location=torch.device('cpu')))
 agent.policy.eval()
-agent.qf.load_state_dict(torch.load('../models/ddpg_Q_2_6.pt', map_location=torch.device('cpu')))
+agent.qf.load_state_dict(torch.load('../models/ddpg_Q_1_5.pt', map_location=torch.device('cpu')))
 agent.qf.eval()
 
 final_time = 0
@@ -86,7 +86,7 @@ def action_policy(time_step):
     #     return [-0.22, 0.31]
 
 
-env, x_y = make_env(episode_timeout=60, type_task=7, trajectory='circle', begin_index_=5)
+env, x_y = make_env(episode_timeout=60, type_task=7, trajectory='circle', begin_index_=10)
 app = application.Application()
 app.launch(env, policy=action_policy)
 
