@@ -181,7 +181,7 @@ class TrakingTrajectoryTask7(base.Task):
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 7 \
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 20 \
                 or len(self.points) == self.achievedPoints or self.count_hard_invalid_state >= 1:
             print("end episode at t = ", np.round(physics.data.time, 2), "\n")
             return 0.0
@@ -200,11 +200,11 @@ class TrakingTrajectoryTask7(base.Task):
 
         if self.is_invalid_state_soft():
             self.count_invalid_states += 1
-            return -50
+            return -60
 
         if self.is_invalid_state_hard():
             self.count_hard_invalid_state += 1
-            return -50
+            return -60
 
         if self.count_invalid_states > 0:
             print("вернулись на траекторию")
@@ -228,11 +228,24 @@ class TrakingTrajectoryTask7(base.Task):
         reward1 = self.get_reward_for_distance(0.10, r1)
         reward2 = self.get_reward_for_distance(0.15, r2)
         reward3 = self.get_reward_for_distance(0.55, r3)
-        reward4 = self.get_reward_for_distance(0.85, r4)
-        reward5 = self.get_reward_for_distance(1.0, r5)
+        reward4 = self.get_reward_for_distance(1.1, r4)
+        reward5 = self.get_reward_for_distance(1.2, r5)
 
-        reward = reward1 + reward2 + reward3 + reward4 + reward5\
-                 - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 25 * sin_a3 * r3 - 35 * sin_a4 * r4 - 50 * sin_a5 * r5
+        # print("reward1 = ", round(reward1, 2), " r1 = ", r1)
+        # print("reward2 = ", round(reward2, 2), " r2 = ", r2)
+        # print("reward3 = ", round(reward3, 2), " r3 = ", r3)
+        # print("reward4 = ", round(reward4, 2), " r4 = ", r4)
+        # print("reward5 = ", round(reward5, 2), " r5 = ", r5)
+        #
+        # print(" discount1 = ", - 10 * sin_a1 * r1)
+        # print(" discount2 = ", - 15 * sin_a2 * r2)
+        # print(" discount3 = ", - 25 * sin_a3 * r3)
+        # print(" discount4 = ", - 35 * sin_a4 * r4)
+        # print(" discount5 = ", - 50 * sin_a5 * r5)
+
+        reward = (1-sin_a1)*reward1 + (1-sin_a2)*reward2 + (1-sin_a3)*reward3 + (1-sin_a4)*reward4 + (1-sin_a5)*reward5
+        # reward = reward1 + reward2 + reward3 + reward4 + reward5 \
+        #          - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 25 * sin_a3 * r3 - 35 * sin_a4 * r4 - 50 * sin_a5 * r5
         return reward
 
     # если количество точек в окретности робота не осталось
