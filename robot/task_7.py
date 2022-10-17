@@ -186,25 +186,25 @@ class TrakingTrajectoryTask7(base.Task):
             print("end episode at t = ", np.round(physics.data.time, 2), "\n")
             return 0.0
 
-    def get_reward_for_distance(self, a_i, r_i):
+    def get_reward_for_distance(self, a_i, r_i, sin_alpha_i):
         if r_i > self.radius:
-            return -10
+            return -15
         else:
             if r_i < 0.01:
                 return a_i * 100
             else:
-                return a_i * (1 / r_i)
+                return a_i * (1 / r_i) * (1 - sin_alpha_i)
 
     def get_reward(self, physics):
         state = self.state
 
         if self.is_invalid_state_soft():
             self.count_invalid_states += 1
-            return -60
+            return -75
 
         if self.is_invalid_state_hard():
             self.count_hard_invalid_state += 1
-            return -60
+            return -85
 
         if self.count_invalid_states > 0:
             print("вернулись на траекторию")
@@ -225,12 +225,6 @@ class TrakingTrajectoryTask7(base.Task):
         sin_a4 = np.sin(round(get_angle_between_2_vector(i4_i5, v_r4, norm(i4_i5), r4), 4))
         sin_a5 = np.sin(round(get_angle_between_2_vector([-state[26], -state[27]], v_r5, norm(i4_i5), r5), 4))
 
-        reward1 = self.get_reward_for_distance(0.10, r1)
-        reward2 = self.get_reward_for_distance(0.15, r2)
-        reward3 = self.get_reward_for_distance(0.55, r3)
-        reward4 = self.get_reward_for_distance(1.1, r4)
-        reward5 = self.get_reward_for_distance(1.2, r5)
-
         # print("reward1 = ", round(reward1, 2), " r1 = ", r1)
         # print("reward2 = ", round(reward2, 2), " r2 = ", r2)
         # print("reward3 = ", round(reward3, 2), " r3 = ", r3)
@@ -243,7 +237,14 @@ class TrakingTrajectoryTask7(base.Task):
         # print(" discount4 = ", - 35 * sin_a4 * r4)
         # print(" discount5 = ", - 50 * sin_a5 * r5)
 
-        reward = (1-sin_a1)*reward1 + (1-sin_a2)*reward2 + (1-sin_a3)*reward3 + (1-sin_a4)*reward4 + (1-sin_a5)*reward5
+        reward1 = self.get_reward_for_distance(0.10, r1, sin_a1)
+        reward2 = self.get_reward_for_distance(0.25, r2, sin_a2)
+        reward3 = self.get_reward_for_distance(0.65, r3, sin_a3)
+        reward4 = self.get_reward_for_distance(1.5, r4, sin_a4)
+        reward5 = self.get_reward_for_distance(1.65, r5, sin_a5)
+
+        reward = reward1 + reward2 + reward3 + reward4 + reward5
+
         # reward = reward1 + reward2 + reward3 + reward4 + reward5 \
         #          - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 25 * sin_a3 * r3 - 35 * sin_a4 * r4 - 50 * sin_a5 * r5
         return reward

@@ -25,6 +25,7 @@ def build_trajectory(agent=None, enviroment=None, timeout=50, x_y=None, type_tas
     circles = np.array([local_x_O, local_y_O]).T
 
     while env.physics.data.time < timeout:
+        print("_______START TEST________")
         action = agent.get_action([observation])
         try:
             time_step = env.step(action)
