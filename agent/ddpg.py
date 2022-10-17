@@ -84,7 +84,7 @@ class DeepDeterministicPolicyGradient(object):
             self.writer.add_scalar("noise_action plat", platform, i)
             self.writer.add_scalar("noise_action wheel", wheel, i)
 
-            platform = self.alpha * platform + (1 - self.alpha) * self.prev_action_platform
+            platform = 0.25 * platform + (1 - 0.25) * self.prev_action_platform
             wheel = self.alpha * wheel + (1 - self.alpha) * self.prev_action_wheel
 
             return [platform[0], wheel[0]]  # with noise
@@ -138,8 +138,8 @@ class DeepDeterministicPolicyGradient(object):
 
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
-            return 32
-        return 32
+            return 16
+        return 16
 
     def play_episode(self, initial_state, enviroment, episode_timeout, n_steps, global_iteration, episode):
         s = initial_state
@@ -236,21 +236,21 @@ class Actor(nn.Module):
 
         self.base = nn.Sequential(
             nn.Linear(self.input_dim, 2048),
-            nn.BatchNorm1d(2048),
+            # nn.BatchNorm1d(2048),
             nn.LeakyReLU(),
 
             nn.Linear(2048, 2048),
-            nn.BatchNorm1d(2048),
+            # nn.BatchNorm1d(2048),
             nn.LeakyReLU(),
 
             nn.Linear(2048, 2048),
-            nn.BatchNorm1d(2048),
+            # nn.BatchNorm1d(2048),
             nn.LeakyReLU()
         ).to(self.device)
 
         self.platform_out = nn.Sequential(
             nn.Linear(2048, 1024),
-            nn.BatchNorm1d(1024),
+            # nn.BatchNorm1d(1024),
             nn.LeakyReLU(),
 
             nn.Linear(1024, 1),
@@ -259,7 +259,7 @@ class Actor(nn.Module):
 
         self.wheel_out = nn.Sequential(
             nn.Linear(2048, 1024),
-            nn.BatchNorm1d(1024),
+            # nn.BatchNorm1d(1024),
             nn.LeakyReLU(),
 
             nn.Linear(1024, 1),
