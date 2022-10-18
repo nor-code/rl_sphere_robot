@@ -65,26 +65,29 @@ import matplotlib.pyplot as plt
 # plt.plot(horizontal, np.linspace(b, b, 10))
 # plt.plot(horizontal, np.linspace(-b, -b, 10))
 
-plt.grid()
+# plt.grid()
+#
+# t = np.linspace(0, 5, 100)
+#
+#
+# for i in range(30):
+#     p = []
+#     w = []
+#
+#     phase_platform = np.random.uniform(-np.pi, np.pi, size=1)[0]
+#     phase_wheel = np.random.uniform(-np.pi, np.pi, size=1)[0]
+#     sigma, amp, omega = np.random.randn(3)
+#     sigma = abs(sigma)
+#
+#     for t_ in t:
+#         mu_p = 0.001 * amp * np.sin(omega * t_ + phase_platform)
+#         mu_w = 0.001 * amp * np.sin(omega * t_ + phase_wheel)
+#         p.append(sigma * np.random.randn(1) + mu_p)
+#         w.append(sigma * np.random.randn(1) + mu_w)
+#
+#     plt.plot(t, p)
+#     plt.plot(t, w)
+#     plt.show()
 
-t = np.linspace(0, 5, 100)
-
-
-for i in range(30):
-    p = []
-    w = []
-
-    phase_platform = np.random.uniform(-np.pi, np.pi, size=1)[0]
-    phase_wheel = np.random.uniform(-np.pi, np.pi, size=1)[0]
-    sigma, amp, omega = np.random.randn(3)
-    sigma = abs(sigma)
-
-    for t_ in t:
-        mu_p = 0.001 * amp * np.sin(omega * t_ + phase_platform)
-        mu_w = 0.001 * amp * np.sin(omega * t_ + phase_wheel)
-        p.append(sigma * np.random.randn(1) + mu_p)
-        w.append(sigma * np.random.randn(1) + mu_w)
-
-    plt.plot(t, p)
-    plt.plot(t, w)
-    plt.show()
+h = np.min([2, 3, -1, 0, 4])
+print(h)

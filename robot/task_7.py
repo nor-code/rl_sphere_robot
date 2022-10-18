@@ -7,6 +7,8 @@ def get_angle_between_2_vector(v1, v2, len_v1, len_v2):
     if len_v2 == 0.0 or len_v1 == 0.0:
         return 0.0
     cos = np.round(np.dot(v1, v2) / (len_v1 * len_v2), 4)
+    if cos < 0:
+        return np.pi - np.arccos(cos)
     return np.arccos(cos)
 
 
@@ -174,12 +176,27 @@ class TrakingTrajectoryTask7(base.Task):
         v_i4_i5 = vector(self.points[self.index4], self.points[self.index5])
 
         v_i2_i4 = vector(self.points[self.index2], self.points[self.index4])
-                    # 0           1         2        3        4        5        6        7        8        9
-        self.state = [v_r1[0],    v_r1[1],  v_r2[0], v_r2[1], v_r3[0], v_r3[1], v_r4[0], v_r4[1], v_r5[0], v_r5[1],
-                    # 10            11            12            13            14            15            16            17            18            19
-                      v_prev_r1[0], v_prev_r1[1], v_prev_r2[0], v_prev_r2[1], v_prev_r3[0], v_prev_r3[1], v_prev_r4[0], v_prev_r4[1], v_prev_r5[0], v_prev_r5[1],
-                    # 20          21          22          23          24          25          26          27          28          29         30   31
-                     v_i1_i2[0], v_i1_i2[1], v_i2_i3[0], v_i2_i3[1], v_i3_i4[0], v_i3_i4[1], v_i4_i5[0], v_i4_i5[1]] #,  v_i2_i4[0], v_i2_i4[1], v_x, v_y]
+        # 10            11            12            13            14            15            16            17            18            19
+        #   v_prev_r1[0], v_prev_r1[1], v_prev_r2[0], v_prev_r2[1], v_prev_r3[0], v_prev_r3[1], v_prev_r4[0], v_prev_r4[1], v_prev_r5[0], v_prev_r5[1],
+
+                      #0       1
+        self.state = [v_r1[0], v_r1[1],
+                      #2       3
+                      v_r2[0], v_r2[1],
+                      #4       5
+                      v_r3[0], v_r3[1],
+                      #6       7
+                      v_r4[0], v_r4[1],
+                      #8       9
+                      v_r5[0], v_r5[1],
+                      #10         11
+                      v_i1_i2[0], v_i1_i2[1],
+                      #12        13
+                      v_i2_i3[0], v_i2_i3[1],
+                      #14        15
+                      v_i3_i4[0], v_i3_i4[1],
+                      #16        17
+                      v_i4_i5[0], v_i4_i5[1]]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
@@ -221,19 +238,21 @@ class TrakingTrajectoryTask7(base.Task):
         v_r5 = [state[8], state[9]]
 
         r1, r2, r3, r4, r5 = norm(v_r1), norm(v_r2), norm(v_r3), norm(v_r4), norm(v_r5)
-        i1_i2, i2_i3, i3_i4, i4_i5 = [state[20], state[21]], [state[22], state[23]], [state[24], state[25]], [state[26], state[27]]
+        i1_i2, i2_i3, i3_i4, i4_i5 = [state[10], state[11]], [state[12], state[13]], [state[14], state[15]], [state[16], state[17]]
 
         sin_a1 = np.sin(round(get_angle_between_2_vector(i1_i2, v_r1, norm(i1_i2), r1), 4))
         sin_a2 = np.sin(round(get_angle_between_2_vector(i2_i3, v_r2, norm(i2_i3), r2), 4))
         sin_a3 = np.sin(round(get_angle_between_2_vector(i3_i4, v_r3, norm(i3_i4), r3), 4))
         sin_a4 = np.sin(round(get_angle_between_2_vector(i4_i5, v_r4, norm(i4_i5), r4), 4))
-        sin_a5 = np.sin(round(get_angle_between_2_vector([-state[26], -state[27]], v_r5, norm(i4_i5), r5), 4))
+        sin_a5 = np.sin(round(get_angle_between_2_vector([-state[16], -state[17]], v_r5, norm(i4_i5), r5), 4))
 
-        reward1 = self.get_reward_for_distance(0.10, r1, sin_a1)
-        reward2 = self.get_reward_for_distance(0.25, r2, sin_a2)
-        reward3 = self.get_reward_for_distance(0.35, r3, sin_a3)
-        reward4 = self.get_reward_for_distance(1.9, r4, sin_a4)
-        reward5 = self.get_reward_for_distance(2.5, r5, sin_a5)
+        reward1 = self.get_reward_for_distance(0.10, r1, 0.0)
+        reward2 = self.get_reward_for_distance(0.25, r2, 0.0)
+        reward3 = self.get_reward_for_distance(0.35, r3, 0.0)
+        reward4 = self.get_reward_for_distance(1.9, r4, 0.0)
+        reward5 = self.get_reward_for_distance(2.5, r5, 0.0)
+
+        h = np.min([sin_a1 * r1, sin_a2 * r2, sin_a3 * r3, sin_a4 * r4, sin_a5 * r5])
 
         # i2_i4 = [state[28], state[29]]
         # velocity = [state[30], state[31]]
@@ -251,7 +270,10 @@ class TrakingTrajectoryTask7(base.Task):
         # print(" discount4 = ", sin_a4)
         # print(" discount5 = ", sin_a5)
 
+        print("distance = ", h)
         reward = reward1 + reward2 + reward3 + reward4 + reward5
+        print("reward = ", reward, " discount = ", -65 * h)
+        reward -= 65 * h
 
         # reward = reward1 + reward2 + reward3 + reward4 + reward5 \
         #          - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 3000 * sin_a3 * r3 - 50 * sin_a4 * r4 - 40 * sin_a5 * r5
