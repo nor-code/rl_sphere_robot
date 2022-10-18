@@ -236,22 +236,27 @@ class Actor(nn.Module):
 
         self.base = nn.Sequential(
             nn.Linear(self.input_dim, 2048),
-            # nn.BatchNorm1d(2048),
-            nn.LeakyReLU(),
+            nn.ReLU(),
+            nn.BatchNorm1d(2048),
 
             nn.Linear(2048, 2048),
-            # nn.BatchNorm1d(2048),
-            nn.LeakyReLU(),
+            nn.ReLU(),
+            nn.BatchNorm1d(2048),
 
             nn.Linear(2048, 2048),
-            # nn.BatchNorm1d(2048),
-            nn.LeakyReLU()
+            nn.ReLU(),
+            nn.BatchNorm1d(2048),
+
         ).to(self.device)
 
         self.platform_out = nn.Sequential(
             nn.Linear(2048, 1024),
-            # nn.BatchNorm1d(1024),
-            nn.LeakyReLU(),
+            nn.ReLU(),
+            nn.BatchNorm1d(1024),
+
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+            nn.BatchNorm1d(1024),
 
             nn.Linear(1024, 1),
             PlatformTanh()
@@ -259,8 +264,12 @@ class Actor(nn.Module):
 
         self.wheel_out = nn.Sequential(
             nn.Linear(2048, 1024),
-            # nn.BatchNorm1d(1024),
-            nn.LeakyReLU(),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+            nn.BatchNorm1d(1024),
 
             nn.Linear(1024, 1),
             WheelSigmoid()
@@ -293,16 +302,16 @@ class Critic(nn.Module):
 
         self.base = nn.Sequential(
             nn.Linear(self.input_dim, 2048),
-            nn.LeakyReLU(),
+            nn.ReLU(),
 
             nn.Linear(2048, 4096),
-            nn.LeakyReLU(),
+            nn.ReLU(),
 
             nn.Linear(4096, 4096),
-            nn.LeakyReLU(),
+            nn.ReLU(),
 
             nn.Linear(4096, 2048),
-            nn.LeakyReLU(),
+            nn.ReLU(),
 
             nn.Linear(2048, 1)
         ).to(self.device)

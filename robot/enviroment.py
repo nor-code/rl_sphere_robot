@@ -126,7 +126,7 @@ def circle():
 def random_trajectory():
     global scope
     # общее количество точек на кривой
-    total_points = 75 # task 3 - 25
+    total_points = 65 # task 3 - 25
 
     x_init = np.random.uniform(scope['x'][0], scope['x'][1])
     y_init = np.random.uniform(scope['y'][0], scope['y'][1])
@@ -203,4 +203,4 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
     elif type_task == 7:
         task = TrakingTrajectoryTask7(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20), x_y  # n_sub_steps = 17
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=12), x_y  # n_sub_steps = 17

@@ -189,13 +189,13 @@ class TrakingTrajectoryTask7(base.Task):
             return 0.0
 
     def get_reward_for_distance(self, a_i, r_i, sin_alpha_i):
-        if r_i > self.radius:
-            return -15
+        # if r_i > self.radius:
+        #     return -15
+        # else:
+        if r_i < 0.01:
+            return a_i * 100
         else:
-            if r_i < 0.01:
-                return a_i * 100
-            else:
-                return a_i * (1 / r_i) * (1 - sin_alpha_i)
+            return a_i * (1 / r_i) * (1 - abs(sin_alpha_i))
 
     def get_reward(self, physics):
         state = self.state
@@ -229,11 +229,11 @@ class TrakingTrajectoryTask7(base.Task):
         sin_a4 = np.sin(round(get_angle_between_2_vector(i4_i5, v_r4, norm(i4_i5), r4), 4))
         sin_a5 = np.sin(round(get_angle_between_2_vector([-state[26], -state[27]], v_r5, norm(i4_i5), r5), 4))
 
-        reward1 = self.get_reward_for_distance(0.10, r1, 1)
-        reward2 = self.get_reward_for_distance(0.25, r2, 1)
-        reward3 = self.get_reward_for_distance(0.35, r3, 1)
-        reward4 = self.get_reward_for_distance(2.0, r4, 1)
-        reward5 = self.get_reward_for_distance(2.5, r5, 1)
+        reward1 = self.get_reward_for_distance(0.10, r1, sin_a1)
+        reward2 = self.get_reward_for_distance(0.25, r2, sin_a2)
+        reward3 = self.get_reward_for_distance(0.35, r3, sin_a3)
+        reward4 = self.get_reward_for_distance(1.9, r4, sin_a4)
+        reward5 = self.get_reward_for_distance(2.5, r5, sin_a5)
 
         # i2_i4 = [state[28], state[29]]
         # velocity = [state[30], state[31]]
@@ -251,10 +251,10 @@ class TrakingTrajectoryTask7(base.Task):
         # print(" discount4 = ", sin_a4)
         # print(" discount5 = ", sin_a5)
 
-        # reward = reward1 + reward2 + reward3 + reward4 + reward5 # - cos_velocity_i2_i4 * 50
+        reward = reward1 + reward2 + reward3 + reward4 + reward5
 
-        reward = reward1 + reward2 + reward3 + reward4 + reward5 \
-                 - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 3000 * sin_a3 * r3 - 50 * sin_a4 * r4 - 40 * sin_a5 * r5
+        # reward = reward1 + reward2 + reward3 + reward4 + reward5 \
+        #          - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 3000 * sin_a3 * r3 - 50 * sin_a4 * r4 - 40 * sin_a5 * r5
         return reward
 
     # если количество точек в окретности робота не осталось
