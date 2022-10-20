@@ -103,10 +103,11 @@ class TrakingTrajectoryTask7(base.Task):
         v_i3_i4 = vector(self.points[self.index3], self.points[self.index4])
         v_i4_i5 = vector(self.points[self.index4], self.points[self.index5])
 
-        self.state = [v_r1[0], v_r1[1], v_r2[0], v_r2[1], v_r3[0],
-                      v_r3[1], v_r4[0], v_r4[1], v_r5[0], v_r5[1],
-                      v_prev_r1[0], v_prev_r1[1], v_prev_r2[0], v_prev_r2[1], v_prev_r3[0],
-                      v_prev_r3[1], v_prev_r4[0], v_prev_r4[1], v_prev_r5[0], v_prev_r5[1],
+        self.state = [v_r1[0], v_r1[1], norm(v_r1),
+                      v_r2[0], v_r2[1], norm(v_r2),
+                      v_r3[0], v_r3[1], norm(v_r3),
+                      v_r4[0], v_r4[1], norm(v_r4),
+                      v_r5[0], v_r5[1], norm(v_r5),
                       v_i1_i2[0], v_i1_i2[1], v_i2_i3[0], v_i2_i3[1],
                       v_i3_i4[0], v_i3_i4[1], v_i4_i5[0], v_i4_i5[1]]
         super().initialize_episode(physics)
@@ -179,28 +180,28 @@ class TrakingTrajectoryTask7(base.Task):
         # 10            11            12            13            14            15            16            17            18            19
         #   v_prev_r1[0], v_prev_r1[1], v_prev_r2[0], v_prev_r2[1], v_prev_r3[0], v_prev_r3[1], v_prev_r4[0], v_prev_r4[1], v_prev_r5[0], v_prev_r5[1],
 
-                      #0       1
-        self.state = [v_r1[0], v_r1[1],
-                      #2       3
-                      v_r2[0], v_r2[1],
-                      #4       5
-                      v_r3[0], v_r3[1],
-                      #6       7
-                      v_r4[0], v_r4[1],
-                      #8       9
-                      v_r5[0], v_r5[1],
-                      #10         11
+                      #0       1        2
+        self.state = [v_r1[0], v_r1[1], norm(v_r1),
+                      #3       4        5
+                      v_r2[0], v_r2[1], norm(v_r2),
+                      #6       7        8
+                      v_r3[0], v_r3[1], norm(v_r3),
+                      #9       10       11
+                      v_r4[0], v_r4[1], norm(v_r4),
+                      #12      13       14
+                      v_r5[0], v_r5[1], norm(v_r5),
+                      #15         16
                       v_i1_i2[0], v_i1_i2[1],
-                      #12        13
+                      #17         18
                       v_i2_i3[0], v_i2_i3[1],
-                      #14        15
+                      #19         20
                       v_i3_i4[0], v_i3_i4[1],
-                      #16        17
+                      #21         22
                       v_i4_i5[0], v_i4_i5[1]]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 20 \
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 10 \
                 or len(self.points) == self.achievedPoints or self.count_hard_invalid_state >= 1:
             print("end episode at t = ", np.round(physics.data.time, 2), "\n")
             return 0.0
@@ -232,25 +233,25 @@ class TrakingTrajectoryTask7(base.Task):
             self.count_invalid_states = 0
 
         v_r1 = [state[0], state[1]]
-        v_r2 = [state[2], state[3]]
-        v_r3 = [state[4], state[5]]
-        v_r4 = [state[6], state[7]]
-        v_r5 = [state[8], state[9]]
+        v_r2 = [state[3], state[4]]
+        v_r3 = [state[6], state[7]]
+        v_r4 = [state[9], state[10]]
+        v_r5 = [state[12], state[13]]
 
-        r1, r2, r3, r4, r5 = norm(v_r1), norm(v_r2), norm(v_r3), norm(v_r4), norm(v_r5)
-        i1_i2, i2_i3, i3_i4, i4_i5 = [state[10], state[11]], [state[12], state[13]], [state[14], state[15]], [state[16], state[17]]
+        r1, r2, r3, r4, r5 = state[2], state[5], state[8], state[11], state[14]
+        i1_i2, i2_i3, i3_i4, i4_i5 = [state[15], state[16]], [state[17], state[18]], [state[19], state[20]], [state[21], state[22]]
 
         sin_a1 = np.sin(round(get_angle_between_2_vector(i1_i2, v_r1, norm(i1_i2), r1), 4))
         sin_a2 = np.sin(round(get_angle_between_2_vector(i2_i3, v_r2, norm(i2_i3), r2), 4))
         sin_a3 = np.sin(round(get_angle_between_2_vector(i3_i4, v_r3, norm(i3_i4), r3), 4))
         sin_a4 = np.sin(round(get_angle_between_2_vector(i4_i5, v_r4, norm(i4_i5), r4), 4))
-        sin_a5 = np.sin(round(get_angle_between_2_vector([-state[16], -state[17]], v_r5, norm(i4_i5), r5), 4))
+        sin_a5 = np.sin(round(get_angle_between_2_vector([-state[21], -state[22]], v_r5, norm(i4_i5), r5), 4))
 
         reward1 = self.get_reward_for_distance(0.10, r1, 0.0)
         reward2 = self.get_reward_for_distance(0.25, r2, 0.0)
         reward3 = self.get_reward_for_distance(0.35, r3, 0.0)
-        reward4 = self.get_reward_for_distance(1.9, r4, 0.0)
-        reward5 = self.get_reward_for_distance(2.5, r5, 0.0)
+        reward4 = self.get_reward_for_distance(0.6, r4, 0.0)
+        reward5 = self.get_reward_for_distance(0.65, r5, 0.0)
 
         h = np.min([sin_a1 * r1, sin_a2 * r2, sin_a3 * r3, sin_a4 * r4, sin_a5 * r5])
 
@@ -270,10 +271,9 @@ class TrakingTrajectoryTask7(base.Task):
         # print(" discount4 = ", sin_a4)
         # print(" discount5 = ", sin_a5)
 
-        print("distance = ", h)
         reward = reward1 + reward2 + reward3 + reward4 + reward5
-        print("reward = ", reward, " discount = ", -65 * h)
-        reward -= 65 * h
+        print("reward = ", reward, " discount = ", -150 * h, "distance = ", h)
+        reward -= 150 * h
 
         # reward = reward1 + reward2 + reward3 + reward4 + reward5 \
         #          - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 3000 * sin_a3 * r3 - 50 * sin_a4 * r4 - 40 * sin_a5 * r5

@@ -126,12 +126,12 @@ def circle():
 def random_trajectory():
     global scope
     # общее количество точек на кривой
-    total_points = 65 # task 3 - 25
+    total_points = 45 # task 3 - 25
 
     x_init = np.random.uniform(scope['x'][0], scope['x'][1])
     y_init = np.random.uniform(scope['y'][0], scope['y'][1])
 
-    radius = np.random.randn(1, total_points) * np.logspace(-1.63, -3.5, total_points)
+    radius = np.random.randn(1, total_points) * np.logspace(-1.4, -3.5, total_points)
     phi = np.random.randn(1, total_points) * np.logspace(-0.01, -1.2, total_points)
     omega = 2 * np.random.randn(1, total_points) * np.logspace(-0.01, -0.85, total_points) * np.pi
 
@@ -166,7 +166,7 @@ def get_state_dim(type_task):
     elif type_task == 6:
         return 16
     elif type_task == 7:
-        return 18
+        return 23
     return -1
 
 
