@@ -249,11 +249,11 @@ class TrakingTrajectoryTask7(base.Task):
 
         reward1 = self.get_reward_for_distance(0.10, r1, 0.0)
         reward2 = self.get_reward_for_distance(0.25, r2, 0.0)
-        reward3 = self.get_reward_for_distance(0.35, r3, 0.0)
-        reward4 = self.get_reward_for_distance(0.6, r4, 0.0)
-        reward5 = self.get_reward_for_distance(0.65, r5, 0.0)
+        reward3 = self.get_reward_for_distance(0.45, r3, 0.0)
+        reward4 = self.get_reward_for_distance(0.85, r4, 0.0)
+        reward5 = self.get_reward_for_distance(1.2, r5, 0.0)
 
-        h = np.min([sin_a1 * r1, sin_a2 * r2, sin_a3 * r3, sin_a4 * r4, sin_a5 * r5])
+        # h = np.min([sin_a1 * r1, sin_a2 * r2, sin_a3 * r3, sin_a4 * r4, sin_a5 * r5])
 
         # i2_i4 = [state[28], state[29]]
         # velocity = [state[30], state[31]]
@@ -271,12 +271,13 @@ class TrakingTrajectoryTask7(base.Task):
         # print(" discount4 = ", sin_a4)
         # print(" discount5 = ", sin_a5)
 
-        reward = reward1 + reward2 + reward3 + reward4 + reward5
-        print("reward = ", reward, " discount = ", -150 * h, "distance = ", h)
-        reward -= 150 * h
+        # reward = reward1 + reward2 + reward3 + reward4 + reward5
+        # print("reward = ", reward, " discount = ", -150 * h, "distance = ", h)
+        # reward -= 150 * h
 
-        # reward = reward1 + reward2 + reward3 + reward4 + reward5 \
-        #          - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 3000 * sin_a3 * r3 - 50 * sin_a4 * r4 - 40 * sin_a5 * r5
+        reward = reward1 + reward2 + reward3 + reward4 + reward5 \
+                 - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 35 * sin_a3 * r3 - 25 * sin_a4 * r4 - 25 * sin_a5 * r5
+
         return reward
 
     # если количество точек в окретности робота не осталось
