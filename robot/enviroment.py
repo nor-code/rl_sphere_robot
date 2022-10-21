@@ -10,6 +10,7 @@ from robot.task_4 import TrakingTrajectoryTask4
 from robot.task_5 import TrakingTrajectoryTask5
 from robot.task_6 import TrakingTrajectoryTask6
 from robot.task_7 import TrakingTrajectoryTask7
+from robot.task_one_point import TrakingTrajectoryTaskOnePoint
 
 
 def get_string_xml(roll_angle):
@@ -122,6 +123,11 @@ def circle():
     y_ = [- np.cos(t_) + 1 for t_ in t]
     return x_, y_
 
+def one_point():
+    x_y = np.random.uniform(size =2)
+    return np.expand_dims(x_y, axis = 0)
+
+
 
 def random_trajectory():
     global scope
@@ -148,6 +154,8 @@ def random_trajectory():
 
 
 def determine_trajectory(type):
+    if type == 'one_point':
+        return one_point
     if type == 'circle':
         return circle
     elif type == 'curve':
@@ -167,6 +175,8 @@ def get_state_dim(type_task):
         return 16
     elif type_task == 7:
         return 28
+    elif type_task == 8: # one point
+        return 6 # x , y , v_x , x_y, target_x,target_y
     return -1
 
 
@@ -174,21 +184,10 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
     trajectory_fun = determine_trajectory(trajectory)
 
     x_y = trajectory_fun()
+
     points = np.array(x_y).T
-    dy = points[begin_index_ + 1][1] - points[begin_index_][1]
-    dx = points[begin_index_ + 1][0] - points[begin_index_][0]
 
-    sign_y = np.sign(np.dot([dx, dy], [0, 1]))
-    sign_x = np.sign(np.dot([dx, dy], [1, 0]))
-
-    deg = np.rad2deg(np.arctan(dy / dx))
-
-    roll_angle = deg - 90  # y / x
-
-    if sign_y < 0 and sign_x < 0:
-        roll_angle -= 180
-    elif sign_x < 0:
-        roll_angle += 180
+    roll_angle = 0
 
     physics = RobotPhysics.from_xml_string(get_string_xml(roll_angle))
 
@@ -202,5 +201,7 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
         task = TrakingTrajectoryTask6(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
     elif type_task == 7:
         task = TrakingTrajectoryTask7(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
+    elif type_task == 8:
+        task = TrakingTrajectoryTaskOnePoint(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
     return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=12), x_y  # n_sub_steps = 17
