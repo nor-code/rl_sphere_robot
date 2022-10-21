@@ -65,6 +65,8 @@ def get_size(args):
         return 25
     elif args.trajectory == 'random':
         return 60
+    elif args.trajectory == 'one_point':
+        return 1
 
 
 def save_model(backup_iteration, _number, name_agent, agent):
