@@ -11,7 +11,8 @@ sys.path.insert(0,parentdir)
 import unittest
 from robot.enviroment import make_env
 import numpy as np
-
+import time
+import tqdm
 
 class TestGrpc(unittest.TestCase):
 
@@ -25,11 +26,21 @@ class TestGrpc(unittest.TestCase):
         print(x.reward)
         print(env.task.points)
 
+
         # Taking random actions
-        for i in range(10):
+
+    def testSpeed(self):
+
+        env, x_y = make_env(episode_timeout=5000, type_task=8, trajectory='one_point', begin_index_=0)
+        s =time.time()
+
+        for i in tqdm.tqdm(range(1000)):
             action = [np.random.uniform(-0.975, 0.975, size=1)[0], np.random.uniform(0.26, 0.6, size=1)[0]]  # only random
             timestep = env.step(action)
-            print(timestep)
+        l = time.time() - s
+
+        print("real time", l, "env time ",env.physics.time(), "ratio", env.physics.time()/l )
+
 
 
 if __name__ == '__main__':

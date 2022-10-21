@@ -124,8 +124,9 @@ def circle():
     return x_, y_
 
 def one_point():
-    x_y = np.random.uniform(size =2)
-    return np.expand_dims(x_y, axis = 0)
+    x = np.random.uniform()
+    y = np.random.uniform()
+    return [x],[y] #np.expand_dims(x_y, axis = 0)
 
 
 

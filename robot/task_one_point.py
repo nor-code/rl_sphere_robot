@@ -27,7 +27,7 @@ class TrakingTrajectoryTaskOnePoint(base.Task):
         """ общее количество точек на пути """
         self.totalPoint = len(self.points)
 
-        assert self.totalPoint == 2 # one point with two coords
+        assert self.totalPoint == 1 # one point with two coords
 
         self.state = []
 
@@ -56,7 +56,7 @@ class TrakingTrajectoryTaskOnePoint(base.Task):
         self.state =[
             x,y, # robot position
             v_x, v_y, # robot velocity
-            self.points[0][0], self.points[1][0] # next point
+            self.points[0][0], self.points[0][1] # next point
         ]
         return self.state
 
@@ -75,17 +75,14 @@ class TrakingTrajectoryTaskOnePoint(base.Task):
     def get_reward(self, physics):
 
         robox_xy = torch.tensor(self.extract_robot_xy()).unsqueeze(0)
-        print(robox_xy)
 
         target_point_xy = torch.tensor(self.extract_target_point_xy()).unsqueeze(0)
-        print(target_point_xy)
-        l2_distance_to_target_point =  torch.cdist(robox_xy, target_point_xy, p=2)
 
-        print("l2",l2_distance_to_target_point)
+        l2_distance_to_target_point =  torch.cdist(robox_xy, target_point_xy, p=2)
 
         l2_distance_to_target_point = l2_distance_to_target_point[0] # remove batch dim
 
         reward = - torch.pow(l2_distance_to_target_point,2)
-        return reward
+        return reward.item()
 
 

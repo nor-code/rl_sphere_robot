@@ -43,6 +43,7 @@ class TrakingTrajectoryTask7(base.Task):
         self.prev_index4 = self.get_index(begin_index + 2)
 
         self.dist = 0.0
+
         self.robot_position = [self.points[begin_index][0], self.points[begin_index][1]]
 
         """ общее количество точек на пути """

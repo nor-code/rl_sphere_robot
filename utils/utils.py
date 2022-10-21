@@ -18,14 +18,15 @@ def build_trajectory(agent=None, enviroment=None, timeout=50, x_y=None, type_tas
     time_step = env.reset()
     prev_time = env.physics.data.time
     observation = time_step.observation
+    robot_start = observation[0], observation[1]
 
     t = np.linspace(0, 2 * np.pi, 20)
     local_x_O = [0.242 * np.sin(t_) for t_ in t]
     local_y_O = [0.242 * np.cos(t_) for t_ in t]
     circles = np.array([local_x_O, local_y_O]).T
-
+    print("_______START TEST________")
     while env.physics.data.time < timeout:
-        print("_______START TEST________")
+
         action = agent.get_action([observation])
         try:
             time_step = env.step(action)
@@ -55,10 +56,13 @@ def build_trajectory(agent=None, enviroment=None, timeout=50, x_y=None, type_tas
     figure = plt.figure(figsize=(10, 10))
     trajectory = figure.add_subplot()
     trajectory.plot(pos[:, 0][1:], pos[:, 1][1:], label="trajectory")
+
+
     trajectory.plot(_x_y[0], _x_y[1], label="desired_trajectory")
 
     circles = circles[21:]
     trajectory.plot(circles.T[0], circles.T[1], alpha=0.4)
+    trajectory.scatter(robot_start[0], robot_start[1], color='green', lw=0.1)
     trajectory.scatter(_x_y[0], _x_y[1], color='red', lw=0.01)
 
     if type_task == 1:
