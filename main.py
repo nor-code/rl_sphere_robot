@@ -66,7 +66,7 @@ def get_size():
     elif args.trajectory == 'curve':
         return 25
     elif args.trajectory == 'random':
-        return 45
+        return 70
 
 
 def save_model(backup_iteration, _number, name_agent):
@@ -89,7 +89,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN/DDPG Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
-parser.add_argument('--type_task', type=int, default=7, help='type of task. now available 4, 5')
+parser.add_argument('--type_task', type=int, default=8, help='type of task. now available 4, 5')
 parser.add_argument('--trajectory', type=str, default='random', help='trajectory for agent, circle, curve, random')
 parser.add_argument('--buffer_size', type=int, default=10 ** 6, help='size of buffer')
 parser.add_argument('--batch_size', type=int, default=2 ** 10, help='batch size')

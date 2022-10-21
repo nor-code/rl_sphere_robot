@@ -10,6 +10,7 @@ from robot.task_4 import TrakingTrajectoryTask4
 from robot.task_5 import TrakingTrajectoryTask5
 from robot.task_6 import TrakingTrajectoryTask6
 from robot.task_7 import TrakingTrajectoryTask7
+from robot.task_8 import TrakingTrajectoryTask8
 
 
 def get_string_xml(roll_angle):
@@ -126,12 +127,12 @@ def circle():
 def random_trajectory():
     global scope
     # общее количество точек на кривой
-    total_points = 45 # task 3 - 25
+    total_points = 75 # task 3 - 25
 
     x_init = np.random.uniform(scope['x'][0], scope['x'][1])
     y_init = np.random.uniform(scope['y'][0], scope['y'][1])
 
-    radius = np.random.randn(1, total_points) * np.logspace(-1.4, -3.5, total_points)
+    radius = np.random.randn(1, total_points) * np.logspace(-1.63, -3.5, total_points)
     phi = np.random.randn(1, total_points) * np.logspace(-0.01, -1.2, total_points)
     omega = 2 * np.random.randn(1, total_points) * np.logspace(-0.01, -0.85, total_points) * np.pi
 
@@ -167,6 +168,8 @@ def get_state_dim(type_task):
         return 16
     elif type_task == 7:
         return 23
+    elif type_task == 8:
+        return 30
     return -1
 
 
@@ -202,5 +205,7 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
         task = TrakingTrajectoryTask6(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
     elif type_task == 7:
         task = TrakingTrajectoryTask7(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
+    elif type_task == 8:
+        task = TrakingTrajectoryTask8(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=25), x_y  # n_sub_steps = 17
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20), x_y  # n_sub_steps = 17

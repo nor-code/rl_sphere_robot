@@ -201,19 +201,19 @@ class TrakingTrajectoryTask7(base.Task):
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 10 \
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 20\
                 or len(self.points) == self.achievedPoints or self.count_hard_invalid_state >= 1:
             print("end episode at t = ", np.round(physics.data.time, 2), "\n")
             return 0.0
 
-    def get_reward_for_distance(self, a_i, r_i, sin_alpha_i):
-        # if r_i > self.radius:
-        #     return -15
-        # else:
-        if r_i < 0.01:
-            return a_i * 100
+    def get_reward_for_distance(self, a_i, r_i):
+        if r_i > self.radius:
+            return -10
         else:
-            return a_i * (1 / r_i) * (1 - abs(sin_alpha_i))
+            if r_i < 0.01:
+                return a_i * 100
+            else:
+                return a_i * (1 / r_i)
 
     def get_reward(self, physics):
         state = self.state
@@ -221,12 +221,12 @@ class TrakingTrajectoryTask7(base.Task):
         if self.is_invalid_state_soft():
             print("soft invalid state")
             self.count_invalid_states += 1
-            return -85
+            return -50
 
         if self.is_invalid_state_hard():
             print("hard invalid state")
             self.count_hard_invalid_state += 1
-            return -85
+            return -50
 
         if self.count_invalid_states > 0:
             print("вернулись на траекторию")
@@ -247,11 +247,11 @@ class TrakingTrajectoryTask7(base.Task):
         sin_a4 = np.sin(round(get_angle_between_2_vector(i4_i5, v_r4, norm(i4_i5), r4), 4))
         sin_a5 = np.sin(round(get_angle_between_2_vector([-state[21], -state[22]], v_r5, norm(i4_i5), r5), 4))
 
-        reward1 = self.get_reward_for_distance(0.10, r1, 0.0)
-        reward2 = self.get_reward_for_distance(0.25, r2, 0.0)
-        reward3 = self.get_reward_for_distance(0.45, r3, 0.0)
-        reward4 = self.get_reward_for_distance(0.85, r4, 0.0)
-        reward5 = self.get_reward_for_distance(1.2, r5, 0.0)
+        reward1 = self.get_reward_for_distance(0.10, r1)
+        reward2 = self.get_reward_for_distance(0.15, r2)
+        reward3 = self.get_reward_for_distance(0.55, r3)
+        reward4 = self.get_reward_for_distance(0.85, r4)
+        reward5 = self.get_reward_for_distance(1.0, r5)
 
         # h = np.min([sin_a1 * r1, sin_a2 * r2, sin_a3 * r3, sin_a4 * r4, sin_a5 * r5])
 
@@ -276,7 +276,7 @@ class TrakingTrajectoryTask7(base.Task):
         # reward -= 150 * h
 
         reward = reward1 + reward2 + reward3 + reward4 + reward5 \
-                 - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 35 * sin_a3 * r3 - 25 * sin_a4 * r4 - 25 * sin_a5 * r5
+                 - 10 * sin_a1 * r1 - 15 * sin_a2 * r2 - 25 * sin_a3 * r3 - 35 * sin_a4 * r4 - 50 * sin_a5 * r5
 
         return reward
 
