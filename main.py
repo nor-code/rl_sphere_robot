@@ -189,7 +189,7 @@ with trange(step, total_steps + 1) as progress_bar:
 
         if step % 2000 == 0:
             i = int(step / 2000)
-            save_count_substepsmodel(i, number, agent_type)
+            save_model(i, number, agent_type)
 
 writer.flush()
 

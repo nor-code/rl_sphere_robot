@@ -84,8 +84,11 @@ class DeepDeterministicPolicyGradient(object):
             self.writer.add_scalar("noise_action plat", platform, i)
             self.writer.add_scalar("noise_action wheel", wheel, i)
 
-            platform = 0.25 * platform + (1 - 0.25) * self.prev_action_platform
+            platform = 0.35 * platform + (1 - 0.35) * self.prev_action_platform
             wheel = self.alpha * wheel + (1 - self.alpha) * self.prev_action_wheel
+
+            self.prev_action_platform = platform[0]
+            self.prev_action_wheel = wheel[0]
 
             return [platform[0], wheel[0]]  # with noise
         else:
@@ -223,7 +226,7 @@ def identity(x):
     return x
 
 
-def soft_target_update(main, target, tau=0.008):  # tau = 0.005
+def soft_target_update(main, target, tau=0.003):  # tau = 0.005
     for main_param, target_param in zip(main.parameters(), target.parameters()):
         target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
 
