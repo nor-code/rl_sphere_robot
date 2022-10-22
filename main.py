@@ -50,12 +50,14 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
             final_val * cur_step) / total_steps
 
 
-def get_env(size):
+def get_env(size, count_substeps=20):
     # begin_index = [size // 10, 2 * size // 10, (3 * size) // 10, (4 * size) // 10,
     #                size // 2, (6 * size) // 10, (7 * size) // 10, (8 * size) // 10, (9 * size) // 10]
     begin_index = np.random.choice(range(0, size - 1), size=1)
     env_i, x_y = make_env(
-        episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_=np.random.choice(begin_index, size=1)[0]
+        episode_timeout=timeout, type_task=args.type_task,
+        trajectory=args.trajectory, begin_index_=begin_index[0],
+        count_substeps=count_substeps
     )
     return env_i, x_y
 
@@ -164,7 +166,7 @@ with trange(step, total_steps + 1) as progress_bar:
         writer.add_scalar("average reward per episode", round(np.mean(rewards), 4), step)
 
         if step % eval_freq == 0:
-            env.reset()
+            env, x_y = get_env(count_point_on_trajectory, count_substeps=15)
 
             plot_buf, fig = build_trajectory(
                 agent=agent, enviroment=env, timeout=timeout, x_y=x_y, type_task=args.type_task
@@ -185,9 +187,9 @@ with trange(step, total_steps + 1) as progress_bar:
 
             env.reset()
 
-        if step % 3000 == 0:
-            i = int(step / 3000)
-            save_model(i, number, agent_type)
+        if step % 2000 == 0:
+            i = int(step / 2000)
+            save_count_substepsmodel(i, number, agent_type)
 
 writer.flush()
 

@@ -184,7 +184,7 @@ class TrakingTrajectoryTask8(base.Task):
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 20\
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 10\
                 or len(self.points) == self.achievedPoints or self.count_hard_invalid_state >= 1:
             print("end episode at t = ", np.round(physics.data.time, 2), "\n")
             return 0.0
@@ -196,7 +196,7 @@ class TrakingTrajectoryTask8(base.Task):
         point = geom.Point(x, y)
         h_error_dist = self.line.distance(point)
 
-        if h_error_dist > 0.08:
+        if h_error_dist > 0.06:
             print("soft invalid state")
             self.count_invalid_states += 1
             return -1.5
@@ -210,7 +210,7 @@ class TrakingTrajectoryTask8(base.Task):
             print("вернулись на траекторию")
             self.count_invalid_states = 0
 
-        reward = 1 - h_error_dist * 13
+        reward = 1 - h_error_dist * 25
 
         return reward
 

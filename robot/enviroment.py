@@ -174,7 +174,7 @@ def get_state_dim(type_task):
     return -1
 
 
-def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
+def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=20):
     trajectory_fun = determine_trajectory(trajectory)
 
     x_y = trajectory_fun()
@@ -209,4 +209,4 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0):
     elif type_task == 8:
         task = TrakingTrajectoryTask8(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=20), x_y  # n_sub_steps = 17
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=count_substeps), x_y  # n_sub_steps = 17
