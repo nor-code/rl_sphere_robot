@@ -24,8 +24,8 @@ def build_trajectory(agent=None, enviroment=None, timeout=50, x_y=None, type_tas
     local_y_O = [0.242 * np.cos(t_) for t_ in t]
     circles = np.array([local_x_O, local_y_O]).T
 
+    print("_______START TEST________")
     while env.physics.data.time < timeout:
-        print("_______START TEST________")
         action = agent.get_action([observation])
         try:
             time_step = env.step(action)
@@ -51,6 +51,7 @@ def build_trajectory(agent=None, enviroment=None, timeout=50, x_y=None, type_tas
         pos = np.append(pos, [[x, y]], axis=0)
 
         times.append(env.physics.data.time)
+        observation = time_step.observation
 
     figure = plt.figure(figsize=(10, 10))
     trajectory = figure.add_subplot()

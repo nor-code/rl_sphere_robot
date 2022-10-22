@@ -11,6 +11,7 @@ from robot.task_5 import TrakingTrajectoryTask5
 from robot.task_6 import TrakingTrajectoryTask6
 from robot.task_7 import TrakingTrajectoryTask7
 from robot.task_8 import TrakingTrajectoryTask8
+from robot.task_9 import TrakingTrajectoryTask9
 
 
 def get_string_xml(roll_angle):
@@ -171,6 +172,8 @@ def get_state_dim(type_task):
         return 23
     elif type_task == 8:
         return 30
+    elif type_task == 9:
+        return 45
     return -1
 
 
@@ -208,5 +211,7 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, c
         task = TrakingTrajectoryTask7(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
     elif type_task == 8:
         task = TrakingTrajectoryTask8(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
+    elif type_task == 9:
+        task = TrakingTrajectoryTask9(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
     return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=count_substeps), x_y  # n_sub_steps = 17
