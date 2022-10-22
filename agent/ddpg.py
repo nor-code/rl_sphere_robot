@@ -84,8 +84,8 @@ class DeepDeterministicPolicyGradient(object):
             self.writer.add_scalar("noise_action plat", platform, i)
             self.writer.add_scalar("noise_action wheel", wheel, i)
 
-            platform = 0.35 * platform + (1 - 0.35) * self.prev_action_platform
-            wheel = self.alpha * wheel + (1 - self.alpha) * self.prev_action_wheel
+            platform = self.alpha * platform + (1 - self.alpha) * self.prev_action_platform
+            wheel = 0.25 * wheel + (1 - 0.25) * self.prev_action_wheel
 
             platform = np.clip(platform, -0.975, 0.975)
             wheel = np.clip(wheel, 0.26, 0.6)

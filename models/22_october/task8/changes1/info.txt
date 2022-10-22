@@ -1,0 +1,28 @@
+if h_error_dist > 0.08:
+        print("soft invalid state")
+        self.count_invalid_states += 1
+        return -1.5
+
+if self.is_invalid_state_hard():
+    print("hard invalid state")
+    self.count_hard_invalid_state += 1
+    return -1.5
+
+if self.count_invalid_states > 0:
+    print("вернулись на траекторию")
+    self.count_invalid_states = 0
+
+reward = 1 - h_error_dist * 13
+
+вектор состояния
+
+self.state = [v_r1[0], v_r1[1], norm(v_r1),
+              v_r2[0], v_r2[1], norm(v_r2),
+              v_r3[0], v_r3[1], norm(v_r3),
+              v_r4[0], v_r4[1], norm(v_r4),
+              v_r5[0], v_r5[1], norm(v_r5),
+              v_r6[0], v_r6[1], norm(v_r6),
+              v_r7[0], v_r7[1], norm(v_r7),
+              v_r8[0], v_r8[1], norm(v_r8),
+              v_r9[0], v_r9[1], norm(v_r9),
+              v_r10[0], v_r10[1], norm(v_r10)]
