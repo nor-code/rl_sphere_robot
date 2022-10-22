@@ -111,14 +111,14 @@ scope = {
 }
 
 def curve():
-    t = np.linspace(0, 3 * np.pi, 30)
+    t = np.linspace(0, 3 * np.pi, 75)
     x_ = [np.sin(t_ * 0.8) for t_ in t]
     y_ = [- np.cos(t_ / 1.5) + 1 for t_ in t]
     return x_, y_
 
 
 def circle():
-    t = np.linspace(0, 2 * np.pi, 50)
+    t = np.linspace(0, 2 * np.pi, 75)
     x_ = [np.sin(t_) for t_ in t]
     y_ = [- np.cos(t_) + 1 for t_ in t]
     return x_, y_
@@ -141,10 +141,11 @@ def random_trajectory():
     for i in range(total_points):
         r += radius[0][i] * np.sin(omega[0][i] * t + phi[0][i])
 
+    r[-1] = r[0]
     x = r * np.sin(t)  # + x_init
     y = - r * np.cos(t) + 1  # + y_init
-    x[-1] = x[0]
-    y[-1] = y[0]
+    # x[-1] = x[0]
+    # y[-1] = y[0]
     return x.tolist(), y.tolist()
 
 

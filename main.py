@@ -62,11 +62,11 @@ def get_env(size):
 
 def get_size():
     if args.trajectory == 'circle':
-        return 50
+        return 75
     elif args.trajectory == 'curve':
-        return 25
+        return 75
     elif args.trajectory == 'random':
-        return 70
+        return 75
 
 
 def save_model(backup_iteration, _number, name_agent):

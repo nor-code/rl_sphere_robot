@@ -196,7 +196,7 @@ class TrakingTrajectoryTask8(base.Task):
         point = geom.Point(x, y)
         h_error_dist = self.line.distance(point)
 
-        if h_error_dist > 0.16:
+        if h_error_dist > 0.08:
             print("soft invalid state")
             self.count_invalid_states += 1
             return -1.5
@@ -210,7 +210,7 @@ class TrakingTrajectoryTask8(base.Task):
             print("вернулись на траекторию")
             self.count_invalid_states = 0
 
-        reward = 1 - h_error_dist * 6
+        reward = 1 - h_error_dist * 13
 
         return reward
 
@@ -223,8 +223,9 @@ class TrakingTrajectoryTask8(base.Task):
         #     return True
         # поскольку индекс невозврата неуменьшается (всегда),
         # то эта проверка - еще один способ проверить не свернул ли робот назад
-        if self.no_return_index == len(self.points) - 1 and self.index1 == 0:
+        if (self.no_return_index == len(self.points) - 1 and self.index1 == 0) or (self.no_return_index - self.index1 >= 72):
             return False
         if self.no_return_index > self.index1: # or self.no_return_index == self.index2 or self.no_return_index == self.index3 or self.no_return_index == self.index4:
+            print("index1 = ", self.index1)
             return True
         return False
