@@ -87,6 +87,9 @@ class DeepDeterministicPolicyGradient(object):
             platform = 0.35 * platform + (1 - 0.35) * self.prev_action_platform
             wheel = self.alpha * wheel + (1 - self.alpha) * self.prev_action_wheel
 
+            platform = np.clip(platform, -0.975, 0.975)
+            wheel = np.clip(wheel, 0.26, 0.6)
+
             self.prev_action_platform = platform[0]
             self.prev_action_wheel = wheel[0]
 
