@@ -173,7 +173,7 @@ def get_state_dim(type_task):
     elif type_task == 8:
         return 30
     elif type_task == 9:
-        return 45
+        return 60
     return -1
 
 
