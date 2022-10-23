@@ -110,26 +110,26 @@ class TrakingTrajectoryTask9(base.Task):
         v_r19 = vector(self.robot_position, self.points[self.index19])
         v_r20 = vector(self.robot_position, self.points[self.index20])
 
-        self.state = [v_r1[0], v_r1[1], norm(v_r1),
-                      v_r2[0], v_r2[1], norm(v_r2),
-                      v_r3[0], v_r3[1], norm(v_r3),
-                      v_r4[0], v_r4[1], norm(v_r4),
-                      v_r5[0], v_r5[1], norm(v_r5),
-                      v_r6[0], v_r6[1], norm(v_r6),
-                      v_r7[0], v_r7[1], norm(v_r7),
-                      v_r8[0], v_r8[1], norm(v_r8),
-                      v_r9[0], v_r9[1], norm(v_r9),
-                      v_r10[0], v_r10[1], norm(v_r10),
-                      v_r11[0], v_r11[1], norm(v_r11),
-                      v_r12[0], v_r12[1], norm(v_r12),
-                      v_r13[0], v_r13[1], norm(v_r13),
-                      v_r14[0], v_r14[1], norm(v_r14),
-                      v_r15[0], v_r15[1], norm(v_r15),
-                      v_r16[0], v_r16[1], norm(v_r16),
-                      v_r17[0], v_r17[1], norm(v_r17),
-                      v_r18[0], v_r18[1], norm(v_r18),
-                      v_r19[0], v_r19[1], norm(v_r19),
-                      v_r20[0], v_r20[1], norm(v_r20)]
+        self.state = [v_r1[0], v_r1[1], # norm(v_r1),
+                      v_r2[0], v_r2[1], # norm(v_r2),
+                      v_r3[0], v_r3[1], # norm(v_r3),
+                      v_r4[0], v_r4[1], # norm(v_r4),
+                      v_r5[0], v_r5[1], # norm(v_r5),
+                      v_r6[0], v_r6[1], # norm(v_r6),
+                      v_r7[0], v_r7[1], # norm(v_r7),
+                      v_r8[0], v_r8[1], # norm(v_r8),
+                      v_r9[0], v_r9[1], # norm(v_r9),
+                      v_r10[0], v_r10[1], #norm(v_r10),
+                      v_r11[0], v_r11[1], #norm(v_r11),
+                      v_r12[0], v_r12[1], #norm(v_r12),
+                      v_r13[0], v_r13[1], #norm(v_r13),
+                      v_r14[0], v_r14[1], #norm(v_r14),
+                      v_r15[0], v_r15[1], #norm(v_r15),
+                      v_r16[0], v_r16[1], #norm(v_r16),
+                      v_r17[0], v_r17[1], #norm(v_r17),
+                      v_r18[0], v_r18[1], #norm(v_r18),
+                      v_r19[0], v_r19[1], #norm(v_r19),
+                      v_r20[0], v_r20[1]] #norm(v_r20)]
 
         super().initialize_episode(physics)
 
@@ -203,30 +203,30 @@ class TrakingTrajectoryTask9(base.Task):
         v_r19 = vector(self.robot_position, self.points[self.index19])
         v_r20 = vector(self.robot_position, self.points[self.index20])
 
-        self.state = [v_r1[0], v_r1[1], norm(v_r1),
-                      v_r2[0], v_r2[1], norm(v_r2),
-                      v_r3[0], v_r3[1], norm(v_r3),
-                      v_r4[0], v_r4[1], norm(v_r4),
-                      v_r5[0], v_r5[1], norm(v_r5),
-                      v_r6[0], v_r6[1], norm(v_r6),
-                      v_r7[0], v_r7[1], norm(v_r7),
-                      v_r8[0], v_r8[1], norm(v_r8),
-                      v_r9[0], v_r9[1], norm(v_r9),
-                      v_r10[0], v_r10[1], norm(v_r10),
-                      v_r11[0], v_r11[1], norm(v_r11),
-                      v_r12[0], v_r12[1], norm(v_r12),
-                      v_r13[0], v_r13[1], norm(v_r13),
-                      v_r14[0], v_r14[1], norm(v_r14),
-                      v_r15[0], v_r15[1], norm(v_r15),
-                      v_r16[0], v_r16[1], norm(v_r16),
-                      v_r17[0], v_r17[1], norm(v_r17),
-                      v_r18[0], v_r18[1], norm(v_r18),
-                      v_r19[0], v_r19[1], norm(v_r19),
-                      v_r20[0], v_r20[1], norm(v_r20)]
+        self.state = [v_r1[0], v_r1[1], #norm(v_r1),
+                      v_r2[0], v_r2[1], #norm(v_r2),
+                      v_r3[0], v_r3[1], #norm(v_r3),
+                      v_r4[0], v_r4[1], #norm(v_r4),
+                      v_r5[0], v_r5[1], #norm(v_r5),
+                      v_r6[0], v_r6[1], #norm(v_r6),
+                      v_r7[0], v_r7[1], #norm(v_r7),
+                      v_r8[0], v_r8[1], #norm(v_r8),
+                      v_r9[0], v_r9[1], #norm(v_r9),
+                      v_r10[0], v_r10[1], #norm(v_r10),
+                      v_r11[0], v_r11[1], #norm(v_r11),
+                      v_r12[0], v_r12[1], #norm(v_r12),
+                      v_r13[0], v_r13[1], #norm(v_r13),
+                      v_r14[0], v_r14[1], #norm(v_r14),
+                      v_r15[0], v_r15[1], #norm(v_r15),
+                      v_r16[0], v_r16[1], #norm(v_r16),
+                      v_r17[0], v_r17[1], #norm(v_r17),
+                      v_r18[0], v_r18[1], #norm(v_r18),
+                      v_r19[0], v_r19[1], #norm(v_r19),
+                      v_r20[0], v_r20[1]] #norm(v_r20)]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 30\
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 7\
                 or len(self.points) == self.achievedPoints or self.count_hard_invalid_state >= 1:
             print("end episode at t = ", np.round(physics.data.time, 2), "\n")
             return 0.0
