@@ -92,9 +92,9 @@ class DeepDeterministicPolicyGradient(object):
             wheel = np.clip(wheel, 0.26, 0.6)
 
             self.prev_action_platform = platform[0]
-            self.prev_action_wheel = wheel[0]
+            self.prev_action_wheel = wheel
 
-            return [platform[0], wheel[0]]  # with noise
+            return [platform[0], wheel]  # with noise
         else:
             action = self.get_action([state])
             self.prev_action_platform = action[0][0]
