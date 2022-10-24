@@ -135,8 +135,8 @@ def build_agent(args, d = 'cuda:0'):
 
 def train(args,agent,writer,replay_buffer):
 
-    timeout = 50
-    max_steps_per_episode = 1600
+    timeout = args.timeout
+    max_steps_per_episode = args.max_steps_per_episode
 
 
     number = args.simu_number
@@ -147,10 +147,8 @@ def train(args,agent,writer,replay_buffer):
 
     # dataset_file = open('dataset/' + 'dataset_' + str(args.agent_type) + "_" + str(args.simu_number) + '.csv', 'a')
 
-
-
     # loss_freq = 250  # 300 # 300
-    eval_freq = 100  # 300  # 400 statestate = env.reset().observation = env.reset().observation
+    eval_freq = args.eval_freq  # 300  # 400 statestate = env.reset().observation = env.reset().observation
     change_env_freq = 1
 
     step = 0
@@ -196,7 +194,7 @@ def train(args,agent,writer,replay_buffer):
 
                 env.reset()
 
-            if step % 3000 == 0:
+            if step > 0 and step % 3000 == 0:
                 i = int(step / 3000)
                 save_model(i, number, args.agent_type,agent)
 

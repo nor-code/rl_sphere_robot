@@ -14,6 +14,11 @@ parser.add_argument('--refresh_target', type=int, default=400, help='refresh tar
 parser.add_argument('--total_steps', type=int, default=10**4, help='total_steps')
 parser.add_argument('--decay_steps', type=int, default=100, help='decay_steps')
 parser.add_argument('--agent_type', type=str, default='ddpg', help='type of agent. available now: dqn, ddqn, ddpg')
+parser.add_argument('--timeout', type=int, default=50, help='Max episode len in simulator time')
+parser.add_argument('--max_steps_per_episode', type=int, default=1600, help='Max steps per episode')
+parser.add_argument('--eval_freq', type=int, default=100, help='Evaluation run frequency')
+parser.add_argument('--neurons', type=int, default=64, help='Neurons in first layer')
+
 args = parser.parse_args()
 
 

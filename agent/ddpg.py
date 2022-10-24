@@ -22,7 +22,8 @@ class DeepDeterministicPolicyGradient(object):
                  gradient_clip_policy=0.5,  # 0.5
                  gradient_clip_qf=1.0,  # 1.0
                  policy_losses=list(),
-                 qf_losses=list()):
+                 qf_losses=list(),
+                 neurons=64):
 
         self.device = device
         self.obs_dim = obs_dim
@@ -39,8 +40,8 @@ class DeepDeterministicPolicyGradient(object):
         self.qf_losses = qf_losses
 
         # Main network Actor & Critic
-        self.policy = Actor(self.obs_dim, self.device)
-        self.qf = Critic(self.obs_dim + self.act_dim, self.device)
+        self.policy = Actor(self.obs_dim, self.device, neurons)
+        self.qf = Critic(self.obs_dim + self.act_dim, self.device, neurons)
 
         # Target network Actor & Critic
         self.policy_target = Actor(self.obs_dim, self.device)
@@ -60,12 +61,17 @@ class DeepDeterministicPolicyGradient(object):
         self.sigma, self.amp, self.omega = np.random.randn(3)
         self.prev_action_platform = 0
         self.prev_action_wheel = 0
-        self.alpha = 0 # для сглаживающего фильтра
+        self.alpha = 0  # для сглаживающего фильтра
 
-    def sample_actions(self, state, t, i):
+
+        #========================================
+        self.platform_max_action = 0.975  # variance
+        self.wheel_max_action = 0.26  # variance
+
+    def sample_actions_orig(self, state, t, i):
         if self.epsilon > 0:
-        #     return [np.random.uniform(-0.975, 0.975, size=1)[0], np.random.uniform(0.26, 0.6, size=1)[0]]  # only random
-        # else:
+            #     return [np.random.uniform(-0.975, 0.975, size=1)[0], np.random.uniform(0.26, 0.6, size=1)[0]]  # only random
+            # else:
             self.policy.to_eval_mode()
             action = self.get_action([state])
 
@@ -135,6 +141,16 @@ class DeepDeterministicPolicyGradient(object):
         # Save losses
         self.policy_losses.append(policy_loss.item())
         self.qf_losses.append(qf_loss.item())
+
+    def sample_actions(self, state, t, i):
+        if self.epsilon > np.abs(np.random.randn()):
+            # random
+            platform = np.random.normal(loc=0, scale=np.sqrt(self.platform_max_action), size=1)
+            wheel = np.random.normal(loc=0, scale=np.sqrt(self.wheel_max_action), size=1)
+            return [platform[0], wheel[0]]
+        else:
+            action = self.get_action([state])
+            return [action[0][1], action[0][1]]
 
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
@@ -225,54 +241,43 @@ def identity(x):
 
 def soft_target_update(main, target, tau=0.008):  # tau = 0.005
     for main_param, target_param in zip(main.parameters(), target.parameters()):
-        target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
+        target_param.data.copy_(tau * main_param.data + (1.0 - tau) * target_param.data)
 
 
 class Actor(nn.Module):
-    def __init__(self, input_dim, device):
+    def __init__(self, input_dim, device, neurons=64):
         super(Actor, self).__init__()
         self.input_dim = input_dim
         self.device = device
 
         self.base = nn.Sequential(
-            nn.Linear(self.input_dim, 2048),
+            nn.Linear(self.input_dim, neurons),
             nn.ReLU(),
-            nn.BatchNorm1d(2048),
+            nn.BatchNorm1d(neurons),
 
-            nn.Linear(2048, 2048),
+            nn.Linear(neurons, neurons * 2),
             nn.ReLU(),
-            nn.BatchNorm1d(2048),
+            nn.BatchNorm1d(neurons * 2),
 
-            nn.Linear(2048, 2048),
-            nn.ReLU(),
-            nn.BatchNorm1d(2048),
+            nn.Linear(neurons * 2, neurons * 4),
 
         ).to(self.device)
 
         self.platform_out = nn.Sequential(
-            nn.Linear(2048, 1024),
+            nn.Linear(neurons * 4, neurons * 2),
             nn.ReLU(),
-            nn.BatchNorm1d(1024),
+            nn.BatchNorm1d(neurons * 2),
 
-            nn.Linear(1024, 1024),
-            nn.ReLU(),
-            nn.BatchNorm1d(1024),
+            nn.Linear(neurons * 2, 1),
 
-            nn.Linear(1024, 1),
-            PlatformTanh()
         ).to(self.device)
 
         self.wheel_out = nn.Sequential(
-            nn.Linear(2048, 1024),
-            nn.BatchNorm1d(1024),
+            nn.Linear(neurons * 4, neurons * 2),
+            nn.BatchNorm1d(neurons * 2),
             nn.ReLU(),
+            nn.Linear(neurons * 2, 1),
 
-            nn.Linear(1024, 1024),
-            nn.ReLU(),
-            nn.BatchNorm1d(1024),
-
-            nn.Linear(1024, 1),
-            WheelSigmoid()
         ).to(self.device)
 
     def forward(self, state):
@@ -280,8 +285,9 @@ class Actor(nn.Module):
 
         platform_out = self.platform_out(out_base)
         wheel_out = self.wheel_out(out_base)
+        out = torch.cat([platform_out, wheel_out], dim=-1)
 
-        return torch.cat([platform_out, wheel_out], dim=-1)
+        return torch.exp(out)
 
     def to_eval_mode(self):
         self.base.eval()
@@ -295,25 +301,23 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, input_dim, device):
+    def __init__(self, input_dim, device, neurons=64):
         super(Critic, self).__init__()
         self.input_dim = input_dim
         self.device = device
 
         self.base = nn.Sequential(
-            nn.Linear(self.input_dim, 2048),
+            nn.Linear(self.input_dim, neurons),
             nn.ReLU(),
 
-            nn.Linear(2048, 4096),
+            nn.Linear(neurons, neurons * 2),
+            nn.BatchNorm1d(neurons * 2),
             nn.ReLU(),
 
-            nn.Linear(4096, 4096),
+            nn.Linear(neurons * 2, neurons),
             nn.ReLU(),
 
-            nn.Linear(4096, 2048),
-            nn.ReLU(),
-
-            nn.Linear(2048, 1)
+            nn.Linear(neurons, 1)
         ).to(self.device)
 
     def forward(self, state, action):
