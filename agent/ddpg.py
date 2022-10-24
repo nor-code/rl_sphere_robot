@@ -63,7 +63,9 @@ class DeepDeterministicPolicyGradient(object):
         self.alpha = 0 # для сглаживающего фильтра
 
     def sample_actions(self, state, t, i):
-        if self.epsilon > 0:
+        rand = np.random.rand()
+
+        if rand <= self.epsilon:
         #     return [np.random.uniform(-0.975, 0.975, size=1)[0], np.random.uniform(0.26, 0.6, size=1)[0]]  # only random
         # else:
             self.policy.to_eval_mode()
@@ -96,7 +98,9 @@ class DeepDeterministicPolicyGradient(object):
             return [platform[0], wheel[0]]  # with noise
         else:
             action = self.get_action([state])
-            return [action[0][1], action[0][1]]
+            self.prev_action_platform = action[0][0]
+            self.prev_action_wheel = action[0][1]
+            return [action[0][0], action[0][1]]
 
     def train_model(self):
         self.policy.to_train_mode()
@@ -229,7 +233,7 @@ def identity(x):
     return x
 
 
-def soft_target_update(main, target, tau=0.003):  # tau = 0.005
+def soft_target_update(main, target, tau=0.0085):  # tau = 0.005
     for main_param, target_param in zip(main.parameters(), target.parameters()):
         target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
 
