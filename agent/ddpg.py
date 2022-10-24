@@ -73,12 +73,11 @@ class DeepDeterministicPolicyGradient(object):
 
             platform, wheel = action[0][0], action[0][1]
 
-            mu_p = 0.001 * self.amp * np.sin(self.omega * t + self.phase_platform)
-            mu_w = 0.0001 * self.amp * np.sin(self.omega * t + self.phase_wheel)
-            sigma = np.sqrt(self.sigma)
+            mu_p = self.amp * np.sin(self.omega * t + self.phase_platform)
+            # mu_w = self.amp * np.sin(self.omega * t + self.phase_wheel)
 
-            platform += (sigma * np.random.randn(1) + mu_p)
-            wheel += (sigma * np.random.randn(1) + mu_w)
+            platform += (self.sigma * np.random.randn(1) + mu_p)
+            wheel += 0.2 * np.random.rand()
 
             platform = np.clip(platform, -0.975, 0.975)
             wheel = np.clip(wheel, 0.26, 0.6)
@@ -157,8 +156,8 @@ class DeepDeterministicPolicyGradient(object):
 
         self.phase_platform = np.random.uniform(-np.pi, np.pi, size=1)[0]
         self.phase_wheel = np.random.uniform(-np.pi, np.pi, size=1)[0]
-        self.sigma, self.amp, self.omega = np.random.randn(3)
-        self.sigma = abs(self.sigma)
+        self.sigma, self.amp, self.omega = np.random.normal(0, 4, size=3)
+        self.sigma = np.sqrt(abs(self.sigma))
         self.alpha = np.random.uniform(0.2, 0.8, size=1)[0]
 
         init_action = self.get_action([s])

@@ -20,7 +20,7 @@ from torchsummary import summary
 iteration = 0
 
 
-def play_and_record(initial_state, _agent, _enviroment, episode_timeout, episode, n_steps=1500):
+def play_and_record(initial_state, _agent, _enviroment, episode_timeout, episode, n_steps=2500):
     global iteration
     total_reward, new_iteration = _agent.play_episode(
         initial_state,
@@ -166,7 +166,7 @@ with trange(step, total_steps + 1) as progress_bar:
         writer.add_scalar("average reward per episode", round(np.mean(rewards), 4), step)
 
         if step % eval_freq == 0:
-            env, x_y = get_env(count_point_on_trajectory, count_substeps=15)
+            env, x_y = get_env(count_point_on_trajectory, count_substeps=8)
 
             plot_buf, fig = build_trajectory(
                 agent=agent, enviroment=env, timeout=timeout, x_y=x_y, type_task=args.type_task
@@ -179,7 +179,7 @@ with trange(step, total_steps + 1) as progress_bar:
 
             env.reset()
             mean_reward = mean_reward_per_episode(
-                agent, env, timeout, n_games=3, t_max=1600
+                agent, env, timeout, n_games=3, t_max=2500
             )
             writer.add_scalar("Mean reward per 3 episode #" + str(number), mean_reward, step)
             writer.add_scalar("size of replay buffer # " + str(number), replay_buffer.buffer_len(), step)

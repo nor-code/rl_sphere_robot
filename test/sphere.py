@@ -26,7 +26,7 @@ U = []
 #                            replay_buffer=None,
 #                            refresh_target=None,
 #                            writer=None)
-agent = DeepDeterministicPolicyGradient(40,
+agent = DeepDeterministicPolicyGradient(45,
                                         device='cpu',
                                         act_dim=2,
                                         replay_buffer=None,
@@ -86,7 +86,7 @@ def action_policy(time_step):
     #     return [-0.22, 0.31]
 
 
-env, x_y = make_env(episode_timeout=65, type_task=9, trajectory='random', begin_index_=40, count_substeps=15)
+env, x_y = make_env(episode_timeout=65, type_task=10, trajectory='random', begin_index_=15, count_substeps=2)
 app = application.Application()
 app.launch(env, policy=action_policy)
 
