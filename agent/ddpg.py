@@ -74,13 +74,13 @@ class DeepDeterministicPolicyGradient(object):
             platform, wheel = action[0][0], action[0][1]
 
             mu_p = self.amp * np.sin(self.omega * t + self.phase_platform)
-            # mu_w = self.amp * np.sin(self.omega * t + self.phase_wheel)
+            mu_w = 0.01 * self.amp * np.sin(self.omega * t + self.phase_wheel)
 
             platform += (self.sigma * np.random.randn(1) + mu_p)
-            wheel += 0.2 * np.random.rand()
+            wheel += (0.01 * self.sigma * np.random.randn(1) + mu_w)
 
             platform = np.clip(platform, -0.975, 0.975)
-            wheel = np.clip(wheel, 0.26, 0.6)
+            wheel = np.clip(wheel, 0.26, 0.4)
 
             self.writer.add_scalar("noise_action plat", platform, i)
             self.writer.add_scalar("noise_action wheel", wheel, i)
@@ -89,12 +89,12 @@ class DeepDeterministicPolicyGradient(object):
             wheel = 0.15 * wheel + (1 - 0.15) * self.prev_action_wheel
 
             platform = np.clip(platform, -0.975, 0.975)
-            wheel = np.clip(wheel, 0.26, 0.6)
+            wheel = np.clip(wheel, 0.26, 0.4)
 
             self.prev_action_platform = platform[0]
-            self.prev_action_wheel = wheel
+            self.prev_action_wheel = wheel[0]
 
-            return [platform[0], wheel]  # with noise
+            return [platform[0], wheel[0]]  # with noise
         else:
             action = self.get_action([state])
             self.prev_action_platform = action[0][0]
@@ -337,4 +337,4 @@ class PlatformTanh(nn.Tanh):
 
 class WheelSigmoid(nn.Sigmoid):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.34 * torch.sigmoid(input) + 0.26
+        return 0.14 * torch.sigmoid(input) + 0.26

@@ -101,7 +101,7 @@ parser.add_argument('--decay_steps', type=int, default=100, help='decay_steps')
 parser.add_argument('--agent_type', type=str, default='ddpg', help='type of agent. available now: dqn, ddqn, ddpg')
 args = parser.parse_args()
 
-timeout = 50
+timeout = 70
 max_steps_per_episode = 1600
 
 state_dim = get_state_dim(type_task=args.type_task)
@@ -179,7 +179,7 @@ with trange(step, total_steps + 1) as progress_bar:
 
             env.reset()
             mean_reward = mean_reward_per_episode(
-                agent, env, timeout, n_games=3, t_max=2500
+                agent, env, timeout, n_games=3, t_max=3000
             )
             writer.add_scalar("Mean reward per 3 episode #" + str(number), mean_reward, step)
             writer.add_scalar("size of replay buffer # " + str(number), replay_buffer.buffer_len(), step)
