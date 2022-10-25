@@ -149,8 +149,8 @@ class DeepDeterministicPolicyGradient(object):
             wheel = np.random.normal(loc=0, scale=np.sqrt(self.wheel_max_action), size=1)
             return [platform[0], wheel[0]]
         else:
-            action = self.get_action([state])
-            return [action[0][1], action[0][1]]
+            action = self.get_action([state])  # -1 .. 1
+            return [self.platform_max_action * action[0][1], self.wheel_max_action*action[0][1]]
 
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
@@ -249,6 +249,7 @@ class Actor(nn.Module):
         super(Actor, self).__init__()
         self.input_dim = input_dim
         self.device = device
+        self.final_tanh = torch.nn.Tanh()
 
         self.base = nn.Sequential(
             nn.Linear(self.input_dim, neurons),
@@ -287,7 +288,8 @@ class Actor(nn.Module):
         wheel_out = self.wheel_out(out_base)
         out = torch.cat([platform_out, wheel_out], dim=-1)
 
-        return torch.exp(out)
+        #return torch.exp(out)
+        return self.final_tanh(out)
 
     def to_eval_mode(self):
         self.base.eval()
