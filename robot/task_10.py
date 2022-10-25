@@ -223,7 +223,7 @@ class TrakingTrajectoryTask10(base.Task):
         point = geom.Point(x, y)
         h_error_dist = self.line.distance(point)
 
-        if h_error_dist > 0.085:
+        if h_error_dist > 0.06:
             print("soft invalid state")
             self.count_invalid_states += 1
             return -1.0
@@ -237,7 +237,7 @@ class TrakingTrajectoryTask10(base.Task):
             print("вернулись на траекторию")
             self.count_invalid_states = 0
 
-        reward = 1 - h_error_dist * 20
+        reward = 1 - h_error_dist * 30
 
         return reward
 

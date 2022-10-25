@@ -180,7 +180,7 @@ def get_state_dim(type_task):
     return -1
 
 
-def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=12):
+def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=15):
     trajectory_fun = determine_trajectory(trajectory)
 
     x_y = trajectory_fun()

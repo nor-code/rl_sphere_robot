@@ -133,7 +133,7 @@ if agent_type == 'dqn' or agent_type == 'ddqn':
 elif agent_type == 'ddpg':
     agent = DeepDeterministicPolicyGradient(state_dim,
                                             device=device,
-                                            act_dim=2,
+                                            act_dim=1,
                                             replay_buffer=replay_buffer,
                                             batch_size=batch_size,
                                             gamma=0.99,
@@ -166,7 +166,7 @@ with trange(step, total_steps + 1) as progress_bar:
         writer.add_scalar("average reward per episode", round(np.mean(rewards), 4), step)
 
         if step % eval_freq == 0:
-            env, x_y = get_env(count_point_on_trajectory, count_substeps=8)
+            env, x_y = get_env(count_point_on_trajectory, count_substeps=10)
 
             plot_buf, fig = build_trajectory(
                 agent=agent, enviroment=env, timeout=timeout, x_y=x_y, type_task=args.type_task
