@@ -172,7 +172,7 @@ def get_state_dim(type_task):
     elif type_task == 7:
         return 23
     elif type_task == 8:
-        return 30
+        return 24
     elif type_task == 9:
         return 40
     elif type_task == 10:
@@ -180,7 +180,7 @@ def get_state_dim(type_task):
     return -1
 
 
-def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=15):
+def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=20):
     trajectory_fun = determine_trajectory(trajectory)
 
     x_y = trajectory_fun()

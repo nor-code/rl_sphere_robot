@@ -91,7 +91,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN/DDPG Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
-parser.add_argument('--type_task', type=int, default=10, help='type of task. now available 4, 5')
+parser.add_argument('--type_task', type=int, default=8, help='type of task. now available 4, 5')
 parser.add_argument('--trajectory', type=str, default='random', help='trajectory for agent, circle, curve, random')
 parser.add_argument('--buffer_size', type=int, default=10 ** 6, help='size of buffer')
 parser.add_argument('--batch_size', type=int, default=2 ** 10, help='batch size')
@@ -114,6 +114,7 @@ decay_steps = args.decay_steps
 refresh_target = args.refresh_target
 
 writer = SummaryWriter(comment="  agent = " + args.agent_type + ", simulation_number = " + str(number)
+                               + ", type task =  " + str(args.type_task)
                                + ", batch_size = " + str(batch_size) + ", refresh_target = " + str(refresh_target)
                                + " ,total_steps = " + str(total_steps) + ", decay steps = " + str(decay_steps)
                                + ", buffer_size = " + str(args.buffer_size))
@@ -133,7 +134,7 @@ if agent_type == 'dqn' or agent_type == 'ddqn':
 elif agent_type == 'ddpg':
     agent = DeepDeterministicPolicyGradient(state_dim,
                                             device=device,
-                                            act_dim=1,
+                                            act_dim=2,
                                             replay_buffer=replay_buffer,
                                             batch_size=batch_size,
                                             gamma=0.99,
@@ -166,7 +167,7 @@ with trange(step, total_steps + 1) as progress_bar:
         writer.add_scalar("average reward per episode", round(np.mean(rewards), 4), step)
 
         if step % eval_freq == 0:
-            env, x_y = get_env(count_point_on_trajectory, count_substeps=10)
+            env, x_y = get_env(count_point_on_trajectory, count_substeps=15)
 
             plot_buf, fig = build_trajectory(
                 agent=agent, enviroment=env, timeout=timeout, x_y=x_y, type_task=args.type_task

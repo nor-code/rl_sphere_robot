@@ -59,7 +59,7 @@ class DeepDeterministicPolicyGradient(object):
         self.phase_wheel = np.random.uniform(-np.pi, np.pi, size=1)
         self.sigma, self.amp, self.omega = np.random.randn(3)
         self.prev_action_platform = 0
-        # self.prev_action_wheel = 0
+        self.prev_action_wheel = 0
         self.alpha = 0 # для сглаживающего фильтра
 
     def sample_actions(self, state, t, i):
@@ -71,36 +71,35 @@ class DeepDeterministicPolicyGradient(object):
             self.policy.to_eval_mode()
             action = self.get_action([state])
 
-            # platform, wheel = action[0][0], action[0][1]
-            platform = action[0][0]
+            platform, wheel = action[0][0], action[0][1]
 
             mu_p = 0.001 * self.amp * np.sin(self.omega * t + self.phase_platform)
-            # mu_w = 0.0001 * self.amp * np.sin(self.omega * t + self.phase_wheel)
+            mu_w = 0.0001 * self.amp * np.sin(self.omega * t + self.phase_wheel)
 
             platform += (self.sigma * np.random.randn(1) + mu_p)
-            # wheel += (self.sigma * np.random.randn(1) + mu_w)
+            wheel += (self.sigma * np.random.randn(1) + mu_w)
 
             platform = np.clip(platform, -0.975, 0.975)
-            # wheel = np.clip(wheel, 0.26, 0.6)
+            wheel = np.clip(wheel, 0.26, 0.4)
 
             platform = self.alpha * platform + (1 - self.alpha) * self.prev_action_platform
-            # wheel = 0.15 * wheel + (1 - 0.15) * self.prev_action_wheel
+            wheel = 0.15 * wheel + (1 - 0.15) * self.prev_action_wheel
 
             platform = np.clip(platform, -0.975, 0.975)
-            # wheel = np.clip(wheel, 0.26, 0.6)
+            wheel = np.clip(wheel, 0.26, 0.4)
 
             self.writer.add_scalar("noise_action plat", platform, i)
-            # self.writer.add_scalar("noise_action wheel", wheel, i)
+            self.writer.add_scalar("noise_action wheel", wheel, i)
 
             self.prev_action_platform = platform[0]
-            # self.prev_action_wheel = wheel[0]
+            self.prev_action_wheel = wheel[0]
 
-            return [platform[0], 0.26]  # with noise
+            return [platform[0], wheel[0]]  # with noise
         else:
             action = self.get_action([state])
             self.prev_action_platform = action[0][0]
-            # self.prev_action_wheel = action[0][1]
-            return [action[0][0], 0.26]
+            self.prev_action_wheel = action[0][1]
+            return [action[0][0], action[0][1]]
 
     def train_model(self):
         self.policy.to_train_mode()
@@ -163,7 +162,7 @@ class DeepDeterministicPolicyGradient(object):
 
         init_action = self.get_action([s])
         self.prev_action_platform = init_action[0][0]
-        # self.prev_action_wheel = init_action[0][1]
+        self.prev_action_wheel = init_action[0][1]
 
         for i in range(n_steps):
             global_iteration += 1
@@ -185,7 +184,7 @@ class DeepDeterministicPolicyGradient(object):
 
             total_reward += timestep.reward
 
-            self.replay_buffer.add(s, [action[0]], timestep.reward, state, is_done)  # agent add to cache. only patform action
+            self.replay_buffer.add(s, action, timestep.reward, state, is_done)  # agent add to cash
 
             if global_iteration > self.batch_size and global_iteration % self.get_learn_freq() == 0:
                 self.train_model()
@@ -272,37 +271,36 @@ class Actor(nn.Module):
             PlatformTanh()
         ).to(self.device)
 
-        # self.wheel_out = nn.Sequential(
-        #     nn.Linear(2048, 1024),
-        #     nn.BatchNorm1d(1024),
-        #     nn.ReLU(),
-        #
-        #     nn.Linear(1024, 1024),
-        #     nn.ReLU(),
-        #     nn.BatchNorm1d(1024),
-        #
-        #     nn.Linear(1024, 1),
-        #     WheelSigmoid()
-        # ).to(self.device)
+        self.wheel_out = nn.Sequential(
+            nn.Linear(2048, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+            nn.BatchNorm1d(1024),
+
+            nn.Linear(1024, 1),
+            WheelSigmoid()
+        ).to(self.device)
 
     def forward(self, state):
         out_base = self.base(state)
 
         platform_out = self.platform_out(out_base)
-        # wheel_out = self.wheel_out(out_base)
+        wheel_out = self.wheel_out(out_base)
 
-        # return torch.cat([platform_out, wheel_out], dim=-1)
-        return platform_out
+        return torch.cat([platform_out, wheel_out], dim=-1)
 
     def to_eval_mode(self):
         self.base.eval()
         self.platform_out.eval()
-        # self.wheel_out.eval()
+        self.wheel_out.eval()
 
     def to_train_mode(self):
         self.base.train()
         self.platform_out.train()
-        # self.wheel_out.train()
+        self.wheel_out.train()
 
 
 class Critic(nn.Module):
@@ -339,4 +337,4 @@ class PlatformTanh(nn.Tanh):
 
 class WheelSigmoid(nn.Sigmoid):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.34 * torch.sigmoid(input) + 0.26
+        return 0.14 * torch.sigmoid(input) + 0.26

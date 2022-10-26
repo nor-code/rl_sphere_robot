@@ -34,8 +34,8 @@ class TrakingTrajectoryTask8(base.Task):
         self.index6 = self.get_index(begin_index + 5)
         self.index7 = self.get_index(begin_index + 6)
         self.index8 = self.get_index(begin_index + 7)
-        self.index9 = self.get_index(begin_index + 8)
-        self.index10 = self.get_index(begin_index + 9)
+        # self.index9 = self.get_index(begin_index + 8)
+        # self.index10 = self.get_index(begin_index + 9)
 
         self.prev_index1 = self.get_index(begin_index)
         self.prev_index2 = self.get_index(begin_index + 1)
@@ -45,8 +45,8 @@ class TrakingTrajectoryTask8(base.Task):
         self.prev_index6 = self.get_index(begin_index + 5)
         self.prev_index7 = self.get_index(begin_index + 6)
         self.prev_index8 = self.get_index(begin_index + 7)
-        self.prev_index9 = self.get_index(begin_index + 8)
-        self.prev_index10 = self.get_index(begin_index + 9)
+        # self.prev_index9 = self.get_index(begin_index + 8)
+        # self.prev_index10 = self.get_index(begin_index + 9)
 
         self.dist = 0.0
         self.robot_position = [self.points[begin_index][0], self.points[begin_index][1]]
@@ -96,8 +96,8 @@ class TrakingTrajectoryTask8(base.Task):
         v_r6 = vector(self.robot_position, self.points[self.index6])
         v_r7 = vector(self.robot_position, self.points[self.index7])
         v_r8 = vector(self.robot_position, self.points[self.index8])
-        v_r9 = vector(self.robot_position, self.points[self.index9])
-        v_r10 = vector(self.robot_position, self.points[self.index10])
+        # v_r9 = vector(self.robot_position, self.points[self.index9])
+        # v_r10 = vector(self.robot_position, self.points[self.index10])
 
         self.state = [v_r1[0], v_r1[1], norm(v_r1),
                       v_r2[0], v_r2[1], norm(v_r2),
@@ -106,9 +106,9 @@ class TrakingTrajectoryTask8(base.Task):
                       v_r5[0], v_r5[1], norm(v_r5),
                       v_r6[0], v_r6[1], norm(v_r6),
                       v_r7[0], v_r7[1], norm(v_r7),
-                      v_r8[0], v_r8[1], norm(v_r8),
-                      v_r9[0], v_r9[1], norm(v_r9),
-                      v_r10[0], v_r10[1], norm(v_r10)]
+                      v_r8[0], v_r8[1], norm(v_r8)]
+                      # v_r9[0], v_r9[1], norm(v_r9),
+                      # v_r10[0], v_r10[1], norm(v_r10)]
 
         super().initialize_episode(physics)
 
@@ -129,8 +129,8 @@ class TrakingTrajectoryTask8(base.Task):
         self.prev_index6 = self.index6
         self.prev_index7 = self.index7
         self.prev_index8 = self.index8
-        self.prev_index9 = self.index9
-        self.prev_index10 = self.index10
+        # self.prev_index9 = self.index9
+        # self.prev_index10 = self.index10
 
         self.index1 = arr[0]
         self.index2 = self.get_index(arr[0] + 1)
@@ -140,8 +140,8 @@ class TrakingTrajectoryTask8(base.Task):
         self.index6 = self.get_index(arr[0] + 5)
         self.index7 = self.get_index(arr[0] + 6)
         self.index8 = self.get_index(arr[0] + 7)
-        self.index9 = self.get_index(arr[0] + 8)
-        self.index10 = self.get_index(arr[0] + 9)
+        # self.index9 = self.get_index(arr[0] + 8)
+        # self.index10 = self.get_index(arr[0] + 9)
 
         if (self.no_return_index == len(self.points) - 1 and self.prev_index1 == 0)\
                 or self.no_return_index < self.prev_index1:
@@ -168,8 +168,8 @@ class TrakingTrajectoryTask8(base.Task):
         v_r6 = vector(self.robot_position, self.points[self.index6])
         v_r7 = vector(self.robot_position, self.points[self.index7])
         v_r8 = vector(self.robot_position, self.points[self.index8])
-        v_r9 = vector(self.robot_position, self.points[self.index9])
-        v_r10 = vector(self.robot_position, self.points[self.index10])
+        # v_r9 = vector(self.robot_position, self.points[self.index9])
+        # v_r10 = vector(self.robot_position, self.points[self.index10])
 
         self.state = [v_r1[0], v_r1[1], norm(v_r1),
                       v_r2[0], v_r2[1], norm(v_r2),
@@ -178,13 +178,13 @@ class TrakingTrajectoryTask8(base.Task):
                       v_r5[0], v_r5[1], norm(v_r5),
                       v_r6[0], v_r6[1], norm(v_r6),
                       v_r7[0], v_r7[1], norm(v_r7),
-                      v_r8[0], v_r8[1], norm(v_r8),
-                      v_r9[0], v_r9[1], norm(v_r9),
-                      v_r10[0], v_r10[1], norm(v_r10)]
+                      v_r8[0], v_r8[1], norm(v_r8)]
+                      # v_r9[0], v_r9[1], norm(v_r9),
+                      # v_r10[0], v_r10[1], norm(v_r10)]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 10\
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 5\
                 or len(self.points) == self.achievedPoints or self.count_hard_invalid_state >= 1:
             print("end episode at t = ", np.round(physics.data.time, 2), "\n")
             return 0.0
@@ -196,21 +196,24 @@ class TrakingTrajectoryTask8(base.Task):
         point = geom.Point(x, y)
         h_error_dist = self.line.distance(point)
 
-        if h_error_dist > 0.06:
+        if h_error_dist > 0.16:
             print("soft invalid state")
             self.count_invalid_states += 1
-            return -1.5
+            return -10
 
         if self.is_invalid_state_hard():
             print("hard invalid state")
             self.count_hard_invalid_state += 1
-            return -1.5
+            return -10
 
         if self.count_invalid_states > 0:
             print("вернулись на траекторию")
             self.count_invalid_states = 0
 
-        reward = 1 - h_error_dist * 25
+        if h_error_dist < 0.03:
+            return 10
+
+        reward = 1 / (4 * h_error_dist)
 
         return reward
 
