@@ -16,6 +16,7 @@ import tqdm
 
 class TestGrpc(unittest.TestCase):
 
+    @unittest.skip
     def testBasic(self):
         env, x_y = make_env(episode_timeout=30, type_task=8, trajectory='one_point', begin_index_=0)
         #print(env)
@@ -29,6 +30,7 @@ class TestGrpc(unittest.TestCase):
 
         # Taking random actions
 
+    @unittest.skip
     def testSpeed(self):
 
         env, x_y = make_env(episode_timeout=5000, type_task=8, trajectory='one_point', begin_index_=0)
@@ -40,6 +42,24 @@ class TestGrpc(unittest.TestCase):
         l = time.time() - s
 
         print("real time", l, "env time ",env.physics.time(), "ratio", env.physics.time()/l )
+
+    def testAction(self):
+        env, x_y = make_env(episode_timeout=5000, type_task=8, trajectory='one_point', begin_index_=0)
+        action = [0, 0]  # no Action
+        env.step(action) # Initial position setup
+        x0, y0, _ = env.physics.named.data.geom_xpos['wheel_']
+
+        for i in tqdm.tqdm(range(100)):
+            env.step(action)
+        x1, y1 , _ = env.physics.named.data.geom_xpos['wheel_']
+        self.assertAlmostEqual(x0 ,x1, 2, "X")
+        self.assertAlmostEqual(y0, y1, 2, "Y")
+        self.assertEquals(sum(env.physics.named.data.qvel), 0, "Velocity must be zero")
+
+
+
+
+
 
 
 

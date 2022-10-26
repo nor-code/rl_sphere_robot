@@ -65,8 +65,8 @@ class DeepDeterministicPolicyGradient(object):
 
 
         #========================================
-        self.platform_max_action = 0.975  # variance
-        self.wheel_max_action = 0.26  # variance
+        self.platform_max_action = 0 # 0.975 / 8  # variance
+        self.wheel_max_action = 0 # 0.26  / 16  # variance
 
     def sample_actions_orig(self, state, t, i):
         if self.epsilon > 0:
@@ -147,10 +147,15 @@ class DeepDeterministicPolicyGradient(object):
             # random
             platform = np.random.normal(loc=0, scale=np.sqrt(self.platform_max_action), size=1)
             wheel = np.random.normal(loc=0, scale=np.sqrt(self.wheel_max_action), size=1)
-            return [platform[0], wheel[0]]
+            act = [platform[0], wheel[0]]
         else:
             action = self.get_action([state])  # -1 .. 1
-            return [self.platform_max_action * action[0][1], self.wheel_max_action*action[0][1]]
+            act = [self.platform_max_action * action[0][1], self.wheel_max_action*action[0][1]]
+
+        self.writer.add_scalar("action plat", act[0], i)
+        self.writer.add_scalar("action wheel", act[1], i)
+
+        return act
 
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
@@ -176,7 +181,9 @@ class DeepDeterministicPolicyGradient(object):
             action = self.sample_actions(s, enviroment.physics.data.time, i)
 
             try:
+
                 timestep = enviroment.step(action)
+                #print(enviroment.physics.named.data.geom_xpos['wheel_'])
             except PhysicsError:
                 print("поломка в физике, метод play_and_record")
                 _enviroment = enviroment.reset()

@@ -23,7 +23,7 @@ class TrakingTrajectoryTaskOnePoint(base.Task):
         self.dist = 0.0
 
         # TODO make random in future
-        self.robot_position = [0, 0]  # initial robot position
+        self.robot_position = [-0.5, -0.5]  # initial robot position
 
         """ общее количество точек на пути """
         self.totalPoint = len(self.points)
@@ -65,6 +65,9 @@ class TrakingTrajectoryTaskOnePoint(base.Task):
         return self.state
 
     def get_termination(self, physics):
+        if self.get_distance2target() < 0.01:
+            print("Point reached!")
+            return 0.0
         x, y = self.extract_robot_xy()
         if x < self.scope["x"][0] or x > self.scope["x"][1] or y < self.scope["y"][0] or x > self.scope["y"][1]:
             print("out of scope")
@@ -80,13 +83,15 @@ class TrakingTrajectoryTaskOnePoint(base.Task):
         return self.state[4], self.state[5]
 
     def get_reward(self, physics):
-        robox_xy = torch.tensor(self.extract_robot_xy()).unsqueeze(0)
-
-        target_point_xy = torch.tensor(self.extract_target_point_xy()).unsqueeze(0)
-
-        l2_distance_to_target_point = torch.cdist(robox_xy, target_point_xy, p=2)
-
-        l2_distance_to_target_point = l2_distance_to_target_point[0]  # remove batch dim
-
-        reward = - torch.pow(l2_distance_to_target_point, 2)
+        distance = self.get_distance2target()
+        reward = - torch.pow(distance, 2)
         return reward.item()
+
+    def get_distance2target(self):
+        robox_xy = torch.tensor(self.extract_robot_xy()).unsqueeze(0)
+        target_point_xy = torch.tensor(self.extract_target_point_xy()).unsqueeze(0)
+        l2_distance_to_target_point = torch.cdist(robox_xy, target_point_xy, p=2)
+        l2_distance_to_target_point = l2_distance_to_target_point[0]  # remove batch dim
+        return l2_distance_to_target_point
+
+
