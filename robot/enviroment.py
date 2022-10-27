@@ -85,8 +85,8 @@ def get_string_xml(roll_angle):
     <!--     </contact>-->
 
         <actuator>
-            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.975 0.975"/>
-            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.6"/>
+            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9985 0.9985"/>
+            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.36"/>
         </actuator>
 
         <sensor>
@@ -105,6 +105,13 @@ def get_string_xml(roll_angle):
         </sensor>
     </mujoco>
     """
+
+#  до 26.10.2022 21:23
+#  <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.975 0.975"/>
+#  <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.6"/>
+#
+#  <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9985 0.9985"/>
+#  <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.36"/>
 
 # область в которой будут генерироваться начало замкнутой траектории
 scope = {
@@ -134,16 +141,18 @@ def random_trajectory():
     x_init = np.random.uniform(scope['x'][0], scope['x'][1])
     y_init = np.random.uniform(scope['y'][0], scope['y'][1])
 
-    radius = np.random.randn(1, total_points) * np.logspace(-1.63, -3.5, total_points)
+    radius = np.sin(np.random.randn(1, total_points)) * np.logspace(-1.61, -2.1, total_points)
     phi = np.random.randn(1, total_points) * np.logspace(-0.01, -1.2, total_points)
-    omega = 2 * np.random.randn(1, total_points) * np.logspace(-0.01, -0.85, total_points) * np.pi
+    omega = 2 * np.random.randn(1, total_points) * np.logspace(-0.1, -0.4, total_points) * np.pi
 
     t = np.linspace(0, 2 * np.pi, total_points)
     r = np.ones(total_points)
     for i in range(total_points):
         r += radius[0][i] * np.sin(omega[0][i] * t + phi[0][i])
 
-    r[-1] = r[0]
+    r[-1] = (r[1] + r[-2]) / 2
+    r[0] = r[-1]
+
     x = r * np.sin(t)  # + x_init
     y = - r * np.cos(t) + 1  # + y_init
     # x[-1] = x[0]
@@ -174,7 +183,7 @@ def get_state_dim(type_task):
     elif type_task == 8:
         return 24
     elif type_task == 9:
-        return 40
+        return 18
     elif type_task == 10:
         return 45
     return -1

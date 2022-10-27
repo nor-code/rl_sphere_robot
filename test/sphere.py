@@ -26,9 +26,9 @@ U = []
 #                            replay_buffer=None,
 #                            refresh_target=None,
 #                            writer=None)
-agent = DeepDeterministicPolicyGradient(45,
+agent = DeepDeterministicPolicyGradient(24,
                                         device='cpu',
-                                        act_dim=1,
+                                        act_dim=2,
                                         replay_buffer=None,
                                         batch_size=1,
                                         gamma=0.99,
@@ -37,9 +37,9 @@ agent = DeepDeterministicPolicyGradient(45,
 # agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
 # agent.q_network.eval()
 # 22_october/task8/
-agent.policy.load_state_dict(torch.load('../models/ddpg_policy_1_5.pt', map_location=torch.device('cpu')))
+agent.policy.load_state_dict(torch.load('../models/26_october/ddpg_policy_1_3.pt', map_location=torch.device('cpu')))
 agent.policy.eval()
-agent.qf.load_state_dict(torch.load('../models/ddpg_Q_1_5.pt', map_location=torch.device('cpu')))
+agent.qf.load_state_dict(torch.load('../models/26_october/ddpg_Q_1_3.pt', map_location=torch.device('cpu')))
 agent.qf.eval()
 
 final_time = 0
@@ -86,7 +86,7 @@ def action_policy(time_step):
     #     return [-0.22, 0.31]
 
 
-env, x_y = make_env(episode_timeout=100, type_task=8, trajectory='random', begin_index_=30, count_substeps=2)
+env, x_y = make_env(episode_timeout=100, type_task=8, trajectory='random', begin_index_=5, count_substeps=12)
 app = application.Application()
 app.launch(env, policy=action_policy)
 
