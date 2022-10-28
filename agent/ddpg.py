@@ -65,8 +65,8 @@ class DeepDeterministicPolicyGradient(object):
 
 
         #========================================
-        self.platform_max_action = 0 # 0.975 / 8  # variance
-        self.wheel_max_action = 0 # 0.26  / 16  # variance
+        self.platform_max_action = 0.15 # 0.975 / 8  # variance
+        self.wheel_max_action = 0.15 # 0.26  / 16  # variance
 
     def sample_actions_orig(self, state, t, i):
         if self.epsilon > 0:
@@ -149,8 +149,7 @@ class DeepDeterministicPolicyGradient(object):
             wheel = np.random.normal(loc=0, scale=np.sqrt(self.wheel_max_action), size=1)
             act = [platform[0], wheel[0]]
         else:
-            action = self.get_action([state])  # -1 .. 1
-            act = [self.platform_max_action * action[0][1], self.wheel_max_action*action[0][1]]
+            act = self.get_action([state])[0]  # -1 .. 1
 
         self.writer.add_scalar("action plat", act[0], i)
         self.writer.add_scalar("action wheel", act[1], i)
@@ -238,7 +237,10 @@ class DeepDeterministicPolicyGradient(object):
     def get_action(self, state):
         self.policy.to_eval_mode()
         state = torch.tensor(state, dtype=torch.float32, device=self.device)
-        return self.policy(state).detach().cpu().numpy()
+        action = self.policy(state).detach().cpu().numpy()
+        scaled_act = np.array([[self.platform_max_action * action[0][1], self.wheel_max_action * action[0][1]]])
+        return scaled_act
+
 
 
 def identity(x):
