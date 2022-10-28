@@ -18,7 +18,7 @@ def build_trajectory(agent=None, enviroment=None, timeout=50, x_y=None, type_tas
     time_step = env.reset()
     prev_time = env.physics.data.time
     observation = time_step.observation
-    robot_start = observation[0], observation[1]
+    robot_start = env.task.robot_position
 
     t = np.linspace(0, 2 * np.pi, 20)
     local_x_O = [0.242 * np.sin(t_) for t_ in t]
