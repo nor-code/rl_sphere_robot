@@ -23,7 +23,7 @@ class TrakingTrajectoryTaskOnePoint(base.Task):
         self.dist = 0.0
 
         # TODO make random in future
-        self.robot_position = [-0.5, -0.5]  # initial robot position
+        self.robot_position = [-1, -1]  # initial robot position
 
         """ общее количество точек на пути """
         self.totalPoint = len(self.points)
@@ -54,18 +54,30 @@ class TrakingTrajectoryTaskOnePoint(base.Task):
     def get_observation(self, physics):
         # координаты центра колеса
         x, y, z = physics.named.data.geom_xpos['wheel_']
+
         # вектор скорости в абс системе координат
         v_x, v_y, v_z = physics.named.data.sensordata['wheel_vel']
-
+        x, y = self.normalize_coords( x, y)
         self.state = [
-            x, y,  # robot position
+            x , y,  # robot position
             v_x, v_y,  # robot speed
             self.points[0][0], self.points[0][1]  # next point
         ]
         return self.state
 
+    def normalize_coords(self, x, y):
+        x = x / max(self.scope["x"])
+        y = y / max(self.scope["y"])
+        return x, y
+
+    def denormalize_coords(self, x, y):
+        x = x * max(self.scope["x"])
+        y = y * max(self.scope["y"])
+        return x, y
+
+
     def get_termination(self, physics):
-        if self.get_distance2target() < 0.01:
+        if self.get_distance2target() < 0.02:
             print("Point reached!")
             return 0.0
         x, y = self.extract_robot_xy()
@@ -93,5 +105,3 @@ class TrakingTrajectoryTaskOnePoint(base.Task):
         l2_distance_to_target_point = torch.cdist(robox_xy, target_point_xy, p=2)
         l2_distance_to_target_point = l2_distance_to_target_point[0]  # remove batch dim
         return l2_distance_to_target_point
-
-

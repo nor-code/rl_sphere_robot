@@ -127,11 +127,9 @@ def one_point():
     x = np.random.uniform()
     y = np.random.uniform()
 
-    x = 0.5
-    y = 0.5
+    x = 1.0
+    y = 1.0
     return [x],[y] #np.expand_dims(x_y, axis = 0)
-
-
 
 def random_trajectory():
     global scope
