@@ -85,8 +85,8 @@ def get_string_xml(roll_angle):
     <!--     </contact>-->
 
         <actuator>
-            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9985 0.9985"/>
-            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.36"/>
+            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.99 0.99"/>
+            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.32"/>
         </actuator>
 
         <sensor>
@@ -183,16 +183,37 @@ def get_state_dim(type_task):
     elif type_task == 8:
         return 24
     elif type_task == 9:
-        return 18
+        return 19
     elif type_task == 10:
         return 45
     return -1
 
 
-def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=20):
-    trajectory_fun = determine_trajectory(trajectory)
+def generate_100_random_trajectory_for_learn():
+    trajectories = []
 
-    x_y = trajectory_fun()
+    for i in range(100):
+        x_y = random_trajectory()
+        trajectories.append(x_y)
+
+    print("generated 100 random trajectories")
+
+    with open('./robot/t_100.txt', 'w') as outfile:
+        for trajectory in trajectories:
+            np.savetxt(outfile, [trajectory[0], trajectory[1]])
+
+    return trajectories
+
+
+trajectory_100 = generate_100_random_trajectory_for_learn()
+
+
+def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=20):
+    global trajectory_100
+    # trajectory_fun = determine_trajectory(trajectory)
+
+    x_y = trajectory_100[np.random.choice(range(100))]  # trajectory_fun()
+
     points = np.array(x_y).T
     dy = points[begin_index_ + 1][1] - points[begin_index_][1]
     dx = points[begin_index_ + 1][0] - points[begin_index_][0]

@@ -4,29 +4,16 @@ import torch
 from dm_control.viewer import application
 
 from agent.ddpg import DeepDeterministicPolicyGradient
-from agent.dqn import DeepQLearningAgent
-from robot.enviroment import make_env, curve, circle
+from robot.enviroment import make_env, curve, circle, get_state_dim
 
+task = 9
+dim_state = get_state_dim(task)
 pos = np.array([[0, 0]])
 i = 0
 V = []
 U = []
 
-# def action_policy(timestamp):
-#     qvalues = agent.get_qvalues([timestamp.observation])
-#     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
-#     return action
-#
-# agent = DeepQLearningAgent(state_dim=20,
-#                            batch_size=1,
-#                            epsilon=0,
-#                            gamma=0.99,
-#                            device='cpu',
-#                            algo='ddqn',
-#                            replay_buffer=None,
-#                            refresh_target=None,
-#                            writer=None)
-agent = DeepDeterministicPolicyGradient(24,
+agent = DeepDeterministicPolicyGradient(dim_state,
                                         device='cpu',
                                         act_dim=2,
                                         replay_buffer=None,
@@ -37,9 +24,9 @@ agent = DeepDeterministicPolicyGradient(24,
 # agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
 # agent.q_network.eval()
 # 22_october/task8/
-agent.policy.load_state_dict(torch.load('../models/26_october/ddpg_policy_1_3.pt', map_location=torch.device('cpu')))
+agent.policy.load_state_dict(torch.load('../models/27_october/task_9/ddpg_policy_1_3.pt', map_location=torch.device('cpu')))
 agent.policy.eval()
-agent.qf.load_state_dict(torch.load('../models/26_october/ddpg_Q_1_3.pt', map_location=torch.device('cpu')))
+agent.qf.load_state_dict(torch.load('../models/27_october/task_9/ddpg_Q_1_3.pt', map_location=torch.device('cpu')))
 agent.qf.eval()
 
 final_time = 0
@@ -61,32 +48,15 @@ def action_policy(time_step):
     V.append(v_x)
     U.append(v_y)
 
-    # ddqn
-    # q = agent.get_qvalues([observation])
-    # index = q.argmax(axis=-1)[0]
-    # print(index)
-
     if time_step.reward is not None:
         total_reward += time_step.reward
-
-    # ddqn
-    # action = agent.index_to_pair[index]
-
-    # ddpg
     action = agent.get_action([observation])
-
     actions = np.concatenate((actions, action[0]), axis=0)
     final_time = env.physics.data.time
     return action
 
-    # if i < 200:
-    #     return [0.2205, 0.20]
-    #
-    # else:nohup python3 main.py --simu_number=1 --type_task=4 --agent_type=ddqn --trajectory=circle --buffer_size=6000000 --batch_size=2048 --total_steps=12000 --decay_steps=6000 > out1.log &
-    #     return [-0.22, 0.31]
 
-
-env, x_y = make_env(episode_timeout=100, type_task=8, trajectory='random', begin_index_=5, count_substeps=12)
+env, x_y = make_env(episode_timeout=110, type_task=task, trajectory='random', begin_index_=5, count_substeps=3)
 app = application.Application()
 app.launch(env, policy=action_policy)
 
@@ -118,3 +88,18 @@ plt.show()
 
 # U_max = 0.2408
 # U_max = 0.2958
+
+# def action_policy(timestamp):
+#     qvalues = agent.get_qvalues([timestamp.observation])
+#     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
+#     return action
+#
+# agent = DeepQLearningAgent(state_dim=20,
+#                            batch_size=1,
+#                            epsilon=0,
+#                            gamma=0.99,
+#                            device='cpu',
+#                            algo='ddqn',
+#                            replay_buffer=None,
+#                            refresh_target=None,
+#                            writer=None)

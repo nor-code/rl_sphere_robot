@@ -51,8 +51,6 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
 
 
 def get_env(size, count_substeps=20):
-    # begin_index = [size // 10, 2 * size // 10, (3 * size) // 10, (4 * size) // 10,
-    #                size // 2, (6 * size) // 10, (7 * size) // 10, (8 * size) // 10, (9 * size) // 10]
     begin_index = np.random.choice(range(0, size - 1), size=1)
     env_i, x_y = make_env(
         episode_timeout=timeout, type_task=args.type_task,
@@ -101,8 +99,8 @@ parser.add_argument('--decay_steps', type=int, default=100, help='decay_steps')
 parser.add_argument('--agent_type', type=str, default='ddpg', help='type of agent. available now: dqn, ddqn, ddpg')
 args = parser.parse_args()
 
-timeout = 70
-max_steps_per_episode = 1600
+timeout = 90
+max_steps_per_episode = 2600
 
 state_dim = get_state_dim(type_task=args.type_task)
 replay_buffer = ReplayBuffer(args.buffer_size)

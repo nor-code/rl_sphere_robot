@@ -232,7 +232,7 @@ def identity(x):
     return x
 
 
-def soft_target_update(main, target, tau=0.0085):  # tau = 0.005
+def soft_target_update(main, target, tau=0.004):  # tau = 0.005
     for main_param, target_param in zip(main.parameters(), target.parameters()):
         target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
 
@@ -332,9 +332,10 @@ class Critic(nn.Module):
 
 class PlatformTanh(nn.Tanh):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.9985 * torch.tanh(input)
+        return 0.99 * torch.tanh(input)
+#       return 0.975 * torch.tanh(input)
 
 
 class WheelSigmoid(nn.Sigmoid):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.1 * torch.sigmoid(input) + 0.26
+        return 0.06 * torch.sigmoid(input) + 0.26

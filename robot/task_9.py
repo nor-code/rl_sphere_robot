@@ -96,7 +96,8 @@ class TrakingTrajectoryTask9(base.Task):
                       v_r6[0], v_r6[1],
                       v_r7[0], v_r7[1],
                       v_r8[0], v_r8[1],
-                      v_r9[0], v_r9[1]
+                      v_r9[0], v_r9[1],
+                      0.0
         ]
 
         super().initialize_episode(physics)
@@ -139,6 +140,9 @@ class TrakingTrajectoryTask9(base.Task):
 
         self.get_nearest_10_points_index()
 
+        point = geom.Point(x, y)
+        h_error_dist = self.line.distance(point)
+
         v_r1 = vector(self.robot_position, self.points[self.index1])
         v_r2 = vector(self.robot_position, self.points[self.index2])
         v_r3 = vector(self.robot_position, self.points[self.index3])
@@ -157,7 +161,8 @@ class TrakingTrajectoryTask9(base.Task):
                       v_r6[0], v_r6[1],
                       v_r7[0], v_r7[1],
                       v_r8[0], v_r8[1],
-                      v_r9[0], v_r9[1]
+                      v_r9[0], v_r9[1],
+                      h_error_dist
         ]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
@@ -168,11 +173,8 @@ class TrakingTrajectoryTask9(base.Task):
             return 0.0
 
     def get_reward(self, physics):
-        state = self.state
 
-        x, y = self.robot_position
-        point = geom.Point(x, y)
-        h_error_dist = self.line.distance(point)
+        h_error_dist = self.state[-1]
 
         if h_error_dist >= 0.1:
             print("soft invalid state")
@@ -188,10 +190,10 @@ class TrakingTrajectoryTask9(base.Task):
             print("вернулись на траекторию")
             self.count_invalid_states = 0
 
-        if h_error_dist <= 0.02:
+        if h_error_dist <= 0.01:
             return 10
 
-        reward = -250 * h_error_dist + 15
+        reward = -17.951 + (1 / (0.02667 + h_error_dist))
 
         return reward
 
