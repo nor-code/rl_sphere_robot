@@ -158,7 +158,7 @@ class DeepDeterministicPolicyGradient(object):
         self.phase_wheel = np.random.uniform(-np.pi, np.pi, size=1)[0]
         self.sigma, self.amp, self.omega = np.random.randn(3)
         self.sigma = np.sqrt(abs(self.sigma))
-        self.alpha = np.random.uniform(0.2, 0.8, size=1)[0]
+        self.alpha = np.random.uniform(0.4, 0.8, size=1)[0]
 
         init_action = self.get_action([s])
         self.prev_action_platform = init_action[0][0]
@@ -232,7 +232,7 @@ def identity(x):
     return x
 
 
-def soft_target_update(main, target, tau=0.004):  # tau = 0.005
+def soft_target_update(main, target, tau=0.01):  # tau = 0.005
     for main_param, target_param in zip(main.parameters(), target.parameters()):
         target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
 
@@ -248,11 +248,11 @@ class Actor(nn.Module):
             nn.ReLU(),
             nn.BatchNorm1d(2048),
 
-            nn.Linear(2048, 2048),
+            nn.Linear(2048, 4096),  # 2048, 2048
             nn.ReLU(),
-            nn.BatchNorm1d(2048),
+            nn.BatchNorm1d(4096),
 
-            nn.Linear(2048, 2048),
+            nn.Linear(4096, 2048),  # 2048, 2048
             nn.ReLU(),
             nn.BatchNorm1d(2048),
 
@@ -332,10 +332,10 @@ class Critic(nn.Module):
 
 class PlatformTanh(nn.Tanh):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.99 * torch.tanh(input)
+        return 0.9975 * torch.tanh(input)
 #       return 0.975 * torch.tanh(input)
 
 
 class WheelSigmoid(nn.Sigmoid):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.06 * torch.sigmoid(input) + 0.26
+        return 0.05 * torch.sigmoid(input) + 0.26

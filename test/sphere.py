@@ -4,10 +4,11 @@ import torch
 from dm_control.viewer import application
 
 from agent.ddpg import DeepDeterministicPolicyGradient
-from robot.enviroment import make_env, curve, circle, get_state_dim
+from robot.enviroment import make_env, curve, circle, get_state_dim, load_trajectories
 
 task = 9
 dim_state = get_state_dim(task)
+load_trajectories()
 pos = np.array([[0, 0]])
 i = 0
 V = []
@@ -24,9 +25,9 @@ agent = DeepDeterministicPolicyGradient(dim_state,
 # agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
 # agent.q_network.eval()
 # 22_october/task8/
-agent.policy.load_state_dict(torch.load('../models/27_october/task_9/ddpg_policy_1_3.pt', map_location=torch.device('cpu')))
+agent.policy.load_state_dict(torch.load('../models/29_october/ddpg_policy_1_5.pt', map_location=torch.device('cpu')))
 agent.policy.eval()
-agent.qf.load_state_dict(torch.load('../models/27_october/task_9/ddpg_Q_1_3.pt', map_location=torch.device('cpu')))
+agent.qf.load_state_dict(torch.load('../models/29_october/ddpg_Q_1_5.pt', map_location=torch.device('cpu')))
 agent.qf.eval()
 
 final_time = 0

@@ -96,8 +96,7 @@ class TrakingTrajectoryTask9(base.Task):
                       v_r6[0], v_r6[1],
                       v_r7[0], v_r7[1],
                       v_r8[0], v_r8[1],
-                      v_r9[0], v_r9[1],
-                      0.0
+                      v_r9[0], v_r9[1]
         ]
 
         super().initialize_episode(physics)
@@ -162,19 +161,20 @@ class TrakingTrajectoryTask9(base.Task):
                       v_r7[0], v_r7[1],
                       v_r8[0], v_r8[1],
                       v_r9[0], v_r9[1],
-                      h_error_dist
         ]
         return self.state  # np.concatenate((xy, acc_gyro), axis=0)
 
     def get_termination(self, physics):
-        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 1\
+        if len(self.points) == 0 or physics.data.time > self.timeout or self.count_invalid_states >= 10\
                 or len(self.points) == self.achievedPoints or self.count_hard_invalid_state >= 1:
             print("end episode at t = ", np.round(physics.data.time, 2), "\n")
             return 0.0
 
     def get_reward(self, physics):
+        x, y = self.robot_position
 
-        h_error_dist = self.state[-1]
+        point = geom.Point(x, y)
+        h_error_dist = self.line.distance(point)
 
         if h_error_dist >= 0.1:
             print("soft invalid state")

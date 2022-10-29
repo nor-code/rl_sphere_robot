@@ -85,7 +85,7 @@ def get_string_xml(roll_angle):
     <!--     </contact>-->
 
         <actuator>
-            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.99 0.99"/>
+            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9975 0.9975"/>
             <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.32"/>
         </actuator>
 
@@ -112,7 +112,11 @@ def get_string_xml(roll_angle):
 #
 #  <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9985 0.9985"/>
 #  <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.36"/>
-
+#
+#  29.10.2022
+#  <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9975 0.9975"/>
+#  <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.32"/>
+#
 # область в которой будут генерироваться начало замкнутой траектории
 scope = {
     "x": [-1.5, 1.5],
@@ -183,9 +187,9 @@ def get_state_dim(type_task):
     elif type_task == 8:
         return 24
     elif type_task == 9:
-        return 19
+        return 18
     elif type_task == 10:
-        return 45
+        return 16
     return -1
 
 
@@ -205,14 +209,26 @@ def generate_100_random_trajectory_for_learn():
     return trajectories
 
 
-trajectory_100 = generate_100_random_trajectory_for_learn()
+# trajectory_100 = generate_100_random_trajectory_for_learn()
+
+
+# trajectory_100 = []
+def load_trajectories():
+    global trajectory_100
+    trajectory_ = np.loadtxt('../t_100.txt')
+    array = np.array(range(200))
+    odd = array[array % 2 == 1]
+    for i in odd:
+        trajectory_100.append((trajectory_[i - 1].tolist(), trajectory_[i].tolist()))
+    print("loaded 100 trajectories")
 
 
 def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=20):
     global trajectory_100
-    # trajectory_fun = determine_trajectory(trajectory)
+    trajectory_fun = determine_trajectory(trajectory)
 
-    x_y = trajectory_100[np.random.choice(range(100))]  # trajectory_fun()
+    # x_y = trajectory_100[np.random.choice(range(100))]
+    x_y = trajectory_fun()
 
     points = np.array(x_y).T
     dy = points[begin_index_ + 1][1] - points[begin_index_][1]
