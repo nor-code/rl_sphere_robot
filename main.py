@@ -50,7 +50,7 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
             final_val * cur_step) / total_steps
 
 
-def get_env(size, count_substeps=20):
+def get_env(size, count_substeps=15):
     begin_index = np.random.choice(range(0, size - 1), size=1)
     env_i, x_y = make_env(
         episode_timeout=timeout, type_task=args.type_task,
@@ -89,7 +89,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='DQN/DDPG Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
-parser.add_argument('--type_task', type=int, default=10, help='type of task. now available 4, 5')
+parser.add_argument('--type_task', type=int, default=11, help='type of task. now available 4, 5')
 parser.add_argument('--trajectory', type=str, default='random', help='trajectory for agent, circle, curve, random')
 parser.add_argument('--buffer_size', type=int, default=10 ** 6, help='size of buffer')
 parser.add_argument('--batch_size', type=int, default=2 ** 10, help='batch size')
@@ -148,7 +148,7 @@ step = 0
 count_point_on_trajectory = get_size()
 
 init_epsilon = 1
-final_epsilon = 0
+final_epsilon = 0.2
 
 rewards = list()
 with trange(step, total_steps + 1) as progress_bar:
@@ -165,7 +165,7 @@ with trange(step, total_steps + 1) as progress_bar:
         writer.add_scalar("average reward per episode", round(np.mean(rewards), 4), step)
 
         if step % eval_freq == 0:
-            env, x_y = get_env(count_point_on_trajectory, count_substeps=15)
+            env, x_y = get_env(count_point_on_trajectory, count_substeps=10)
 
             plot_buf, fig = build_trajectory(
                 agent=agent, enviroment=env, timeout=timeout, x_y=x_y, type_task=args.type_task

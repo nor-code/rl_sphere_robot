@@ -13,6 +13,7 @@ from robot.task_7 import TrakingTrajectoryTask7
 from robot.task_8 import TrakingTrajectoryTask8
 from robot.task_9 import TrakingTrajectoryTask9
 from robot.task_10 import TrakingTrajectoryTask10
+from robot.task_11 import TrakingTrajectoryTask11
 
 
 def get_string_xml(roll_angle):
@@ -85,8 +86,8 @@ def get_string_xml(roll_angle):
     <!--     </contact>-->
 
         <actuator>
-            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9975 0.9975"/>
-            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.32"/>
+            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9985 0.9985"/>
+            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.4"/>
         </actuator>
 
         <sensor>
@@ -190,6 +191,8 @@ def get_state_dim(type_task):
         return 18
     elif type_task == 10:
         return 16
+    elif type_task == 11:
+        return 10
     return -1
 
 
@@ -223,7 +226,7 @@ def load_trajectories():
     print("loaded 100 trajectories")
 
 
-def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=20):
+def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=15):
     global trajectory_100
     trajectory_fun = determine_trajectory(trajectory)
 
@@ -264,5 +267,7 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, c
         task = TrakingTrajectoryTask9(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
     elif type_task == 10:
         task = TrakingTrajectoryTask10(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
+    elif type_task == 11:
+        task = TrakingTrajectoryTask11(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
     return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=count_substeps), x_y  # n_sub_steps = 17

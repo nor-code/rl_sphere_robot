@@ -73,7 +73,7 @@ class DeepDeterministicPolicyGradient(object):
 
             platform, wheel = action[0][0], action[0][1]
 
-            mu_p = 0.001 * self.amp * np.sin(self.omega * t + self.phase_platform)
+            mu_p = 0.01 * self.amp * np.sin(self.omega * t + self.phase_platform)
             mu_w = 0.0001 * self.amp * np.sin(self.omega * t + self.phase_wheel)
 
             platform += (self.sigma * np.random.randn(1) + mu_p)
@@ -147,8 +147,8 @@ class DeepDeterministicPolicyGradient(object):
 
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
-            return 16
-        return 16
+            return 8
+        return 8
 
     def play_episode(self, initial_state, enviroment, episode_timeout, n_steps, global_iteration, episode):
         s = initial_state
@@ -158,7 +158,7 @@ class DeepDeterministicPolicyGradient(object):
         self.phase_wheel = np.random.uniform(-np.pi, np.pi, size=1)[0]
         self.sigma, self.amp, self.omega = np.random.randn(3)
         self.sigma = np.sqrt(abs(self.sigma))
-        self.alpha = np.random.uniform(0.4, 0.8, size=1)[0]
+        self.alpha = np.random.uniform(0.1, 0.9, size=1)[0]
 
         init_action = self.get_action([s])
         self.prev_action_platform = init_action[0][0]
@@ -232,7 +232,7 @@ def identity(x):
     return x
 
 
-def soft_target_update(main, target, tau=0.01):  # tau = 0.005
+def soft_target_update(main, target, tau=0.0075):  # tau = 0.005
     for main_param, target_param in zip(main.parameters(), target.parameters()):
         target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
 
@@ -332,10 +332,10 @@ class Critic(nn.Module):
 
 class PlatformTanh(nn.Tanh):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.9975 * torch.tanh(input)
+        return 0.9985 * torch.tanh(input)
 #       return 0.975 * torch.tanh(input)
 
 
 class WheelSigmoid(nn.Sigmoid):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.05 * torch.sigmoid(input) + 0.26
+        return 0.14 * torch.sigmoid(input) + 0.26

@@ -1,3 +1,4 @@
+# НЕЙРОНКИ С 1_*
 self.state = [v_r1[0], v_r1[1],
               v_r2[0], v_r2[1],
               v_r3[0], v_r3[1],
@@ -26,3 +27,28 @@ if h_error_dist <= 0.02:
     return 10
 
 reward = -250 * h_error_dist + 15
+
+# НЕЙРОНКИ С 2_*
+x, y = self.robot_position
+
+point = geom.Point(x, y)
+h_error_dist = self.line.distance(point)
+
+if h_error_dist >= 0.1:
+    print("soft invalid state")
+    self.count_invalid_states += 1
+    return -10
+
+if self.is_invalid_state_hard():
+    print("hard invalid state")
+    self.count_hard_invalid_state += 1
+    return -10
+
+if self.count_invalid_states > 0:
+    print("вернулись на траекторию")
+    self.count_invalid_states = 0
+
+if h_error_dist <= 0.01:
+    return 10
+
+reward = -17.951 + (1 / (0.02667 + h_error_dist))
