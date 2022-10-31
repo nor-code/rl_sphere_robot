@@ -4,8 +4,7 @@ from dm_control.rl.control import PhysicsError
 from dm_env import StepType
 import torch.nn as nn
 import torch.nn.functional as F
-
-from agent.ddpg import soft_target_update, WheelSigmoid, PlatformTanh
+from torch import Tensor
 
 
 class TwinDelayedAgent(object):
@@ -152,6 +151,8 @@ class TwinDelayedAgent(object):
         policy_loss.backward()
         self.policy_optimizer.step()
 
+        del obs1, obs2, rews, acts, done, q1_pi, q1, q2, epsilon, pi_target
+
         # Polyak averaging for target parameter
         soft_target_update(self.policy, self.policy_target)
         soft_target_update(self.qf1, self.qf1_target)
@@ -248,6 +249,16 @@ class TwinDelayedAgent(object):
         return self.policy(state).detach().cpu().numpy()
 
 
+def identity(x):
+    """Return input without any change."""
+    return x
+
+
+def soft_target_update(main, target, tau=0.0065):  # tau = 0.005
+    for main_param, target_param in zip(main.parameters(), target.parameters()):
+        target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
+
+
 class Actor(nn.Module):
     def __init__(self, input_dim, device):
         super(Actor, self).__init__()
@@ -326,21 +337,32 @@ class Critic(nn.Module):
         self.device = device
 
         self.base = nn.Sequential(
-            nn.Linear(self.input_dim, 1024),
+            nn.Linear(self.input_dim, 512),
             nn.ReLU(),
 
-            nn.Linear(1024, 2048),
+            nn.Linear(512, 512),
             nn.ReLU(),
 
-            nn.Linear(2048, 1024),
+            nn.Linear(512, 512),
             nn.ReLU(),
 
-            nn.Linear(1024, 1024),
+            nn.Linear(512, 512),
             nn.ReLU(),
 
-            nn.Linear(1024, 1)
+            nn.Linear(512, 1)
         ).to(self.device)
 
     def forward(self, state, action):
         q = torch.cat([state, action], dim=-1)
         return self.base(q)
+
+
+class PlatformTanh(nn.Tanh):
+    def forward(self, input: Tensor) -> Tensor:
+        return 0.9985 * torch.tanh(input)
+#       return 0.975 * torch.tanh(input)
+
+
+class WheelSigmoid(nn.Sigmoid):
+    def forward(self, input: Tensor) -> Tensor:
+        return 0.02 * torch.sigmoid(input) + 0.26
