@@ -22,7 +22,7 @@ class ThreadSimulation(threading.Thread):
 
     def run(self):
         global top_result_map
-        type_task = 9
+        type_task = 11
         timeout = 105
         state_dim = get_state_dim(type_task)
 
@@ -35,12 +35,12 @@ class ThreadSimulation(threading.Thread):
                                                 writer=None)
 
         agent.policy.load_state_dict(
-            torch.load('../models/27_october/task_9/ddpg_policy_1_3.pt', map_location=torch.device('cpu'))
+            torch.load('../models/30_october/task_11/ddpg_policy_1_2.pt', map_location=torch.device('cpu'))
         )
         agent.policy.eval()
 
         agent.qf.load_state_dict(
-            torch.load('../models/27_october/task_9/ddpg_Q_1_3.pt', map_location=torch.device('cpu'))
+            torch.load('../models/30_october/task_11/ddpg_Q_1_2.pt', map_location=torch.device('cpu'))
         )
         agent.qf.eval()
         env, x_y = make_env(episode_timeout=timeout, type_task=type_task,

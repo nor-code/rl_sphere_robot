@@ -87,7 +87,7 @@ def get_string_xml(roll_angle):
 
         <actuator>
             <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9985 0.9985"/>
-            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.4"/>
+            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.36"/>
         </actuator>
 
         <sensor>
@@ -192,7 +192,7 @@ def get_state_dim(type_task):
     elif type_task == 10:
         return 16
     elif type_task == 11:
-        return 10
+        return 22
     return -1
 
 

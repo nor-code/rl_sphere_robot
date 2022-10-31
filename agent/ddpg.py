@@ -147,8 +147,8 @@ class DeepDeterministicPolicyGradient(object):
 
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
-            return 8
-        return 8
+            return 16
+        return 16
 
     def play_episode(self, initial_state, enviroment, episode_timeout, n_steps, global_iteration, episode):
         s = initial_state
@@ -232,7 +232,7 @@ def identity(x):
     return x
 
 
-def soft_target_update(main, target, tau=0.0075):  # tau = 0.005
+def soft_target_update(main, target, tau=0.0065):  # tau = 0.005
     for main_param, target_param in zip(main.parameters(), target.parameters()):
         target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
 
@@ -259,6 +259,11 @@ class Actor(nn.Module):
         ).to(self.device)
 
         self.platform_out = nn.Sequential(
+            nn.Linear(2048, 2048),
+            nn.ReLU(),
+            nn.BatchNorm1d(2048),
+
+            # new layer
             nn.Linear(2048, 1024),
             nn.ReLU(),
             nn.BatchNorm1d(1024),
@@ -338,4 +343,4 @@ class PlatformTanh(nn.Tanh):
 
 class WheelSigmoid(nn.Sigmoid):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.14 * torch.sigmoid(input) + 0.26
+        return 0.1 * torch.sigmoid(input) + 0.26

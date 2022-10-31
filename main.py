@@ -51,7 +51,7 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
 
 
 def get_env(size, count_substeps=15):
-    begin_index = np.random.choice(range(0, size - 1), size=1)
+    begin_index = np.random.choice(range(6, size - 7), size=1)
     env_i, x_y = make_env(
         episode_timeout=timeout, type_task=args.type_task,
         trajectory=args.trajectory, begin_index_=begin_index[0],
@@ -148,7 +148,7 @@ step = 0
 count_point_on_trajectory = get_size()
 
 init_epsilon = 1
-final_epsilon = 0.2
+final_epsilon = 0.25
 
 rewards = list()
 with trange(step, total_steps + 1) as progress_bar:
