@@ -1,10 +1,11 @@
 import numpy as np
 import torch
-import torch.nn.functional as F
 from dm_control.rl.control import PhysicsError
 from dm_env import StepType
+import torch.nn as nn
+import torch.nn.functional as F
 
-from agent.ddpg import Actor, Critic, soft_target_update
+from agent.ddpg import soft_target_update, WheelSigmoid, PlatformTanh
 
 
 class TwinDelayedAgent(object):
@@ -245,3 +246,101 @@ class TwinDelayedAgent(object):
         self.policy.to_eval_mode()
         state = torch.tensor(state, dtype=torch.float32, device=self.device)
         return self.policy(state).detach().cpu().numpy()
+
+
+class Actor(nn.Module):
+    def __init__(self, input_dim, device):
+        super(Actor, self).__init__()
+        self.input_dim = input_dim
+        self.device = device
+
+        self.base = nn.Sequential(
+            nn.Linear(self.input_dim, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512),
+
+            nn.Linear(512, 512),  # 2048, 2048
+            nn.ReLU(),
+            nn.BatchNorm1d(512),
+
+            nn.Linear(512, 512),  # 2048, 2048
+            nn.ReLU(),
+            nn.BatchNorm1d(512),
+
+        ).to(self.device)
+
+        self.platform_out = nn.Sequential(
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512),
+
+            # new layer
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512),
+
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512),
+
+            nn.Linear(512, 1),
+            PlatformTanh()
+        ).to(self.device)
+
+        self.wheel_out = nn.Sequential(
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512),
+
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512),
+
+            nn.Linear(512, 1),
+            WheelSigmoid()
+        ).to(self.device)
+
+    def forward(self, state):
+        out_base = self.base(state)
+
+        platform_out = self.platform_out(out_base)
+        wheel_out = self.wheel_out(out_base)
+
+        return torch.cat([platform_out, wheel_out], dim=-1)
+
+    def to_eval_mode(self):
+        self.base.eval()
+        self.platform_out.eval()
+        self.wheel_out.eval()
+
+    def to_train_mode(self):
+        self.base.train()
+        self.platform_out.train()
+        self.wheel_out.train()
+
+
+class Critic(nn.Module):
+    def __init__(self, input_dim, device):
+        super(Critic, self).__init__()
+        self.input_dim = input_dim
+        self.device = device
+
+        self.base = nn.Sequential(
+            nn.Linear(self.input_dim, 1024),
+            nn.ReLU(),
+
+            nn.Linear(1024, 2048),
+            nn.ReLU(),
+
+            nn.Linear(2048, 1024),
+            nn.ReLU(),
+
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+
+            nn.Linear(1024, 1)
+        ).to(self.device)
+
+    def forward(self, state, action):
+        q = torch.cat([state, action], dim=-1)
+        return self.base(q)

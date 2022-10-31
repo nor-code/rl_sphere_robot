@@ -2,7 +2,7 @@
 sudo apt update -y
 sudo apt upgrade -y
 
-sudo apt install git mc curl -y
+sudo apt install git net-tools mc curl -y
 
 # установка conda и PyTorch скомпилированный под cuda
 touch anaconda.sh
@@ -27,4 +27,4 @@ source ~/.bashrc
 sudo apt install python3-pip
 pip install --upgrade pip setuptools wheel
 conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch-nightly -c nvidia
-pip install matplotlib numpy tqdm tensorboard
+pip install matplotlib numpy tqdm tensorboard torchsummary geos shapely
