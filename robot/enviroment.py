@@ -3,7 +3,6 @@ import collections
 import numpy as np
 from dm_control.rl import control
 
-from robot.mock_task import MockTask
 from robot.model import RobotPhysics
 from robot.task_3 import TrakingTrajectoryTask3
 from robot.task_4 import TrakingTrajectoryTask4

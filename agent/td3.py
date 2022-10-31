@@ -1,14 +1,14 @@
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from dm_control.rl.control import PhysicsError
 from dm_env import StepType
-from torch import Tensor
+
+from agent.ddpg import Actor, Critic, soft_target_update
 
 
-class DeepDeterministicPolicyGradient(object):
-    """An implementation of the Deep Deterministic Policy Gradient (DDPG) agent."""
+class TwinDelayedAgent(object):
+    """Twin Delayed DDPG (TD3) agent"""
 
     def __init__(self,
                  obs_dim,
@@ -19,6 +19,8 @@ class DeepDeterministicPolicyGradient(object):
                  gamma=0.99,
                  act_noise=0.1,
                  batch_size=1,
+                 target_noise=0.2,
+                 noise_clip=0.5,
                  gradient_clip_policy=0.5,  # 0.5
                  gradient_clip_qf=1.0,  # 1.0
                  policy_losses=list(),
@@ -32,27 +34,33 @@ class DeepDeterministicPolicyGradient(object):
         self.gamma = gamma
         self.writer = writer
         self.batch_size = batch_size
+        self.target_noise = target_noise
+        self.noise_clip = noise_clip
 
         self.gradient_clip_policy = gradient_clip_policy
         self.gradient_clip_qf = gradient_clip_qf
         self.policy_losses = policy_losses
         self.qf_losses = qf_losses
 
-        # Main network Actor & Critic
-        self.policy = Actor(self.obs_dim, self.device)
-        self.qf = Critic(self.obs_dim + self.act_dim, self.device)
-
-        # Target network Actor & Critic
-        self.policy_target = Actor(self.obs_dim, self.device)
-        self.qf_target = Critic(self.obs_dim + self.act_dim, self.device)
+        # Main network
+        self.policy = Actor(self.obs_dim, self.device).to(self.device)
+        self.qf1 = Critic(self.obs_dim + self.act_dim, self.device)
+        self.qf2 = Critic(self.obs_dim + self.act_dim, self.device)
+        # Target network
+        self.policy_target = Actor(self.obs_dim, self.device).to(self.device)
+        self.qf1_target = Critic(self.obs_dim + self.act_dim, self.device)
+        self.qf2_target = Critic(self.obs_dim + self.act_dim, self.device)
 
         # Initialize target parameters to match main parameters
         self.policy_target.load_state_dict(self.policy.state_dict())
-        self.qf.load_state_dict(self.qf_target.state_dict())
+        self.qf1.load_state_dict(self.qf1_target.state_dict())
+        self.qf2.load_state_dict(self.qf2_target.state_dict())
 
+        # Concat the Q-network parameters to use one optim
+        self.qf_parameters = list(self.qf1.parameters()) + list(self.qf2.parameters())
         # Create optimizers
-        self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=1e-3, weight_decay=1e-4)
-        self.qf_optimizer = torch.optim.Adam(self.qf.parameters(), lr=2e-3, weight_decay=1e-4)
+        self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=3e-4, weight_decay=1e-4)
+        self.qf_optimizer = torch.optim.Adam(self.qf_parameters, lr=3e-4, weight_decay=1e-4)
 
         # for noize action per one episode
         self.phase_platform = np.random.uniform(-np.pi, np.pi, size=1)
@@ -66,14 +74,12 @@ class DeepDeterministicPolicyGradient(object):
         rand = np.random.rand()
 
         if rand <= self.epsilon:
-        #     return [np.random.uniform(-0.975, 0.975, size=1)[0], np.random.uniform(0.26, 0.6, size=1)[0]]  # only random
-        # else:
             self.policy.to_eval_mode()
             action = self.get_action([state])
 
             platform, wheel = action[0][0], action[0][1]
 
-            mu_p = 0.01 * self.amp * np.sin(self.omega * t + self.phase_platform)
+            mu_p = 0.001 * self.amp * np.sin(self.omega * t + self.phase_platform)
             mu_w = 0.0001 * self.amp * np.sin(self.omega * t + self.phase_wheel)
 
             platform += (self.sigma * np.random.randn(1) + mu_p)
@@ -102,8 +108,6 @@ class DeepDeterministicPolicyGradient(object):
             return [action[0][0], action[0][1]]
 
     def train_model(self):
-        self.policy.to_train_mode()
-
         s, actions, r, next_s, is_done = self.replay_buffer.sample(self.batch_size)
 
         obs1 = torch.tensor(s, device=self.device, dtype=torch.float32)
@@ -112,34 +116,50 @@ class DeepDeterministicPolicyGradient(object):
         rews = torch.tensor(r, device=self.device, dtype=torch.float32)
         done = torch.tensor(is_done.astype('float32'), device=self.device, dtype=torch.float32)
 
-        # Prediction Q(s,𝜇(s)), Q(s,a), Q‾(s',𝜇‾(s'))
-        q_pi = self.qf(obs1, self.policy(obs1))
-        q = self.qf(obs1, acts).squeeze(1)
-        q_pi_target = self.qf_target(obs2, self.policy_target(obs2)).squeeze(1)
+        # Prediction Q1(s,𝜇(s)), Q1(s,a), Q2(s,a)
+        q1_pi = self.qf1(obs1, self.policy(obs1))
+        q1 = self.qf1(obs1, acts).squeeze(1)
+        q2 = self.qf2(obs1, acts).squeeze(1)
+
+        # Target policy smoothing, by adding clipped noise to target actions
+        pi_target = self.policy_target(obs2)
+        epsilon = torch.normal(mean=0, std=self.target_noise, size=pi_target.size()).to(self.device)
+        epsilon = torch.clamp(epsilon, -self.noise_clip, self.noise_clip).to(self.device)
+        pi_target = pi_target + epsilon
+        pi_target[:, 0] = torch.clamp(pi_target[:, 0], -0.9985, 0.9985)
+        pi_target[:, 1] = torch.clamp(pi_target[:, 1], 0.24, 0.28)
+        pi_target.to(self.device)
+
+        # Min Double-Q: min(Q1‾(s',𝜇(s')), Q2‾(s',𝜇(s')))
+        min_q_pi_target = torch.min(self.qf1_target(obs2, pi_target),
+                                    self.qf2_target(obs2, pi_target)).squeeze(1).to(self.device)
 
         # Target for Q regression
-        q_backup = rews + self.gamma * (1 - done) * q_pi_target
+        q_backup = rews + self.gamma * (1 - done) * min_q_pi_target
         q_backup.to(self.device)
 
-        # DDPG losses
-        policy_loss = -q_pi.mean()
-        qf_loss = F.mse_loss(q, q_backup.detach())
+        # TD3 losses
+        policy_loss = -q1_pi.mean()
+        qf1_loss = F.mse_loss(q1, q_backup.detach())
+        qf2_loss = F.mse_loss(q2, q_backup.detach())
+        qf_loss = qf1_loss + qf2_loss
 
+        # Delayed policy update
+        # if self.steps % self.policy_delay == 0:
         # Update policy network parameter
         self.policy_optimizer.zero_grad()
         policy_loss.backward()
-        # nn.utils.clip_grad_norm_(self.policy.parameters(), self.gradient_clip_policy)
         self.policy_optimizer.step()
-
-        # Update Q-function network parameter
-        self.qf_optimizer.zero_grad()
-        qf_loss.backward()
-        # nn.utils.clip_grad_norm_(self.qf.parameters(), self.gradient_clip_qf)
-        self.qf_optimizer.step()
 
         # Polyak averaging for target parameter
         soft_target_update(self.policy, self.policy_target)
-        soft_target_update(self.qf, self.qf_target)
+        soft_target_update(self.qf1, self.qf1_target)
+        soft_target_update(self.qf2, self.qf2_target)
+
+        # Update two Q-network parameter
+        self.qf_optimizer.zero_grad()
+        qf_loss.backward()
+        self.qf_optimizer.step()
 
         # Save losses
         self.policy_losses.append(policy_loss.item())
@@ -147,8 +167,8 @@ class DeepDeterministicPolicyGradient(object):
 
     def get_learn_freq(self):
         if self.replay_buffer.buffer_len() >= self.replay_buffer.get_maxsize():
-            return 16
-        return 16
+            return 10
+        return 10
 
     def play_episode(self, initial_state, enviroment, episode_timeout, n_steps, global_iteration, episode):
         s = initial_state
@@ -225,122 +245,3 @@ class DeepDeterministicPolicyGradient(object):
         self.policy.to_eval_mode()
         state = torch.tensor(state, dtype=torch.float32, device=self.device)
         return self.policy(state).detach().cpu().numpy()
-
-
-def identity(x):
-    """Return input without any change."""
-    return x
-
-
-def soft_target_update(main, target, tau=0.0065):  # tau = 0.005
-    for main_param, target_param in zip(main.parameters(), target.parameters()):
-        target_param.data.copy_(tau * main_param.data + (1.0-tau) * target_param.data)
-
-
-class Actor(nn.Module):
-    def __init__(self, input_dim, device):
-        super(Actor, self).__init__()
-        self.input_dim = input_dim
-        self.device = device
-
-        self.base = nn.Sequential(
-            nn.Linear(self.input_dim, 2048),
-            nn.ReLU(),
-            nn.BatchNorm1d(2048),
-
-            nn.Linear(2048, 4096),  # 2048, 2048
-            nn.ReLU(),
-            nn.BatchNorm1d(4096),
-
-            nn.Linear(4096, 2048),  # 2048, 2048
-            nn.ReLU(),
-            nn.BatchNorm1d(2048),
-
-        ).to(self.device)
-
-        self.platform_out = nn.Sequential(
-            nn.Linear(2048, 2048),
-            nn.ReLU(),
-            nn.BatchNorm1d(2048),
-
-            # new layer
-            nn.Linear(2048, 1024),
-            nn.ReLU(),
-            nn.BatchNorm1d(1024),
-
-            nn.Linear(1024, 1024),
-            nn.ReLU(),
-            nn.BatchNorm1d(1024),
-
-            nn.Linear(1024, 1),
-            PlatformTanh()
-        ).to(self.device)
-
-        self.wheel_out = nn.Sequential(
-            nn.Linear(2048, 1024),
-            nn.BatchNorm1d(1024),
-            nn.ReLU(),
-
-            nn.Linear(1024, 1024),
-            nn.ReLU(),
-            nn.BatchNorm1d(1024),
-
-            nn.Linear(1024, 1),
-            WheelSigmoid()
-        ).to(self.device)
-
-    def forward(self, state):
-        out_base = self.base(state)
-
-        platform_out = self.platform_out(out_base)
-        wheel_out = self.wheel_out(out_base)
-
-        return torch.cat([platform_out, wheel_out], dim=-1)
-
-    def to_eval_mode(self):
-        self.base.eval()
-        self.platform_out.eval()
-        self.wheel_out.eval()
-
-    def to_train_mode(self):
-        self.base.train()
-        self.platform_out.train()
-        self.wheel_out.train()
-
-
-class Critic(nn.Module):
-    def __init__(self, input_dim, device):
-        super(Critic, self).__init__()
-        self.input_dim = input_dim
-        self.device = device
-
-        self.base = nn.Sequential(
-            nn.Linear(self.input_dim, 2048),
-            nn.ReLU(),
-
-            nn.Linear(2048, 4096),
-            nn.ReLU(),
-
-            nn.Linear(4096, 4096),
-            nn.ReLU(),
-
-            nn.Linear(4096, 2048),
-            nn.ReLU(),
-
-            nn.Linear(2048, 1)
-        ).to(self.device)
-
-    def forward(self, state, action):
-        q = torch.cat([state, action], dim=-1)
-        return self.base(q)
-
-
-class PlatformTanh(nn.Tanh):
-    def forward(self, input: Tensor) -> Tensor:
-        return 0.9985 * torch.tanh(input)
-#       return 0.975 * torch.tanh(input)
-
-
-class WheelSigmoid(nn.Sigmoid):
-    def forward(self, input: Tensor) -> Tensor:
-        return 0.02 * torch.sigmoid(input) + 0.26

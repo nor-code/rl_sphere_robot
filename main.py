@@ -10,6 +10,7 @@ from tqdm import trange
 
 from agent.ddpg import DeepDeterministicPolicyGradient
 from agent.dqn import DeepQLearningAgent
+from agent.td3 import TwinDelayedAgent
 from replay_buffer import ReplayBuffer
 from robot.enviroment import make_env, get_state_dim
 # from IPython.display import clear_output
@@ -76,18 +77,28 @@ def save_model(backup_iteration, _number, name_agent):
     if name_agent == 'ddqn' or name_agent == 'dqn':
         FILE = PATH + name_agent + str(_number) + "_" + str(backup_iteration) + ".pt"
         torch.save(agent.q_network.state_dict(), FILE)
-    else:
+
+    elif name_agent == 'ddpg':
         FILE_POLICY = PATH + name_agent + "_policy_" + str(_number) + "_" + str(backup_iteration) + ".pt"
         torch.save(agent.policy.state_dict(), FILE_POLICY)
 
         FILE_Q = PATH + name_agent + "_Q_" + str(_number) + "_" + str(backup_iteration) + ".pt"
         torch.save(agent.qf.state_dict(), FILE_Q)
 
+    elif name_agent == 'td3':
+        FILE_POLICY = PATH + name_agent + "_policy_" + str(_number) + "_" + str(backup_iteration) + ".pt"
+        torch.save(agent.policy.state_dict(), FILE_POLICY)
+
+        FILE_Q1 = PATH + name_agent + "_Q1_" + str(_number) + "_" + str(backup_iteration) + ".pt"
+        torch.save(agent.qf1.state_dict(), FILE_Q1)
+
+        FILE_Q2 = PATH + name_agent + "_Q2_" + str(_number) + "_" + str(backup_iteration) + ".pt"
+        torch.save(agent.qf2.state_dict(), FILE_Q2)
 
 np.random.seed(42)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-parser = argparse.ArgumentParser(description='DQN/DDPG Spherical Robot')
+parser = argparse.ArgumentParser(description='Q Spherical Robot')
 parser.add_argument('--simu_number', type=int, default=1, help='number of simulation')
 parser.add_argument('--type_task', type=int, default=11, help='type of task. now available 4, 5')
 parser.add_argument('--trajectory', type=str, default='random', help='trajectory for agent, circle, curve, random')
@@ -96,7 +107,7 @@ parser.add_argument('--batch_size', type=int, default=2 ** 10, help='batch size'
 parser.add_argument('--refresh_target', type=int, default=400, help='refresh target network')
 parser.add_argument('--total_steps', type=int, default=10**4, help='total_steps')
 parser.add_argument('--decay_steps', type=int, default=100, help='decay_steps')
-parser.add_argument('--agent_type', type=str, default='ddpg', help='type of agent. available now: dqn, ddqn, ddpg')
+parser.add_argument('--agent_type', type=str, default='td3', help='type of agent. available now: dqn, ddqn, ddpg, td3')
 args = parser.parse_args()
 
 timeout = 90
@@ -137,6 +148,14 @@ elif agent_type == 'ddpg':
                                             batch_size=batch_size,
                                             gamma=0.99,
                                             writer=writer)
+elif agent_type == 'td3':
+    agent = TwinDelayedAgent(state_dim,
+                             device=device,
+                             act_dim=2,
+                             replay_buffer=replay_buffer,
+                             batch_size=batch_size,
+                             gamma=0.99,
+                             writer=writer)
 else:
     raise RuntimeError('unknown type agent')
 
@@ -192,7 +211,7 @@ with trange(step, total_steps + 1) as progress_bar:
 
 writer.flush()
 
-save_model(int(step/3000), number, agent_type)
+save_model(int(step/2000), number, agent_type)
 
 # model = TheModelClass(*args, **kwargs)
 # model.load_state_dict(torch.load(PATH))

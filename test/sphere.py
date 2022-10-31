@@ -6,7 +6,7 @@ from dm_control.viewer import application
 from agent.ddpg import DeepDeterministicPolicyGradient
 from robot.enviroment import make_env, curve, circle, get_state_dim, load_trajectories
 
-task = 10
+task = 11
 dim_state = get_state_dim(task)
 # load_trajectories()
 pos = np.array([[0, 0]])
@@ -25,9 +25,9 @@ agent = DeepDeterministicPolicyGradient(dim_state,
 # agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
 # agent.q_network.eval()
 # 22_october/task8/
-agent.policy.load_state_dict(torch.load('../models/30_october/task_10/ddpg_policy_1_4.pt', map_location=torch.device('cpu')))
+agent.policy.load_state_dict(torch.load('../models/30_october/task_11/ddpg_policy_1_1.pt', map_location=torch.device('cpu')))
 agent.policy.eval()
-agent.qf.load_state_dict(torch.load('../models/30_october/task_10/ddpg_Q_1_4.pt', map_location=torch.device('cpu')))
+agent.qf.load_state_dict(torch.load('../models/30_october/task_11/ddpg_Q_1_1.pt', map_location=torch.device('cpu')))
 agent.qf.eval()
 
 final_time = 0
@@ -57,7 +57,7 @@ def action_policy(time_step):
     return action
 
 
-env, x_y = make_env(episode_timeout=110, type_task=task, trajectory='random', begin_index_=5, count_substeps=20)
+env, x_y = make_env(episode_timeout=110, type_task=task, trajectory='random', begin_index_=7, count_substeps=3)
 app = application.Application()
 app.launch(env, policy=action_policy)
 
