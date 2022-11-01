@@ -108,6 +108,8 @@ class TwinDelayedAgent(object):
             return [action[0][0], action[0][1]]
 
     def train_model(self):
+        self.policy.to_train_mode()
+
         s, actions, r, next_s, is_done = self.replay_buffer.sample(self.batch_size)
 
         obs1 = torch.tensor(s, device=self.device, dtype=torch.float32)
@@ -128,7 +130,6 @@ class TwinDelayedAgent(object):
         pi_target = pi_target + epsilon
         pi_target[:, 0] = torch.clamp(pi_target[:, 0], -0.9985, 0.9985)
         pi_target[:, 1] = torch.clamp(pi_target[:, 1], 0.24, 0.28)
-        pi_target.to(self.device)
 
         # Min Double-Q: min(Q1‾(s',𝜇(s')), Q2‾(s',𝜇(s')))
         min_q_pi_target = torch.min(self.qf1_target(obs2, pi_target),
