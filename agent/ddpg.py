@@ -48,7 +48,7 @@ class DeepDeterministicPolicyGradient(object):
 
         # Initialize target parameters to match main parameters
         self.policy_target.load_state_dict(self.policy.state_dict())
-        self.qf.load_state_dict(self.qf_target.state_dict())
+        self.qf_target.load_state_dict(self.qf.state_dict())
 
         # Create optimizers
         self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=1e-3, weight_decay=1e-4)
@@ -337,7 +337,7 @@ class Critic(nn.Module):
 
 class PlatformTanh(nn.Tanh):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.9985 * torch.tanh(input)
+        return 0.995 * torch.tanh(input) # 9985
 #       return 0.975 * torch.tanh(input)
 
 

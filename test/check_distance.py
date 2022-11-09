@@ -24,11 +24,17 @@ class NearestPoint(object):
         dist = np.array([np.sqrt((h_error.x - point[0]) ** 2 + (h_error.y - point[1]) ** 2) for point in self.points])
 
         self.arr = dist.argsort()[:1][0]
+        self.draw_nearest_line(point, -5)
+        self.draw_nearest_line(point, -4)
+        self.draw_nearest_line(point, -3)
         self.draw_nearest_line(point, -2)
         self.draw_nearest_line(point, -1)
         self.draw_nearest_line(point, 0)
         self.draw_nearest_line(point, 1)
         self.draw_nearest_line(point, 2)
+        self.draw_nearest_line(point, 3)
+        self.draw_nearest_line(point, 4)
+        self.draw_nearest_line(point, 5)
 
         print("\n index = ", self.arr)
         print('Distance to line:', distance)
@@ -37,6 +43,7 @@ class NearestPoint(object):
         point_on_line = line.interpolate(line.project(point))
         self.ax.plot([point.x, point_on_line.x], [point.y, point_on_line.y],
                      color='red', marker='o', scalex=False, scaley=False)
+        self.ax.annotate("O", xy=(point.x, point.y), fontsize=12)
         fig.canvas.draw()
 
     def draw_nearest_line(self, point, i):
@@ -44,7 +51,8 @@ class NearestPoint(object):
         dist = np.sqrt((point_on_line[0] - point.x) ** 2 + (point_on_line[1] - point.y) ** 2)
         print(i, " distanse = ", round(dist, 3))
         self.ax.plot([point_on_line[0], point.x], [point_on_line[1], point.y],
-                     color='green', marker='o', scalex=False, scaley=False)
+                     color='green', scalex=False, scaley=False)
+        self.ax.annotate(str(i), xy=(point_on_line[0], point_on_line[1]), fontsize=10)
         fig.canvas.draw()
 
     def get_index(self, index):
@@ -66,7 +74,7 @@ line = geom.LineString(arr)
 
 fig, ax = plt.subplots()
 ax.plot(arr[:, 0][0:], arr[:, 1][0:])
-ax.scatter(arr[:, 0][0:], arr[:, 1][0:])
+ax.scatter(arr[:, 0][0:], arr[:, 1][0:], s=2.1)
 
 ax.axis('equal')
 NearestPoint(line, ax, arr)

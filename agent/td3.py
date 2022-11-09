@@ -133,7 +133,7 @@ class TwinDelayedAgent(object):
 
         # Min Double-Q: min(Q1‾(s',𝜇(s')), Q2‾(s',𝜇(s')))
         min_q_pi_target = torch.min(self.qf1_target(obs2, pi_target),
-                                    self.qf2_target(obs2, pi_target)).squeeze(1).to(self.device)
+                                    self.qf2_target(obs2, pi_target)).squeeze(1)
 
         # Target for Q regression
         q_backup = rews + self.gamma * (1 - done) * min_q_pi_target

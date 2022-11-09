@@ -1,6 +1,6 @@
 import threading
+import json
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from dm_control.rl.control import PhysicsError
@@ -14,6 +14,21 @@ c = threading.Condition()
 top_result_map = {}
 
 
+class SimulationResult:
+
+    def __init__(self, time, required, result):
+        self.time = time
+        self.required = required
+        self.result = result
+
+    def to_json(self):
+        return {"time": self.time,
+                "x_req": self.required[0],
+                "y_req": self.required[1],
+                "res_x": self.result[:, 0].tolist(),
+                "res_y": self.result[:, 1].tolist()}
+
+
 class ThreadSimulation(threading.Thread):
     def __init__(self, i, j):
         threading.Thread.__init__(self)
@@ -23,7 +38,7 @@ class ThreadSimulation(threading.Thread):
     def run(self):
         global top_result_map
         type_task = 11
-        timeout = 105
+        timeout = 110
         state_dim = get_state_dim(type_task)
 
         agent = DeepDeterministicPolicyGradient(state_dim,
@@ -68,13 +83,13 @@ class ThreadSimulation(threading.Thread):
             observation = time_step.observation
 
         c.acquire()
-        top_result_map["_" + str(self.i) + str(self.j) + 'p'] = pos
-        top_result_map["_" + str(self.i) + str(self.j) + 'x'] = x_y
+        top_result_map["_" + str(self.i) + str(self.j)] = SimulationResult(env.physics.data.time,
+                                                                           required=x_y,
+                                                                           result=pos)
         c.release()
 
 
-ci, cj = 3, 3
-fig, ax = plt.subplots(ci, cj)
+ci, cj = 5, 8
 threads = []
 
 for i in range(ci):
@@ -86,13 +101,12 @@ for i in range(ci):
 for th in threads:
     th.join()
 
-for i in range(ci):
-    for j in range(cj):
-        pos = top_result_map["_" + str(i) + str(j) + 'p']
-        x_y = top_result_map["_" + str(i) + str(j) + 'x']
+all_res_list = list(top_result_map.values())
+all_res_list.sort(key=lambda r: r.time, reverse=True)
 
-        ax[i][j].plot(pos[:, 0][1:], pos[:, 1][1:])
-        ax[i][j].plot(x_y[0], x_y[1])
-        ax[i][j].grid()
+top_10 = {}
+for i in range(10):
+    top_10[i] = all_res_list[i].to_json()
 
-plt.show()
+with open('./top_10.json', 'w') as outfile:
+    outfile.write(json.dumps(top_10))
