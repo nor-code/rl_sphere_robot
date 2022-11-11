@@ -19,6 +19,7 @@ def get_string_xml(roll_angle):
     filename = dir_path + os.sep + "robot.xml"
     with open(filename, 'r') as file:
         xml_in_string = file.read()
+    # TODO replace roll_angle to changing last zero in `euler="0 0 0"`
     return xml_in_string.replace("{roll_angle}", str(roll_angle))
 
 

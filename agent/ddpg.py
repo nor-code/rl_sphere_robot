@@ -65,8 +65,8 @@ class DeepDeterministicPolicyGradient(object):
 
 
         #========================================
-        self.platform_max_action = 0.15 # 0.975 / 8  # variance
-        self.wheel_max_action = 0.15 # 0.26  / 16  # variance
+        self.platform_max_action = 0.25 # 0.975 / 8  # variance
+        self.wheel_max_action = 0.25 # 0.26  / 16  # variance
 
     def sample_actions_orig(self, state, t, i):
         if self.epsilon > 0:
