@@ -11,104 +11,23 @@ from robot.task_5 import TrakingTrajectoryTask5
 from robot.task_6 import TrakingTrajectoryTask6
 from robot.task_7 import TrakingTrajectoryTask7
 from robot.task_one_point import TrakingTrajectoryTaskOnePoint
+import os
 
 
 def get_string_xml(roll_angle):
-    return f"""
-    <?xml version="1.0"?>
-    <mujoco model="sphere_robot">
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    filename = dir_path + os.sep + "robot.xml"
+    with open(filename, 'r') as file:
+        xml_in_string = file.read()
+    return xml_in_string.replace("{roll_angle}", str(roll_angle))
 
-        <compiler inertiafromgeom="true" angle="degree"/>
-        <option integrator="RK4"/>
-        <option timestep="0.005" iterations="50" solver="Newton" tolerance="1e-10"/>
-        <size njmax="1500" nconmax="5000" nstack="5000000"/>
-
-
-        <asset>
-            <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
-            <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
-            <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278"
-                rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
-            <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
-            <material name="matgeom" texture="texgeom" texuniform="true" rgba="0.8 0.6 .4 1"/>
-        </asset>
-
-        <visual>
-            <map force="0.1" zfar="30"/>
-            <rgba haze="0.15 0.25 0.35 1"/>
-            <quality shadowsize="2048"/>
-            <global offwidth="800" offheight="800"/>
-        </visual>
-
-        <worldbody>
-            <geom name="floor" pos="0 0 0" size="0 0 .25" type="plane" material="matplane" condim="3"/>
-            <camera name="fixed" pos="0 -4 1" zaxis="0 -1 0"/>
-
-            <light pos="0 0 6"/>
-            <light directional="false" diffuse=".2 .2 .2" specular="0 0 0" pos="0 0 5" dir="0 0 -1" castshadow="false"/>
-
-            <body name="shell" pos="0 0 0" euler="0 0 {roll_angle}">
-                <joint name="shell_floor" type="free"/>
-                <geom name="sphere_shell" type="sphere" pos="0 0 0" size=".2 .19" rgba=".0 .0 .0 .2" mass="0.2" friction="1 5 1" group="1"/>
-
-                <body name="wheel">
-                    <joint name="wheel_with_shell" type="ball" frictionloss="0.0068"/>
-                    <geom name="wheel_" type="cylinder" fromto="-0.008 0 -0.15  0.008 0 -0.15" size="0.049 0.005" mass="0.7"/>
-                    <!-- friction[0] sliding friction, friction[1] torsional friction, friction[2] rolling friction -->
-
-                    <body>
-                       <geom name="wheel_axis1" type="cylinder" fromto="-0.03 0 -0.15  -0.008 0 -0.15" size="0.005" mass="0.005"/>
-                       <geom name="wheel_axis2" type="cylinder" fromto="0.008 0 -0.15  0.03 0 -0.15" size="0.005" mass="0.005"/>
-
-                       <geom name="fork1" type="capsule" fromto="-0.03 0 -0.07  -0.03 0 -0.16" size="0.01" mass="0.01" group="1"/>
-                       <geom name="fork2" type="capsule" fromto="0.03 0 -0.07  0.03 0 -0.16" size="0.01" mass="0.01" group="1"/>
-                       <geom name="link_f1_f2" type="capsule" fromto="-0.03 0 -0.07   0.03 0 -0.07" size="0.01" mass="0.001" group="1"/>
-                       <geom name="fork0" type="capsule" fromto="0 0 -0.03  0 0 -0.07" size="0.01" mass="0.1" group="0.01"/>
-                    </body>
-
-                    <body>
-                        <joint name="fork_with_platform" type="hinge" axis="0 0 1" frictionloss="0.1"/>
-                        <geom name="platform" type="cylinder" pos="0 0 -0.03" size=".15 .005" rgba=".0 .0 .3 .5" mass="2" group="1"/>
-                        <geom name="line1" type="cylinder" fromto="0       -0.15 -0.03    0     -0.167 -0.03" size="0.005"/>
-                        <geom name="line2" type="cylinder" fromto="0.1299  0.075 -0.03    0.1472 0.085 -0.03" size="0.005"/>
-                        <geom name="line3" type="cylinder" fromto="-0.1299 0.075 -0.03   -0.1472 0.085 -0.03" size="0.005"/>
-                        <site name="mpu9250" pos="0 0 -0.03" size=".03 .03 .03" type="ellipsoid" rgba="0.3 0.2 0.1 0.3"/>
-                    </body>
-                </body>
-            </body>
-        </worldbody>
-
-    <!--     <contact>-->
-    <!--       <pair name="friction_shell" geom1="floor" geom2="sphere_shell" condim="3" friction="0 1"/>-->
-    <!--     </contact>-->
-
-        <actuator>
-            <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.975 0.975"/>
-            <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.6"/>
-        </actuator>
-
-        <sensor>
-            <subtreecom name="shell_center" body="shell"/>
-
-            <jointpos name="fork_wheel_angle" joint="fork_with_platform"/> <!-- угол поворота колеса -->
-
-            <subtreelinvel name="sphere_vel" body="shell"/>
-            
-            <subtreelinvel name="wheel_vel" body="wheel"/>
-            
-            <frameangvel name="sphere_angular_vel" objtype="geom" objname="sphere_shell"/>
-            
-            <accelerometer name="imu_accel" site="mpu9250"/>
-            <gyro name="imu_gyro" site="mpu9250"/>
-        </sensor>
-    </mujoco>
-    """
 
 # область в которой будут генерироваться начало замкнутой траектории
 scope = {
     "x": [-1.5, 1.5],
     "y": [-0.5, 2.5],
 }
+
 
 def curve():
     t = np.linspace(0, 3 * np.pi, 30)
@@ -123,18 +42,20 @@ def circle():
     y_ = [- np.cos(t_) + 1 for t_ in t]
     return x_, y_
 
+
 def one_point():
     x = np.random.uniform()
     y = np.random.uniform()
 
     x = 1.0
     y = 1.0
-    return [x],[y] #np.expand_dims(x_y, axis = 0)
+    return [x], [y]  # np.expand_dims(x_y, axis = 0)
+
 
 def random_trajectory():
     global scope
     # общее количество точек на кривой
-    total_points = 65 # task 3 - 25
+    total_points = 65  # task 3 - 25
 
     x_init = np.random.uniform(scope['x'][0], scope['x'][1])
     y_init = np.random.uniform(scope['y'][0], scope['y'][1])
@@ -177,8 +98,8 @@ def get_state_dim(type_task):
         return 16
     elif type_task == 7:
         return 28
-    elif type_task == 8: # one point
-        return 6 # x , y , v_x , x_y, target_x,target_y
+    elif type_task == 8:  # one point
+        return 6  # x , y , v_x , x_y, target_x,target_y
     return -1
 
 

@@ -48,7 +48,7 @@ def linear_decay(init_val, final_val, cur_step, total_steps):
             final_val * cur_step) / total_steps
 
 
-def get_env(size,timeout,args):
+def get_env(size, timeout, args):
     # begin_index = [size // 10, 2 * size // 10, (3 * size) // 10, (4 * size) // 10,
     #                size // 2, (6 * size) // 10, (7 * size) // 10, (8 * size) // 10, (9 * size) // 10]
 
@@ -59,7 +59,10 @@ def get_env(size,timeout,args):
         begin_index = np.random.choice(begin_index, size=1)[0]
 
     env_i, x_y = make_env(
-        episode_timeout=timeout, type_task=args.type_task, trajectory=args.trajectory, begin_index_= begin_index
+        episode_timeout=timeout,
+        type_task=args.type_task,
+        trajectory=args.trajectory,
+        begin_index_=begin_index
     )
     return env_i, x_y
 
@@ -90,8 +93,7 @@ def save_model(backup_iteration, _number, name_agent, agent):
         torch.save(agent.qf.state_dict(), FILE_Q)
 
 
-
-def build_agent(args, d = 'cuda:0'):
+def build_agent(args, d='cuda:0'):
     np.random.seed(42)
     device = torch.device(d if torch.cuda.is_available() else 'cpu')
     replay_buffer = ReplayBuffer(args.buffer_size)
@@ -131,19 +133,14 @@ def build_agent(args, d = 'cuda:0'):
     return agent, writer, replay_buffer
 
 
-
-
-def train(args,agent,writer,replay_buffer):
-
+def train(args, agent, writer, replay_buffer):
     timeout = args.timeout
     max_steps_per_episode = args.max_steps_per_episode
-
 
     number = args.simu_number
 
     total_steps = args.total_steps
     decay_steps = args.decay_steps
-
 
     # dataset_file = open('dataset/' + 'dataset_' + str(args.agent_type) + "_" + str(args.simu_number) + '.csv', 'a')
 
@@ -160,7 +157,7 @@ def train(args,agent,writer,replay_buffer):
     rewards = list()
     with trange(step, total_steps + 1) as progress_bar:
         for step in progress_bar:
-            env, x_y = get_env(count_point_on_trajectory,timeout,args)
+            env, x_y = get_env(count_point_on_trajectory, timeout, args)
             state = env.reset().observation
 
             agent.epsilon = linear_decay(init_epsilon, final_epsilon, step, decay_steps)
@@ -179,7 +176,7 @@ def train(args,agent,writer,replay_buffer):
                 )
 
                 pillow_img = PIL.Image.open(plot_buf)
-                #pillow_img.save("tmp.jpg")
+                # pillow_img.save("tmp.jpg")
                 tensor_img = ToTensor()(pillow_img)
                 writer.add_image("trajectory #" + str(number), tensor_img, step / eval_freq)
                 plt.close(fig)
@@ -196,7 +193,7 @@ def train(args,agent,writer,replay_buffer):
 
             if step > 0 and step % 3000 == 0:
                 i = int(step / 3000)
-                save_model(i, number, args.agent_type,agent)
+                save_model(i, number, args.agent_type, agent)
 
     writer.flush()
 
