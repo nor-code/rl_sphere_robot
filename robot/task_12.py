@@ -7,7 +7,7 @@ def vector(pointA, pointB):
     return [pointB[0] - pointA[0], pointB[1] - pointA[1]]
 
 
-class TrakingTrajectoryTask11(base.Task):
+class TrakingTrajectoryTask12(base.Task):
 
     def __init__(self, trajectory_x_y, begin_index, timeout, R=0.242, random=None):
         """ тайм-аут одного эпизода """
@@ -103,6 +103,7 @@ class TrakingTrajectoryTask11(base.Task):
                       v_r4[0], v_r4[1],
                       v_r5[0], v_r5[1],
                       v_r6[0], v_r6[1],
+                      0.0,     0.0,
                       v_r7[0], v_r7[1],
                       v_r8[0], v_r8[1],
                       v_r9[0], v_r9[1],
@@ -175,6 +176,7 @@ class TrakingTrajectoryTask11(base.Task):
                       v_r4[0], v_r4[1],
                       v_r5[0], v_r5[1],
                       v_r6[0], v_r6[1],
+                      round(v_x, 4), round(v_y, 4),
                       v_r7[0], v_r7[1],
                       v_r8[0], v_r8[1],
                       v_r9[0], v_r9[1],
@@ -193,18 +195,30 @@ class TrakingTrajectoryTask11(base.Task):
     def get_reward(self, physics):
         x, y = self.robot_position
 
+        v_x = self.state[12]
+        v_y = self.state[13]
+
         point = geom.Point(x, y)
         h_error_dist = self.line.distance(point)
+        point_on_line = self.line.interpolate(self.line.project(point))
+
+        vector_h = vector([x, y], [point_on_line.x, point_on_line.y])
+        vel = [round(-vector_h[1] / vector_h[0], 4), 1]
+
+        cos = abs(np.round(np.dot([v_x, v_y], vel) / (np.linalg.norm([v_x, v_y]) * np.linalg.norm(vel)), 4))  # 0 to 1
+        coefficient = (1 - cos)
+
+        course_reward = coefficient * 90
 
         if h_error_dist >= 0.1:
             print("soft invalid state")
             self.count_invalid_states += 1
-            return -10
+            return -10 - course_reward
 
         if self.is_invalid_state_hard():
             print("hard invalid state")
             self.count_hard_invalid_state += 1
-            return -10
+            return -10 - course_reward
 
         if self.count_invalid_states > 0:
             print("вернулись на траекторию")
@@ -213,7 +227,7 @@ class TrakingTrajectoryTask11(base.Task):
         if h_error_dist <= 0.01:
             return 12.5
 
-        reward = -250 * h_error_dist + 15
+        reward = -250 * h_error_dist + 15 - course_reward
 
         return reward
 

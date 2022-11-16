@@ -337,7 +337,7 @@ class Critic(nn.Module):
 
 class PlatformTanh(nn.Tanh):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.995 * torch.tanh(input) # 9985
+        return 0.9985 * torch.tanh(input) # 9985
 #       return 0.975 * torch.tanh(input)
 
 

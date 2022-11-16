@@ -25,9 +25,9 @@ agent = DeepDeterministicPolicyGradient(dim_state,
 # agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
 # agent.q_network.eval()
 # 22_october/task8/
-agent.policy.load_state_dict(torch.load('../models/30_october/task_11/ddpg_policy_1_1.pt', map_location=torch.device('cpu')))
+agent.policy.load_state_dict(torch.load('../models/31_october/task_11/ddpg_policy_4_17.pt', map_location=torch.device('cpu')))
 agent.policy.eval()
-agent.qf.load_state_dict(torch.load('../models/30_october/task_11/ddpg_Q_1_1.pt', map_location=torch.device('cpu')))
+agent.qf.load_state_dict(torch.load('../models/31_october/task_11/ddpg_Q_4_17.pt', map_location=torch.device('cpu')))
 agent.qf.eval()
 
 final_time = 0
@@ -57,7 +57,7 @@ def action_policy(time_step):
     return action
 
 
-env, x_y = make_env(episode_timeout=110, type_task=task, trajectory='random', begin_index_=7, count_substeps=3)
+env, x_y = make_env(episode_timeout=110, type_task=task, trajectory='random', begin_index_=30, count_substeps=3)
 app = application.Application()
 app.launch(env, policy=action_policy)
 
@@ -72,15 +72,13 @@ traj.set_xlabel('x,    total reward = ' + str(round(total_reward, 3)))
 traj.set_ylabel('y')
 
 control, ax = plt.subplots(2, 1)
-ax[0].plot(np.linspace(0, 95, len(actions)), actions[:, 0], label="platform_signal")
-ax[0].set_xlabel('time, s')
-ax[0].set_ylabel('platform_signal')
-ax[0].legend(loc='upper right')
+ax[0].plot(np.linspace(0, final_time, len(actions)), actions[:, 0], color='green')
+ax[0].set_xlabel('time, [s]')
+ax[0].set_ylabel('platform control')
 
-ax[1].plot(np.linspace(0, 95, len(actions)), actions[:, 1], label="wheel_signal", color='red')
-ax[1].set_xlabel('time, s')
-ax[1].set_ylabel('wheel_signal')
-ax[1].legend(loc='upper right')
+ax[1].plot(np.linspace(0, final_time, len(actions)), actions[:, 1], color='blue')
+ax[1].set_xlabel('time [s]')
+ax[1].set_ylabel('wheel control')
 
 print("V_max = ", max(V))
 print("U_max = ", max(U))

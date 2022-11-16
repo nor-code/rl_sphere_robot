@@ -13,6 +13,8 @@ from robot.task_8 import TrakingTrajectoryTask8
 from robot.task_9 import TrakingTrajectoryTask9
 from robot.task_10 import TrakingTrajectoryTask10
 from robot.task_11 import TrakingTrajectoryTask11
+from robot.task_12 import TrakingTrajectoryTask12
+import json
 
 
 def get_string_xml(roll_angle):
@@ -127,6 +129,9 @@ def curve():
     t = np.linspace(0, 3 * np.pi, 75)
     x_ = [np.sin(t_ * 0.8) for t_ in t]
     y_ = [- np.cos(t_ / 1.5) + 1 for t_ in t]
+    # t = np.linspace(-70, 70, 5000)
+    #     x = 3 * np.sqrt(2) * (t + t ** 3) / (1 + t ** 4)
+    #     y = 3 * np.sqrt(2) * (t - t ** 3) / (1 + t ** 4)
     return x_, y_
 
 
@@ -135,6 +140,16 @@ def circle():
     x_ = [np.sin(t_) for t_ in t]
     y_ = [- np.cos(t_) + 1 for t_ in t]
     return x_, y_
+
+def random_from_file():
+    json_10 = open('../test/res/top_10_4.json')
+    load = json.load(json_10)
+
+    data = load['2']
+    x_req = data["x_req"]
+    y_req = data["y_req"]
+
+    return x_req, y_req
 
 
 def random_trajectory():
@@ -171,6 +186,8 @@ def determine_trajectory(type):
         return curve
     elif type == 'random':
         return random_trajectory
+    elif type == 'json':
+        return random_from_file
 
 
 def get_state_dim(type_task):
@@ -192,6 +209,8 @@ def get_state_dim(type_task):
         return 16
     elif type_task == 11:
         return 22
+    elif type_task == 12:
+        return 24
     return -1
 
 
@@ -268,5 +287,7 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, c
         task = TrakingTrajectoryTask10(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
     elif type_task == 11:
         task = TrakingTrajectoryTask11(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
+    elif type_task == 12:
+        task = TrakingTrajectoryTask12(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
     return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=count_substeps), x_y  # n_sub_steps = 17

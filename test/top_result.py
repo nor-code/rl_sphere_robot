@@ -1,3 +1,4 @@
+import argparse
 import threading
 import json
 
@@ -5,9 +6,15 @@ import numpy as np
 import torch
 from dm_control.rl.control import PhysicsError
 from dm_env import StepType
+import shapely.geometry as geom
 
 from agent.ddpg import DeepDeterministicPolicyGradient
 from robot.enviroment import get_state_dim, make_env
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--i', type=int, default=1, help="number expirement")
+args = parser.parse_args()
 
 c = threading.Condition()
 
@@ -22,7 +29,23 @@ class SimulationResult:
         self.result = result
 
     def to_json(self):
+        line = geom.LineString(np.array([self.required[0], self.required[1]]).T)
+
+        L2 = 0.0
+        mean_h = 0.0
+        for i in range(len(self.result)):
+            point = geom.Point(self.result[i, 0], self.result[i, 1])
+            point_on_line = line.interpolate(line.project(point))
+            dist = np.sqrt((point_on_line.x - point.x)**2 + (point_on_line.y - point.y)**2)
+            L2 += dist**2
+            mean_h += dist
+
+        L2 = np.sqrt(L2)
+        mean_h = mean_h / len(self.result)
         return {"time": self.time,
+                "length": line.length,
+                "dist": L2,
+                "h_error_mean": mean_h,
                 "x_req": self.required[0],
                 "y_req": self.required[1],
                 "res_x": self.result[:, 0].tolist(),
@@ -108,5 +131,5 @@ top_10 = {}
 for i in range(10):
     top_10[i] = all_res_list[i].to_json()
 
-with open('./top_10.json', 'w') as outfile:
+with open('./top_10_' + str(args.i) + '.json', 'w') as outfile:
     outfile.write(json.dumps(top_10))
