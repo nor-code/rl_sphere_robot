@@ -203,7 +203,10 @@ class TrakingTrajectoryTask12(base.Task):
         point_on_line = self.line.interpolate(self.line.project(point))
 
         vector_h = vector([x, y], [point_on_line.x, point_on_line.y])
-        vel = [round(-vector_h[1] / vector_h[0], 4), 1]
+        if vector_h[0] == 0:
+            vel = [1, 0]
+        else:
+            vel = [round(-vector_h[1] / vector_h[0], 4), 1]
 
         cos = abs(np.round(np.dot([v_x, v_y], vel) / (np.linalg.norm([v_x, v_y]) * np.linalg.norm(vel)), 4))  # 0 to 1
         coefficient = (1 - cos)
