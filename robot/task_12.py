@@ -208,8 +208,12 @@ class TrakingTrajectoryTask12(base.Task):
         else:
             vel = [round(-vector_h[1] / vector_h[0], 4), 1]
 
-        cos = abs(np.round(np.dot([v_x, v_y], vel) / (np.linalg.norm([v_x, v_y]) * np.linalg.norm(vel)), 4))  # 0 to 1
-        coefficient = (1 - cos)
+        coefficient = 0.0
+        if np.linalg.norm(vel) == 0.0 or np.linalg.norm(vector_h) == 0.0:
+            coefficient = 1.0
+        else:
+            cos = abs(np.round(np.dot([v_x, v_y], vel) / (np.linalg.norm([v_x, v_y]) * np.linalg.norm(vel)), 4))  # 0 to 1
+            coefficient = (1 - cos)
 
         course_reward = coefficient * 90
 
