@@ -25,10 +25,10 @@ agent = DeepDeterministicPolicyGradient(dim_state,
                                         gamma=0.99,
                                         writer=None)
 
-
-agent.policy.load_state_dict(torch.load('../models/31_october/task_11/ddpg_policy_4_17.pt', map_location=torch.device('cpu')))
+# 31_october/task_11/
+agent.policy.load_state_dict(torch.load('../models/ddpg_policy_4_17.pt', map_location=torch.device('cpu')))
 agent.policy.eval()
-agent.qf.load_state_dict(torch.load('../models/31_october/task_11/ddpg_Q_4_17.pt', map_location=torch.device('cpu')))
+agent.qf.load_state_dict(torch.load('../models/ddpg_Q_4_17.pt', map_location=torch.device('cpu')))
 agent.qf.eval()
 
 final_time = 0
