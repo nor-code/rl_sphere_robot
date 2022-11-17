@@ -1,6 +1,6 @@
 ## УПРАВЛЕНИЕ ДВИЖЕНИЕМ СФЕРИЧЕСКОГО РОБОТА ПРИ ПОМОЩИ Q-ОБУЧЕНИЯ
 
-[![Видео](https://img.youtube.com/vi/pCcGI_YZO_s/0.jpg)](https://www.youtube.com/watch?v=pCcGI_YZO_s)
+[![Видео]](https://www.youtube.com/watch?v=pCcGI_YZO_s)
 
 ![Alt Text](paper/trajectory.gif)
 
