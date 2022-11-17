@@ -82,10 +82,6 @@ def get_string_xml(roll_angle):
             </body>
         </worldbody>
 
-    <!--     <contact>-->
-    <!--       <pair name="friction_shell" geom1="floor" geom2="sphere_shell" condim="3" friction="0 1"/>-->
-    <!--     </contact>-->
-
         <actuator>
             <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9985 0.9985"/>
             <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.36"/>
@@ -108,23 +104,6 @@ def get_string_xml(roll_angle):
     </mujoco>
     """
 
-#  до 26.10.2022 21:23
-#  <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.975 0.975"/>
-#  <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.6"/>
-#
-#  <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9985 0.9985"/>
-#  <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.36"/>
-#
-#  29.10.2022
-#  <motor name="platform_motor" gear="0.107" joint="fork_with_platform" ctrllimited="true" ctrlrange="-0.9975 0.9975"/>
-#  <motor name="wheel_motor" gear="90" joint="wheel_with_shell" ctrllimited="true" ctrlrange="0.26 0.32"/>
-#
-# область в которой будут генерироваться начало замкнутой траектории
-scope = {
-    "x": [-1.5, 1.5],
-    "y": [-0.5, 2.5],
-}
-
 def curve():
     t = np.linspace(0, 3 * np.pi, 75)
     x_ = [np.sin(t_ * 0.8) for t_ in t]
@@ -141,24 +120,21 @@ def circle():
     y_ = [- np.cos(t_) + 1 for t_ in t]
     return x_, y_
 
-def random_from_file():
-    json_10 = open('../test/res/top_10_4.json')
+
+def paper_result():
+    json_10 = open('../paper/results_paper.json')
     load = json.load(json_10)
 
-    data = load['2']
-    x_req = data["x_req"]
-    y_req = data["y_req"]
+    i = int(np.random.rand() * 10) % 10
+    data = load[str(i)]
 
-    return x_req, y_req
+    return data["x_req"], data["y_req"]
 
 
 def random_trajectory():
     global scope
     # общее количество точек на кривой
-    total_points = 75 # task 3 - 25
-
-    x_init = np.random.uniform(scope['x'][0], scope['x'][1])
-    y_init = np.random.uniform(scope['y'][0], scope['y'][1])
+    total_points = 75
 
     radius = np.sin(np.random.randn(1, total_points)) * np.logspace(-1.61, -2.1, total_points)
     phi = np.random.randn(1, total_points) * np.logspace(-0.01, -1.2, total_points)
@@ -172,10 +148,8 @@ def random_trajectory():
     r[-1] = (r[1] + r[-2]) / 2
     r[0] = r[-1]
 
-    x = r * np.sin(t)  # + x_init
-    y = - r * np.cos(t) + 1  # + y_init
-    # x[-1] = x[0]
-    # y[-1] = y[0]
+    x = r * np.sin(t)
+    y = - r * np.cos(t) + 1
     return x.tolist(), y.tolist()
 
 
@@ -186,8 +160,8 @@ def determine_trajectory(type):
         return curve
     elif type == 'random':
         return random_trajectory
-    elif type == 'json':
-        return random_from_file
+    elif type == 'paper_result':
+        return paper_result
 
 
 def get_state_dim(type_task):
@@ -230,25 +204,9 @@ def generate_100_random_trajectory_for_learn():
     return trajectories
 
 
-# trajectory_100 = generate_100_random_trajectory_for_learn()
-
-
-# trajectory_100 = []
-def load_trajectories():
-    global trajectory_100
-    trajectory_ = np.loadtxt('../t_100.txt')
-    array = np.array(range(200))
-    odd = array[array % 2 == 1]
-    for i in odd:
-        trajectory_100.append((trajectory_[i - 1].tolist(), trajectory_[i].tolist()))
-    print("loaded 100 trajectories")
-
-
 def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, count_substeps=15):
-    global trajectory_100
     trajectory_fun = determine_trajectory(trajectory)
 
-    # x_y = trajectory_100[np.random.choice(range(100))]
     x_y = trajectory_fun()
 
     points = np.array(x_y).T
@@ -290,4 +248,4 @@ def make_env(episode_timeout=30, type_task=2, trajectory=None, begin_index_=0, c
     elif type_task == 12:
         task = TrakingTrajectoryTask12(trajectory_x_y=points, begin_index=begin_index_, timeout=episode_timeout)
 
-    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=count_substeps), x_y  # n_sub_steps = 17
+    return control.Environment(physics, task, time_limit=episode_timeout, n_sub_steps=count_substeps), x_y

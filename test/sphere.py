@@ -4,11 +4,14 @@ import torch
 from dm_control.viewer import application
 
 from agent.ddpg import DeepDeterministicPolicyGradient
-from robot.enviroment import make_env, curve, circle, get_state_dim, load_trajectories
+from robot.enviroment import make_env, curve, circle, get_state_dim
+
+"""
+запуск графической симуляции
+"""
 
 task = 11
 dim_state = get_state_dim(task)
-# load_trajectories()
 pos = np.array([[0, 0]])
 i = 0
 V = []
@@ -21,10 +24,8 @@ agent = DeepDeterministicPolicyGradient(dim_state,
                                         batch_size=1,
                                         gamma=0.99,
                                         writer=None)
-#
-# agent.q_network.load_state_dict(torch.load('../models/ddqn2_3.pt', map_location=torch.device('cpu')))
-# agent.q_network.eval()
-# 22_october/task8/
+
+
 agent.policy.load_state_dict(torch.load('../models/31_october/task_11/ddpg_policy_4_17.pt', map_location=torch.device('cpu')))
 agent.policy.eval()
 agent.qf.load_state_dict(torch.load('../models/31_october/task_11/ddpg_Q_4_17.pt', map_location=torch.device('cpu')))
@@ -38,8 +39,6 @@ def action_policy(time_step):
     global pos, V, U, i, agent, actions, final_time, total_reward
 
     i += 1
-
-    val = np.random.random()
     observation = time_step.observation
 
     x, y, _ = env.physics.named.data.geom_xpos['wheel_']
@@ -57,7 +56,7 @@ def action_policy(time_step):
     return action
 
 
-env, x_y = make_env(episode_timeout=110, type_task=task, trajectory='random', begin_index_=30, count_substeps=3)
+env, x_y = make_env(episode_timeout=110, type_task=task, trajectory='paper_result', begin_index_=30, count_substeps=3)
 app = application.Application()
 app.launch(env, policy=action_policy)
 
@@ -84,21 +83,3 @@ print("V_max = ", max(V))
 print("U_max = ", max(U))
 print("count iteration: i = ", i)
 plt.show()
-
-# U_max = 0.2408
-# U_max = 0.2958
-
-# def action_policy(timestamp):
-#     qvalues = agent.get_qvalues([timestamp.observation])
-#     action = agent.index_to_pair[qvalues.argmax(axis=-1)[0]]
-#     return action
-#
-# agent = DeepQLearningAgent(state_dim=20,
-#                            batch_size=1,
-#                            epsilon=0,
-#                            gamma=0.99,
-#                            device='cpu',
-#                            algo='ddqn',
-#                            replay_buffer=None,
-#                            refresh_target=None,
-#                            writer=None)

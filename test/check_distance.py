@@ -4,6 +4,11 @@ import matplotlib.pyplot as plt
 
 from robot.enviroment import random_trajectory
 
+"""
+интерактивно отрисовывает растояния до 11 точек и расстояние от робота до кривой 
+сделано исключительно для проверки того, что task11.py работает корректно
+"""
+
 
 class NearestPoint(object):
     def __init__(self, line, ax, points):
@@ -62,13 +67,10 @@ class NearestPoint(object):
             return index % len(self.points)
         return index
 
+
 xy = random_trajectory()
 
 arr = np.array(xy).T
-
-# for i in range(1, 75):
-#     l = np.sqrt((arr[i][1] - arr[i-1][1])**2 + (arr[i][0] - arr[i-1][0])**2)
-#     print(l)
 
 line = geom.LineString(arr)
 

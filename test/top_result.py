@@ -73,12 +73,12 @@ class ThreadSimulation(threading.Thread):
                                                 writer=None)
 
         agent.policy.load_state_dict(
-            torch.load('../models/30_october/task_11/ddpg_policy_1_2.pt', map_location=torch.device('cpu'))
+            torch.load('../models/5_november/task_11/ddpg_policy_1_12.pt', map_location=torch.device('cpu'))
         )
         agent.policy.eval()
 
         agent.qf.load_state_dict(
-            torch.load('../models/30_october/task_11/ddpg_Q_1_2.pt', map_location=torch.device('cpu'))
+            torch.load('../models/5_november/task_11/ddpg_Q_1_12.pt', map_location=torch.device('cpu'))
         )
         agent.qf.eval()
         env, x_y = make_env(episode_timeout=timeout, type_task=type_task,
@@ -112,7 +112,7 @@ class ThreadSimulation(threading.Thread):
         c.release()
 
 
-ci, cj = 5, 8
+ci, cj = 5, 2
 threads = []
 
 for i in range(ci):

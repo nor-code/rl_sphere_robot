@@ -337,8 +337,8 @@ class Critic(nn.Module):
 
 class PlatformTanh(nn.Tanh):
     def forward(self, input: Tensor) -> Tensor:
-        return 0.9985 * torch.tanh(input) # 9985
-#       return 0.975 * torch.tanh(input)
+        return 0.9935 * torch.tanh(input)
+#       return 0.9985 * torch.tanh(input)
 
 
 class WheelSigmoid(nn.Sigmoid):
