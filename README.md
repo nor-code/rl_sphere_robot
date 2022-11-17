@@ -2,7 +2,7 @@
 
 ![Alt Text](paper/trajectory.gif)
 
-[[Видео]](https://www.youtube.com/watch?v=pCcGI_YZO_s)
+ [Видео](https://www.youtube.com/watch?v=pCcGI_YZO_s)
 
 ## 1. Настройка
 - для того, чтобы запустить обучение или симуляцию с уже обученной моделью, необходимо выполнить инструкции по установке и настройке физического движка ```MuJoCo```,
