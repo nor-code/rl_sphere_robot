@@ -18,8 +18,8 @@
 
 
 
-### поскольку гит не пускает файлы выше 100Мб и настроить git lfs не получилось, то модели доступны по ссылкам, после скачивания переместить в папку ``./models``
+#### UPD: поскольку гит не пускает файлы выше 100Мб и настроить git lfs не получилось, то модели доступны по ссылкам, после скачивания переместить в папку ``./models``
 
-```Q-network      https://disk.yandex.ru/d/v1yUVwlFXtMcYw```
+ - [Q-network](https://disk.yandex.ru/d/v1yUVwlFXtMcYw)
 
-```policy-network https://disk.yandex.ru/d/zYff7QSoP7cdAQ```
+ - [policy-network](https://disk.yandex.ru/d/zYff7QSoP7cdAQ)
